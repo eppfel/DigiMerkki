@@ -13,20 +13,15 @@
 #if defined(ESP8266) // Feather Huzzah ESP8266
   #include <CapacitiveSensor.h>
   #define LED             0    // GPIO number of connected LED
-  #define ESP8266         1    // boolean for later checks
   #define TTHRESHOLD   3000    // threshold for touch
 
 #elif defined(ARDUINO_FEATHER_ESP32)
-  #include "stub.h"            // The capacitivesensor library does not compile in ESP32, so this stub is needed to not throw errors
   #define LED            13    // GPIO number of connected LED
-  #define ESP8266         0    // boolean for later checks
   #define TOUCHPIN       T5    // Pin for sensing touch input
-  #define TTHRESHOLD     40    // threshold for touch
+  #define TTHRESHOLD     42    // threshold for touch
 
 #else //ESP32 DEV Module
-  #include "stub.h"            // The capacitivesensor library does not compile in ESP32, so this stub is needed to not throw errors
   #define LED             2    // GPIO number of connected LED
-  #define ESP8266         0    // boolean for later checks
   #define TOUCHPIN       T5    // Pin for sensing touch input
   #define TTHRESHOLD     40    // threshold for touch
   
@@ -99,10 +94,8 @@ void setup() {
   userScheduler.addTask(blinkNoNodes);
   blinkNoNodes.enable();
 
-#if defined(ESP8266) // Feather Huzzah32
+#if defined(ESP8266) // Feather Huzzah
   cap.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
-#else
-  touchAttachInterrupt(TOUCHPIN, sendMessage, TTHRESHOLD);
 #endif
 
   randomSeed(analogRead(A0));
@@ -111,18 +104,26 @@ void setup() {
 void loop() {
   mesh.update();
 
-
-#if defined(ESP8266) || defined(ARDUINO_FEATHER_ESP32)
+#if defined(ESP8266) // Feather Huzzah
   digitalWrite(LED, !onFlag);
+  int capval = cap.capacitiveSensor(30);
+  if (capval > TTHRESHOLD) {  
+    
 #else
   digitalWrite(LED, onFlag);
+  int capval = touchRead(TOUCHPIN);    
+  if (capval < TTHRESHOLD) {
+    
 #endif
-  
-#if defined(ESP8266) // Feather Huzzah32
-  int capval = cap.capacitiveSensor(30);
-  if (capval > TTHRESHOLD) sendMessage();
-  //Serial.println(capval);                  // print capacitive sensor output
-#endif
+
+    Serial.print("Touch:");                  // print capacitive sensor output
+    Serial.println(capval); 
+             
+    if (lastTouch + TOUCHDELAY < millis()) {
+      lastTouch = millis();
+      sendMessage();
+    }
+  }
 
 }
 
@@ -134,8 +135,6 @@ void sendMessage() {
 
   Serial.printf("Sending message: %s\n", msg.c_str());
   Serial.println("");
-  if (lastTouch + TOUCHDELAY > millis()) return;
-  lastTouch = millis();
 
   mesh.sendBroadcast(msg);
 
