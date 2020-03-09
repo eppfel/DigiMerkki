@@ -1,11 +1,13 @@
 //************************************************************
-// this is a simple example that uses the easyMesh library
+// This demo uses the painless Mesh library for connectivity and FastLED library to control the NeoPixel LEDs
 //
 // 1. blinks led once for every node on the mesh
 // 2. blink cycle repeats every BLINK_PERIOD
 // 3. sends a message to every node on the mesh when a capacitive touch event happened
 // 4. prints anything it receives to Serial.print
+// 5. Flashes the RGB LEDs when touch event is received
 //
+// TODO: Calibrate touch sensors on startup to avoid false positive touch events
 //
 //************************************************************
 #include <painlessMesh.h>
@@ -16,13 +18,15 @@
   #define TTHRESHOLD   3000    // threshold for touch
 
 #elif defined(ARDUINO_FEATHER_ESP32)
+  #include <FastLED.h>
   #define LED            13    // GPIO number of connected LED
-  #define TOUCHPIN       T5    // Pin for sensing touch input
+  #define TOUCHPIN       T6    // Pin for sensing touch input
   #define TTHRESHOLD     42    // threshold for touch
 
 #else //ESP32 DEV Module
+  #include <FastLED.h>
   #define LED             2    // GPIO number of connected LED
-  #define TOUCHPIN       T5    // Pin for sensing touch input
+  #define TOUCHPIN       T6    // Pin for sensing touch input
   #define TTHRESHOLD     40    // threshold for touch
   
 #endif
@@ -34,6 +38,11 @@
 #define   MESH_SSID       "nopainnogain"
 #define   MESH_PASSWORD   "istanbul"
 #define   MESH_PORT       5555
+
+#define   DATA_PIN       12    // Pin for controlling NeoPixel
+#define   NUM_LEDS        2    // Number of LEDs conrolled through FastLED
+#define   BS_PERIOD      120
+#define   BS_COUNT       24
 
 // Prototypes
 void sendMessage();
@@ -55,6 +64,10 @@ bool onFlag = false;
 
 #if defined(ESP8266) // Feather Huzzah
   CapacitiveSensor cap = CapacitiveSensor(4,13); // 470k resistor between pins 4 & 2, pin 2 is sensor pin, add a wire and or foil if desired
+#else // ESP32// Task to blink the number of nodes
+  Task blinkBonding;
+  CRGB leds[NUM_LEDS];
+  bool bsFlag = false;
 #endif
 
 unsigned long lastTouch = 0;
@@ -96,6 +109,25 @@ void setup() {
 
 #if defined(ESP8266) // Feather Huzzah
   cap.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
+#else //ESP32
+  FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);  // GRB ordering is assumed  
+  FastLED.clear();
+  FastLED.setBrightness(64);
+  blinkBonding.set(0, BS_COUNT, []() {
+
+    // leds[bsFlag] = CRGB::Pink;
+    // leds[!bsFlag] = CRGB::Cyan;
+    leds[bsFlag].setHue(224);
+    leds[!bsFlag].setHue(128);
+    bsFlag = !bsFlag;
+
+    blinkBonding.delay(BS_PERIOD);
+    if (blinkBonding.isLastIteration()) {
+      FastLED.clear();
+    }
+  });
+  userScheduler.addTask(blinkBonding);
+  blinkBonding.enableDelayed(5000);
 #endif
 
   randomSeed(analogRead(A0));
@@ -124,7 +156,9 @@ void loop() {
       sendMessage();
     }
   }
-
+#if defined(ARDUINO_FEATHER_ESP32)
+    FastLED.show();
+#endif
 }
 
 void sendMessage() {
@@ -159,7 +193,8 @@ void receivedCallback(uint32_t from, String & msg) {
     mesh.sendSingle(from, "Bonding");
   }else if (msg.startsWith("Bonding")) {
     Serial.printf("Bonded with %u\n", from);Serial.println("");
-    //TODO: Push nodeId into a list to use for further interactions
+    blinkBonding.setIterations(BS_COUNT);
+    blinkBonding.enable();
   }
 }
 
