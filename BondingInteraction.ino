@@ -57,7 +57,7 @@ bool onFlag = false;
   CapacitiveSensor cap = CapacitiveSensor(4,13); // 470k resistor between pins 4 & 2, pin 2 is sensor pin, add a wire and or foil if desired
 #endif
 
-int lastTouch = 0;
+unsigned long lastTouch = 0;
 
 void setup() {
   Serial.begin(115200);
