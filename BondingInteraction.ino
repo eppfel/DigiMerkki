@@ -106,12 +106,12 @@ void loop() {
 
 #if defined(ESP8266) // Feather Huzzah
   digitalWrite(LED, !onFlag);
-  int capval = cap.capacitiveSensor(30);
+  long capval = cap.capacitiveSensor(30);
   if (capval > TTHRESHOLD) {  
     
 #else
   digitalWrite(LED, onFlag);
-  int capval = touchRead(TOUCHPIN);    
+  long capval = touchRead(TOUCHPIN);    
   if (capval < TTHRESHOLD) {
     
 #endif
