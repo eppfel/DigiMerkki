@@ -161,6 +161,7 @@ void loop() {
 #endif
 }
 
+/* Broadcast a touch event to all nodes*/
 void sendMessage() {
 
   String msg = "Touch from node ";
@@ -183,7 +184,7 @@ void sendMessage() {
 
 }
 
-
+/* Controller for incoming messages that prints all incoming messages and listens on touch and bonding events */
 void receivedCallback(uint32_t from, String & msg) {
   Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
   Serial.println("");
