@@ -203,9 +203,9 @@ void receivedCallback(uint32_t from, String & msg) {
   Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
   Serial.println("");
 
-  if (msg.startsWith("Touch") && (lastTouch + TOUCHDELAY * 2) > millis()) {    
+  if (msg.startsWith("Touch") && (lastTouch + TOUCHDELAY * 2) > millis()) { // check if another touch accordingly   
     Serial.printf("Bonding with %u\n", from);Serial.println("");
-    mesh.sendSingle(from, "Bonding");
+    mesh.sendSingle(from, "Bonding"); // send bonding handshake
   }else if (msg.startsWith("Bonding")) {
     Serial.printf("Bonded with %u\n", from);Serial.println("");
     blinkBonding.setIterations(BS_COUNT);
