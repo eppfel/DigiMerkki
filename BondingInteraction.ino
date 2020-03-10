@@ -138,12 +138,25 @@ void loop() {
 
 #if defined(ESP8266) // Feather Huzzah
   digitalWrite(LED, !onFlag);
+#else // ESP32
+  digitalWrite(LED, onFlag);
+#endif
+
+  checkForTouch();
+
+#if defined(ARDUINO_FEATHER_ESP32)
+  FastLED.show();
+#endif
+}
+
+/* Check for touch input */
+void checkForTouch() {
+#if defined(ESP8266) // Feather Huzzah
   long capval = cap.capacitiveSensor(30);
   if (capval > TTHRESHOLD) {  
     
 #else
-  digitalWrite(LED, onFlag);
-  long capval = touchRead(TOUCHPIN);    
+  long capval = touchRead(TOUCHPIN);
   if (capval < TTHRESHOLD) {
     
 #endif
@@ -155,10 +168,7 @@ void loop() {
       lastTouch = millis();
       sendMessage();
     }
-  }
-#if defined(ARDUINO_FEATHER_ESP32)
-    FastLED.show();
-#endif
+  }  
 }
 
 /* Broadcast a touch event to all nodes*/
