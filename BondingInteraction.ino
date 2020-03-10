@@ -11,6 +11,7 @@
 //
 //************************************************************
 #include <painlessMesh.h>
+#include <Filter.h>
 
 #if defined(ESP8266) // Feather Huzzah ESP8266
   #include <CapacitiveSensor.h>
@@ -70,6 +71,8 @@ bool onFlag = false;
   bool bsFlag = false;
 #endif
 
+
+ExponentialFilter<long> ADCFilter(5, TTHRESHOLD);
 unsigned long lastTouch = 0;
 
 void setup() {
@@ -153,18 +156,19 @@ void loop() {
 void checkForTouch() {
 #if defined(ESP8266) // Feather Huzzah
   long capval = cap.capacitiveSensor(30);
-  if (capval > TTHRESHOLD) {  
+  ADCFilter.Filter(capval);
+  if (ADCFilter.Current() > TTHRESHOLD) {  
     
 #else
   long capval = touchRead(TOUCHPIN);
-  if (capval < TTHRESHOLD) {
+  ADCFilter.Filter(capval);
+  if (ADCFilter.Current() < TTHRESHOLD) {
     
 #endif
 
-    Serial.print("Touch:");                  // print capacitive sensor output
-    Serial.println(capval); 
-             
-    if (lastTouch + TOUCHDELAY < millis()) {
+    Serial.print("Touch: ");                  // print capacitive sensor output
+    Serial.println(ADCFilter.Current() );
+    if (lastTouch + TOUCHDELAY < millis()) { //check if touch event was broadcasted recently
       lastTouch = millis();
       sendMessage();
     }
