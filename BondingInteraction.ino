@@ -16,7 +16,7 @@
 #if defined(ESP8266) // Feather Huzzah ESP8266
   #include <CapacitiveSensor.h>
   #define LED             0    // GPIO number of connected LED
-  #define TTHRESHOLD   3000    // threshold for touch
+  #define TTHRESHOLD   5000    // threshold for touch
 
 #elif defined(ARDUINO_FEATHER_ESP32)
   #include <FastLED.h>
@@ -208,8 +208,10 @@ void receivedCallback(uint32_t from, String & msg) {
     mesh.sendSingle(from, "Bonding"); // send bonding handshake
   }else if (msg.startsWith("Bonding")) {
     Serial.printf("Bonded with %u\n", from);Serial.println("");
+#ifdef ESP32 // ESP32
     blinkBonding.setIterations(BS_COUNT);
     blinkBonding.enable();
+#endif
   }
 }
 
