@@ -25,9 +25,8 @@
   #define TTHRESHOLD     42    // threshold for touch
 
 #else //ESP32 DEV Module
-  #include <FastLED.h>
-  #define LED             2    // GPIO number of connected LED
-  #define TOUCHPIN       T6    // Pin for sensing touch input
+  #define LED            21    // GPIO number of connected LED
+  #define TOUCHPIN       T5    // Pin for sensing touch input
   #define TTHRESHOLD     40    // threshold for touch
   
 #endif
@@ -65,10 +64,12 @@ bool onFlag = false;
 
 #if defined(ESP8266) // Feather Huzzah
   CapacitiveSensor cap = CapacitiveSensor(4,13); // 470k resistor between pins 4 & 2, pin 2 is sensor pin, add a wire and or foil if desired
-#else // ESP32// Task to blink the number of nodes
+
+#elif defined(ARDUINO_FEATHER_ESP32) // include variables for addresable LEDs
   Task blinkBonding;
   CRGB leds[NUM_LEDS];
   bool bsFlag = false;
+
 #endif
 
 
@@ -112,7 +113,8 @@ void setup() {
 
 #if defined(ESP8266) // Feather Huzzah
   cap.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
-#else //ESP32
+
+#elif defined(ARDUINO_FEATHER_ESP32)
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);  // GRB ordering is assumed  
   FastLED.clear();
   FastLED.setBrightness(64);
@@ -131,6 +133,7 @@ void setup() {
   });
   userScheduler.addTask(blinkBonding);
   blinkBonding.enableDelayed(5000);
+
 #endif
 
   randomSeed(analogRead(A0));
@@ -208,7 +211,7 @@ void receivedCallback(uint32_t from, String & msg) {
     mesh.sendSingle(from, "Bonding"); // send bonding handshake
   }else if (msg.startsWith("Bonding")) {
     Serial.printf("Bonded with %u\n", from);Serial.println("");
-#ifdef ESP32 // ESP32
+#ifdef ARDUINO_FEATHER_ESP32 // ESP32
     blinkBonding.setIterations(BS_COUNT);
     blinkBonding.enable();
 #endif
