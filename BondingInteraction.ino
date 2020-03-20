@@ -25,6 +25,22 @@
   #define TTHRESHOLD     42    // threshold for touch
 
 #else //ESP32 DEV Module
+  #include <TFT_eSPI.h>
+  #include <SPI.h>
+  #ifndef TFT_DISPOFF
+  #define TFT_DISPOFF  0x28
+  #endif
+  #ifndef TFT_SLPIN
+  #define TFT_SLPIN    0x10
+  #endif
+
+  #define TFT_MOSI       19
+  #define TFT_SCLK       18
+  #define TFT_CS          5
+  #define TFT_DC         16
+  #define TFT_RST        23
+  #define TFT_BL          4  // Display backlight control pin
+
   #define LED            21    // GPIO number of connected LED
   #define TOUCHPIN       T5    // Pin for sensing touch input
   #define TTHRESHOLD     40    // threshold for touch
@@ -69,6 +85,8 @@ bool onFlag = false;
   Task blinkBonding;
   CRGB leds[NUM_LEDS];
   bool bsFlag = false;
+#else 
+  TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom TFT library
 
 #endif
 
@@ -133,6 +151,13 @@ void setup() {
   });
   userScheduler.addTask(blinkBonding);
   blinkBonding.enableDelayed(5000);
+#else
+    tft.init();
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextSize(2);
+    tft.setTextColor(TFT_WHITE);
+    tft.setCursor(0, 0);
+    tft.drawString("Display is on!", 0, 0);
 
 #endif
 
