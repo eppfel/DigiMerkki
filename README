@@ -1,0 +1,34 @@
+# ESP Mesh Bonding Interaction
+
+This project automatically connects several ESP32 or ESP8266 in range into a WiFi mesh. Through touch input pairs of devices can "bond" together to track peoples face-to-face interactions.
+
+## Dependencies
+
+* [Painless Mesh](https://gitlab.com/painlessMesh/painlessMesh)
+* [CapacitiveSensor](https://github.com/PaulStoffregen/CapacitiveSensor) (for ESP8266 touch sensing)
+* [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) (for controlling the display on the TTGO T-display board)
+
+
+## Boards
+
+The current implementation was implemented for three different boards:
+
+* Adafruit Feather Huzzah32 (ESP32)
+* Adafruit Feahter Huzzah 8266 (ESP8266)
+* [TTGO T-display (ESP32)](https://github.com/Xinyuan-LilyGO/TTGO-T-Display)
+
+## Setup
+
+All boards can immediatly join the mesh without further setup or any elcectronics. For touch sensing and visual feedback, the different boards require different layouts. Pins and specific libraries are defined in the code. By default the code assumes a TTGO T-display board.
+
+See pin defintions in the main file for the layout.
+
+### Huzzah32
+
+At this point the Huzzah supports to control NeoPixel through FastLed library. 
+
+### Huzzah 8266
+The feather with ESP8266 needs a `<500 OHM` resistor between two pins to sense capacititce touch.
+
+### T-display
+This board does not feature an onboard LED, so an external has to be attached. Further this board controls its integrated display.
