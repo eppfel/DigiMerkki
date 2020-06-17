@@ -14,17 +14,27 @@
 #include <Filter.h>
 
 #if defined(ESP8266) // Feather Huzzah ESP8266
-  #include <CapacitiveSensor.h>
   #define LED             0    // GPIO number of connected LED
   #define TTHRESHOLD   5000    // threshold for touch
+  #include <CapacitiveSensor.h>
 
 #elif defined(ARDUINO_FEATHER_ESP32)
-  #include <FastLED.h>
   #define LED            13    // GPIO number of connected LED
   #define TOUCHPIN       T6    // Pin for sensing touch input
+
+  #include <FastLED.h>
+  #define NUM_LEDS        2    // Number of LEDs conrolled through FastLED
+  #define DATA_PIN       12    // Pin for controlling NeoPixel
+  #define BS_PERIOD     120
+  #define BS_COUNT       24
+
   #define TTHRESHOLD     42    // threshold for touch
 
 #else //ESP32 DEV Module
+  #define LED            21    // GPIO number of connected LED
+  #define TOUCHPIN       T5    // Pin for sensing touch input
+  #define TTHRESHOLD     40    // threshold for touch
+
   #include <TFT_eSPI.h>
   #include <SPI.h>
   #ifndef TFT_DISPOFF
@@ -41,9 +51,10 @@
   #define TFT_RST        23
   #define TFT_BL          4  // Display backlight control pin
 
-  #define LED            21    // GPIO number of connected LED
-  #define TOUCHPIN       T5    // Pin for sensing touch input
-  #define TTHRESHOLD     40    // threshold for touch
+
+  #define DATA_PIN       12    // Pin for controlling NeoPixel
+  #define BS_PERIOD     240
+  #define BS_COUNT       12
   
 #endif
 
@@ -55,10 +66,6 @@
 #define   MESH_PASSWORD   "istanbul"
 #define   MESH_PORT       5555
 
-#define   DATA_PIN       12    // Pin for controlling NeoPixel
-#define   NUM_LEDS        2    // Number of LEDs conrolled through FastLED
-#define   BS_PERIOD      120
-#define   BS_COUNT       24
 
 // Prototypes
 void sendMessage();
@@ -80,16 +87,16 @@ bool onFlag = false;
 
 #if defined(ESP8266) // Feather Huzzah
   CapacitiveSensor cap = CapacitiveSensor(4,13); // 470k resistor between pins 4 & 2, pin 2 is sensor pin, add a wire and or foil if desired
-
 #elif defined(ARDUINO_FEATHER_ESP32) // include variables for addresable LEDs
-  Task blinkBonding;
   CRGB leds[NUM_LEDS];
-  bool bsFlag = false;
 #else 
   TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom TFT library
-
 #endif
 
+#if !defined(ESP8266) // ESP32
+  Task blinkBonding;
+  bool bsFlag = false;
+#endif
 
 ExponentialFilter<long> ADCFilter(5, TTHRESHOLD);
 unsigned long lastTouch = 0;
@@ -151,13 +158,34 @@ void setup() {
   });
   userScheduler.addTask(blinkBonding);
   blinkBonding.enableDelayed(5000);
+
 #else
-    tft.init();
-    tft.fillScreen(TFT_BLACK);
+  tft.init();
+  tft.setRotation(1);
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextSize(2);
+  tft.setTextColor(TFT_WHITE);
+  tft.drawString("Started!", 0, 0);
+
+  blinkBonding.set(0, BS_COUNT, []() {
+
+    if (bsFlag) {
+      tft.fillScreen(TFT_PINK);
+    } else {
+      tft.fillScreen(TFT_CYAN);
+    }
     tft.setTextSize(2);
-    tft.setTextColor(TFT_WHITE);
-    tft.setCursor(0, 0);
-    tft.drawString("Display is on!", 0, 0);
+    // tft.setTextDatum(MC_DATUM);
+    tft.drawString("Bonded!", 0, 0);
+    bsFlag = !bsFlag;
+
+    blinkBonding.delay(BS_PERIOD);
+    if (blinkBonding.isLastIteration()) {
+      tft.fillScreen(TFT_BLACK);
+    }
+  });
+  userScheduler.addTask(blinkBonding);
+  blinkBonding.enableDelayed(5000);
 
 #endif
 
@@ -236,7 +264,7 @@ void receivedCallback(uint32_t from, String & msg) {
     mesh.sendSingle(from, "Bonding"); // send bonding handshake
   }else if (msg.startsWith("Bonding")) {
     Serial.printf("Bonded with %u\n", from);Serial.println("");
-#ifdef ARDUINO_FEATHER_ESP32 // ESP32
+#if !defined(ESP8266) // ESP32
     blinkBonding.setIterations(BS_COUNT);
     blinkBonding.enable();
 #endif
