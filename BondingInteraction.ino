@@ -20,7 +20,10 @@
 
 #elif defined(ARDUINO_FEATHER_ESP32)
   #define LED            13    // GPIO number of connected LED
-  #define TOUCHPIN       T6    // Pin for sensing touch input
+  #define TOUCHPIN       T0    // Pin for sensing touch input
+  #define TOUCHPIN1      T9    // Pin for sensing touch input
+  #define TOUCHPIN2      T8    // Pin for sensing touch input
+  #define TTHRESHOLD     30    // threshold for touch
 
   #include <FastLED.h>
   #define NUM_LEDS        2    // Number of LEDs conrolled through FastLED
@@ -28,7 +31,6 @@
   #define BS_PERIOD     120
   #define BS_COUNT       24
 
-  #define TTHRESHOLD     42    // threshold for touch
 
 #else //ESP32 DEV Module
   #define LED            21    // GPIO number of connected LED
@@ -99,6 +101,8 @@ bool onFlag = false;
 #endif
 
 ExponentialFilter<long> ADCFilter(5, TTHRESHOLD);
+ExponentialFilter<long> ADCFilter1(5, TTHRESHOLD);
+ExponentialFilter<long> ADCFilter2(5, TTHRESHOLD);
 unsigned long lastTouch = 0;
 
 void setup() {
@@ -201,7 +205,10 @@ void loop() {
   digitalWrite(LED, onFlag);
 #endif
 
-  checkForTouch();
+  if (checkForTouch() > 0 && lastTouch + TOUCHDELAY < millis()) { //check if touch event was broadcasted recently
+      lastTouch = millis();
+      sendMessage();
+  }
 
 #if defined(ARDUINO_FEATHER_ESP32)
   FastLED.show();
@@ -209,26 +216,83 @@ void loop() {
 }
 
 /* Check for touch input */
-void checkForTouch() {
+int checkForTouch() {
+  int buttonState = 0;
 #if defined(ESP8266) // Feather Huzzah
   long capval = cap.capacitiveSensor(30);
   ADCFilter.Filter(capval);
   if (ADCFilter.Current() > TTHRESHOLD) {  
+    buttonState += 1;
+  }
     
 #else
   long capval = touchRead(TOUCHPIN);
   ADCFilter.Filter(capval);
   if (ADCFilter.Current() < TTHRESHOLD) {
+    buttonState += 1;
+  }
+
+  capval = touchRead(TOUCHPIN1);
+  ADCFilter1.Filter(capval);
+  if (ADCFilter1.Current() < TTHRESHOLD) {
+    buttonState += 2;
+  }
+
+  capval = touchRead(TOUCHPIN2);
+  ADCFilter2.Filter(capval);
+  if (ADCFilter2.Current() < TTHRESHOLD) {
+    buttonState += 4;
+  }
     
 #endif
 
-    Serial.print("Touch: ");                  // print capacitive sensor output
-    Serial.println(ADCFilter.Current() );
-    if (lastTouch + TOUCHDELAY < millis()) { //check if touch event was broadcasted recently
-      lastTouch = millis();
-      sendMessage();
+  if (DEBUG && buttonState > 0) {
+    switch (buttonState) {
+      case 1:
+        Serial.print("Button press: A : ");
+        Serial.println(ADCFilter.Current());
+        break;
+      case 2:
+        Serial.print("Button press: B : ");
+        Serial.println(ADCFilter1.Current());
+        break;
+      case 4:
+        Serial.print("Button press: C : ");
+        Serial.println(ADCFilter2.Current());
+        break;
+      case 3:
+        Serial.print("Button press: A+B : ");
+        Serial.println(ADCFilter.Current());
+        Serial.print(", ");
+        Serial.println(ADCFilter1.Current());
+        break;
+      case 5:
+        Serial.print("Button press: A+C : ");
+        Serial.print(ADCFilter.Current());
+        Serial.print(", ");
+        Serial.println(ADCFilter2.Current());
+        break;
+      case 6:
+        Serial.print("Button press: B+C : ");
+        Serial.print(ADCFilter1.Current());
+        Serial.print(", ");
+        Serial.println(ADCFilter2.Current());
+        break;
+      case 7:
+        Serial.print("Button press: A+B+C : ");
+        Serial.print(ADCFilter.Current());
+        Serial.print(", ");
+        Serial.print(ADCFilter1.Current());
+        Serial.print(", ");
+        Serial.println(ADCFilter2.Current());
+        break;
+      default:
+        Serial.println("No button was pressed, this message was not meant to be produced.");
+        break;
     }
-  }  
+  }
+
+  return buttonState;
 }
 
 /* Broadcast a touch event to all nodes*/
