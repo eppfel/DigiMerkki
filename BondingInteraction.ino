@@ -102,6 +102,14 @@ ExponentialFilter<long> ADCFilter1(5, TTHRESHOLD);
 ExponentialFilter<long> ADCFilter2(5, TTHRESHOLD);
 unsigned long lastTouch = 0;
 
+#define BTN_A   1
+#define BTN_B   2
+#define BTN_C   4
+#define BTN_AB  3
+#define BTN_AC  5
+#define BTN_BC  6
+#define BTN_ABC 7
+
 void setup() {
   Serial.begin(115200);
 
@@ -205,56 +213,56 @@ int checkForTouch() {
   long capval = touchRead(TOUCHPIN);
   ADCFilter.Filter(capval);
   if (ADCFilter.Current() < TTHRESHOLD) {
-    buttonState += 1;
+    buttonState += BTN_A;
   }
 
   capval = touchRead(TOUCHPIN1);
   ADCFilter1.Filter(capval);
   if (ADCFilter1.Current() < TTHRESHOLD) {
-    buttonState += 2;
+    buttonState += BTN_B;
   }
 
   capval = touchRead(TOUCHPIN2);
   ADCFilter2.Filter(capval);
   if (ADCFilter2.Current() < TTHRESHOLD) {
-    buttonState += 4;
+    buttonState += BTN_C;
   }
     
 #endif
 
   if (DEBUG && buttonState > 0) {
     switch (buttonState) {
-      case 1:
+      case BTN_A:
         Serial.print("Button press: A : ");
         Serial.println(ADCFilter.Current());
         break;
-      case 2:
+      case BTN_B:
         Serial.print("Button press: B : ");
         Serial.println(ADCFilter1.Current());
         break;
-      case 4:
+      case BTN_C:
         Serial.print("Button press: C : ");
         Serial.println(ADCFilter2.Current());
         break;
-      case 3:
+      case BTN_AB:
         Serial.print("Button press: A+B : ");
         Serial.println(ADCFilter.Current());
         Serial.print(", ");
         Serial.println(ADCFilter1.Current());
         break;
-      case 5:
+      case BTN_AC:
         Serial.print("Button press: A+C : ");
         Serial.print(ADCFilter.Current());
         Serial.print(", ");
         Serial.println(ADCFilter2.Current());
         break;
-      case 6:
+      case BTN_BC:
         Serial.print("Button press: B+C : ");
         Serial.print(ADCFilter1.Current());
         Serial.print(", ");
         Serial.println(ADCFilter2.Current());
         break;
-      case 7:
+      case BTN_ABC:
         Serial.print("Button press: A+B+C : ");
         Serial.print(ADCFilter.Current());
         Serial.print(", ");
