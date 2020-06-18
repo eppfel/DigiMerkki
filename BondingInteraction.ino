@@ -65,7 +65,7 @@
 #define   MESH_PASSWORD   "istanbul"
 #define   MESH_PORT       5555
 
-#define   NUM_LEDS        2    // Number of LEDs conrolled through FastLED
+#define   NUM_LEDS        5    // Number of LEDs conrolled through FastLED
 #define   BS_PERIOD       120
 #define   BS_COUNT        24
 
@@ -153,10 +153,14 @@ void setup() {
   FastLED.setBrightness(64);
   blinkBonding.set(0, BS_COUNT, []() {
 
-    // leds[bsFlag] = CRGB::Pink;
-    // leds[!bsFlag] = CRGB::Cyan;
-    leds[bsFlag].setHue(224);
-    leds[!bsFlag].setHue(128);
+    for (int i = 0; i < NUM_LEDS; ++i)
+    {
+      if (i % 2 == bsFlag) {
+        leds[i].setHue(224);
+      } else {
+        leds[i].setHue(128);
+      }
+    }
     bsFlag = !bsFlag;
 
     blinkBonding.delay(BS_PERIOD);
