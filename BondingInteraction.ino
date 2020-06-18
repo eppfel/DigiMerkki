@@ -101,6 +101,7 @@ ExponentialFilter<long> ADCFilter(5, TTHRESHOLD);
 ExponentialFilter<long> ADCFilter1(5, TTHRESHOLD);
 ExponentialFilter<long> ADCFilter2(5, TTHRESHOLD);
 unsigned long lastTouch = 0;
+unsigned int lastButton = 0;
 
 #define BTN_A   1
 #define BTN_B   2
@@ -276,7 +277,12 @@ int checkForTouch() {
     }
   }
 
-  return buttonState;
+  if (buttonState != lastButton) {
+    lastButton = buttonState;
+    return buttonState;
+  }
+
+  return 0;
 }
 
 /* Broadcast a touch event to all nodes*/
