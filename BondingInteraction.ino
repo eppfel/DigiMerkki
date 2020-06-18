@@ -111,6 +111,10 @@ unsigned int lastButton = 0;
 #define BTN_BC  6
 #define BTN_ABC 7
 
+#define STATE_IDLE 0
+#define STATE_CODE 1
+uint32_t currentState = STATE_IDLE;
+
 void setup() {
   Serial.begin(115200);
 
@@ -191,10 +195,41 @@ void loop() {
 #else // ESP32
   digitalWrite(LED, onFlag);
 #endif
+    
+  int buttonInput = checkForTouch();
+  switch (currentState) {
+    case STATE_CODE:
+      // add button inputs into sequence
+      if (buttonInput == BTN_A || buttonInput == BTN_B || buttonInput == BTN_C) {
+        // add buttunInput to code sequene
+        //visual feedback
+        switch (buttonInput) {
+          case BTN_A:
+            Serial.println("Add A to code");
+            break;
+          case BTN_B:
+            Serial.println("Add B to code");
+            break;
+          case BTN_C:
+            Serial.println("Add C to code");
+            break;
+          default:
+            Serial.println("Adding nothing. This should not have been reached.");
+          break;
+        }
 
-  if (checkForTouch() > 0 && lastTouch + TOUCHDELAY < millis()) { //check if touch event was broadcasted recently
-      lastTouch = millis();
-      sendMessage();
+      } else if (buttonInput == BTN_AC) {
+        sendMessage();
+        currentState = STATE_IDLE;
+        Serial.println("Switch from code-input to idle");
+      }
+      break;
+    default: //idle
+      if (buttonInput == BTN_AC) {
+        currentState = STATE_CODE;
+        Serial.println("Switch from idle to code-input");
+      }
+      break;
   }
 
   FastLED.show();
@@ -279,6 +314,9 @@ int checkForTouch() {
 
   if (buttonState != lastButton) {
     lastButton = buttonState;
+    // if (lastTouch + TOUCHDELAY < millis()) { //check if touch event was broadcasted recently
+    //   lastTouch = millis();
+    // }
     return buttonState;
   }
 
