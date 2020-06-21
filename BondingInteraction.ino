@@ -66,8 +66,8 @@
 #define   MESH_PORT       5555
 
 #define   NUM_LEDS        5    // Number of LEDs conrolled through FastLED
-#define   BS_PERIOD       120
-#define   BS_COUNT        24
+#define   BS_PERIOD       360
+#define   BS_COUNT        10
 
 // Prototypes
 void sendMessage();
@@ -114,6 +114,7 @@ unsigned int lastButton = 0;
 #define STATE_IDLE 0
 #define STATE_CODE 1
 uint32_t currentState = STATE_IDLE;
+uint32_t bondingCode = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -155,9 +156,9 @@ void setup() {
 #elif !defined(ARDUINO_FEATHER_ESP32)
   tft.init();
   tft.setRotation(1);
-  tft.fillScreen(TFT_BLACK);
   tft.setTextSize(2);
   tft.setTextColor(TFT_WHITE);
+  tft.fillScreen(TFT_BLACK);
   tft.drawString("Started!", 0, 0);
 #endif
 
@@ -203,24 +204,32 @@ void loop() {
       if (buttonInput == BTN_A || buttonInput == BTN_B || buttonInput == BTN_C) {
         // add buttunInput to code sequene
         //visual feedback
-        switch (buttonInput) {
-          case BTN_A:
-            Serial.println("Add A to code");
+        bondingCode = buttonInput | (bondingCode << 3);
+        if (DEBUG) {
+          switch (buttonInput) {
+            case BTN_A:
+              Serial.println("Add A to code");
+              break;
+            case BTN_B:
+              Serial.println("Add B to code");
+              break;
+            case BTN_C:
+              Serial.println("Add C to code");
+              break;
+            default:
+              Serial.println("Adding nothing. This should not have been reached.");
             break;
-          case BTN_B:
-            Serial.println("Add B to code");
-            break;
-          case BTN_C:
-            Serial.println("Add C to code");
-            break;
-          default:
-            Serial.println("Adding nothing. This should not have been reached.");
-          break;
+          }
         }
 
-      } else if (buttonInput == BTN_AC) {
+        tft.fillScreen(TFT_BLACK);
+        tft.drawString(String(bondingCode), 0, 0);
+
+      }
+      if (buttonInput == BTN_AC || bondingCode > 1 << 12) {
         sendMessage();
         currentState = STATE_IDLE;
+        bondingCode = 0;
         Serial.println("Switch from code-input to idle");
       }
       break;
@@ -236,6 +245,7 @@ void loop() {
 }
 
 /* Check for touch input */
+// Needs a buffer to avoid noise
 int checkForTouch() {
   int buttonState = 0;
 #if defined(ESP8266) // Feather Huzzah
