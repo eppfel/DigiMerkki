@@ -11,16 +11,15 @@
 //
 //************************************************************
 #include <painlessMesh.h>
-#include <Filter.h>
 #include <FastLED.h>
+#include "CapacitiveKeyboard.h"
 
-#if defined(ESP8266) // Feather Huzzah ESP8266
-  #include <CapacitiveSensor.h>
-
+#ifdef ESP8266 // Feather Huzzah ESP8266
   #define LED             0    // GPIO number of connected LED
   #define TOUCHPIN       13    // Pin for sensing touch input
   #define TOUCHPIN1      13    // Pin for sensing touch input
   #define TOUCHPIN2      13    // Pin for sensing touch input
+  #define SENDPIN         4    // 
   #define TTHRESHOLD   5000    // threshold for touch
   #define DATA_PIN       12    // Pin for controlling NeoPixel
 
@@ -69,6 +68,8 @@
 #define   BS_PERIOD       360
 #define   BS_COUNT        10
 
+CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD, SENDPIN);
+
 // Prototypes
 void sendMessage();
 void receivedCallback(uint32_t from, String & msg);
@@ -82,34 +83,19 @@ painlessMesh  mesh;
 
 bool calc_delay = false;
 SimpleList<uint32_t> nodes;
+long lastTouchSend = 0;
 
 // Task to blink the number of nodes
 Task blinkNoNodes;
 bool onFlag = false;
 
-#if defined(ESP8266) // Feather Huzzah
-  CapacitiveSensor cap = CapacitiveSensor(4,TOUCHPIN); // 470k resistor between pins 4 & 2, pin 2 is sensor pin, add a wire and or foil if desired
-#elif !defined(ARDUINO_FEATHER_ESP32) 
+#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom TFT library
 #endif
 
 CRGB leds[NUM_LEDS];// include variables for addresable LEDs
 Task blinkBonding;
 bool bsFlag = false;
-
-ExponentialFilter<long> ADCFilter(5, TTHRESHOLD);
-ExponentialFilter<long> ADCFilter1(5, TTHRESHOLD);
-ExponentialFilter<long> ADCFilter2(5, TTHRESHOLD);
-unsigned long lastTouch = 0;
-unsigned int lastButton = 0;
-
-#define BTN_A   1
-#define BTN_B   2
-#define BTN_C   4
-#define BTN_AB  3
-#define BTN_AC  5
-#define BTN_BC  6
-#define BTN_ABC 7
 
 #define STATE_IDLE 0
 #define STATE_CODE 1
@@ -151,9 +137,7 @@ void setup() {
   userScheduler.addTask(blinkNoNodes);
   blinkNoNodes.enable();
 
-#if defined(ESP8266) // Feather Huzzah
-  cap.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
-#elif !defined(ARDUINO_FEATHER_ESP32)
+#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   tft.init();
   tft.setRotation(1);
   tft.setTextSize(2);
@@ -197,7 +181,7 @@ void loop() {
   digitalWrite(LED, onFlag);
 #endif
     
-  int buttonInput = checkForTouch();
+  int buttonInput = touchInput.checkTouch();
   switch (currentState) {
     case STATE_CODE:
       // add button inputs into sequence
@@ -244,94 +228,6 @@ void loop() {
   FastLED.show();
 }
 
-/* Check for touch input */
-// Needs a buffer to avoid noise
-int checkForTouch() {
-  int buttonState = 0;
-#if defined(ESP8266) // Feather Huzzah
-  long capval = cap.capacitiveSensor(30);
-  ADCFilter.Filter(capval);
-  if (ADCFilter.Current() > TTHRESHOLD) {  
-    buttonState += 1;
-  }
-    
-#else
-  long capval = touchRead(TOUCHPIN);
-  ADCFilter.Filter(capval);
-  if (ADCFilter.Current() < TTHRESHOLD) {
-    buttonState += BTN_A;
-  }
-
-  capval = touchRead(TOUCHPIN1);
-  ADCFilter1.Filter(capval);
-  if (ADCFilter1.Current() < TTHRESHOLD) {
-    buttonState += BTN_B;
-  }
-
-  capval = touchRead(TOUCHPIN2);
-  ADCFilter2.Filter(capval);
-  if (ADCFilter2.Current() < TTHRESHOLD) {
-    buttonState += BTN_C;
-  }
-    
-#endif
-
-  if (DEBUG && buttonState > 0) {
-    switch (buttonState) {
-      case BTN_A:
-        Serial.print("Button press: A : ");
-        Serial.println(ADCFilter.Current());
-        break;
-      case BTN_B:
-        Serial.print("Button press: B : ");
-        Serial.println(ADCFilter1.Current());
-        break;
-      case BTN_C:
-        Serial.print("Button press: C : ");
-        Serial.println(ADCFilter2.Current());
-        break;
-      case BTN_AB:
-        Serial.print("Button press: A+B : ");
-        Serial.println(ADCFilter.Current());
-        Serial.print(", ");
-        Serial.println(ADCFilter1.Current());
-        break;
-      case BTN_AC:
-        Serial.print("Button press: A+C : ");
-        Serial.print(ADCFilter.Current());
-        Serial.print(", ");
-        Serial.println(ADCFilter2.Current());
-        break;
-      case BTN_BC:
-        Serial.print("Button press: B+C : ");
-        Serial.print(ADCFilter1.Current());
-        Serial.print(", ");
-        Serial.println(ADCFilter2.Current());
-        break;
-      case BTN_ABC:
-        Serial.print("Button press: A+B+C : ");
-        Serial.print(ADCFilter.Current());
-        Serial.print(", ");
-        Serial.print(ADCFilter1.Current());
-        Serial.print(", ");
-        Serial.println(ADCFilter2.Current());
-        break;
-      default:
-        Serial.println("No button was pressed, this message was not meant to be produced.");
-        break;
-    }
-  }
-
-  if (buttonState != lastButton) {
-    lastButton = buttonState;
-    // if (lastTouch + TOUCHDELAY < millis()) { //check if touch event was broadcasted recently
-    //   lastTouch = millis();
-    // }
-    return buttonState;
-  }
-
-  return 0;
-}
 
 /* Broadcast a touch event to all nodes*/
 void sendMessage() {
@@ -361,7 +257,7 @@ void receivedCallback(uint32_t from, String & msg) {
   Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
   Serial.println("");
 
-  if (msg.startsWith("Touch") && (lastTouch + TOUCHDELAY * 2) > millis()) { // check if another touch accordingly   
+  if (msg.startsWith("Touch") && (lastTouchSend + TOUCHDELAY * 2) > millis()) { // check if another touch accordingly   
     Serial.printf("Bonding with %u\n", from);Serial.println("");
     mesh.sendSingle(from, "Bonding"); // send bonding handshake
   }else if (msg.startsWith("Bonding")) {
