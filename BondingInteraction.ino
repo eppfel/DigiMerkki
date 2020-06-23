@@ -19,7 +19,7 @@
   #define TOUCHPIN       13    // Pin for sensing touch input
   #define TOUCHPIN1      13    // Pin for sensing touch input
   #define TOUCHPIN2      13    // Pin for sensing touch input
-  #define SENDPIN         4    // 
+  #define SENDPIN         4    // Sending pulse from this pin to measure capacity
   #define TTHRESHOLD   5000    // threshold for touch
   #define DATA_PIN       12    // Pin for controlling NeoPixel
 
@@ -28,6 +28,7 @@
   #define TOUCHPIN       T0    // Pin for sensing touch input A5
   #define TOUCHPIN1      T9    // Pin for sensing touch input 32
   #define TOUCHPIN2      T8    // Pin for sensing touch input 33
+  #define SENDPIN         4    // stub
   #define TTHRESHOLD     30    // threshold for touch
   #define DATA_PIN       12    // Pin for controlling NeoPixel
 
@@ -36,6 +37,7 @@
   #define TOUCHPIN       T3    // Pin for sensing touch input 15
   #define TOUCHPIN1      T9    // Pin for sensing touch input 32
   #define TOUCHPIN2      T8    // Pin for sensing touch input 33
+  #define SENDPIN         4    // stub
   #define TTHRESHOLD     40    // threshold for touch
   #define DATA_PIN       12    // Pin for controlling NeoPixel
 
