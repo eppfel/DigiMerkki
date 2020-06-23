@@ -240,6 +240,7 @@ void sendMessage() {
   Serial.println("");
 
   mesh.sendBroadcast(msg);
+  lastTouchSend = millis();
 
   if (calc_delay) {
     SimpleList<uint32_t>::iterator node = nodes.begin();
