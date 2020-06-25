@@ -34,12 +34,12 @@
 
 #else //ESP32 DEV Module
   #define LED            21    // GPIO number of connected LED
-  #define TOUCHPIN       T3    // Pin for sensing touch input 15
-  #define TOUCHPIN1      T9    // Pin for sensing touch input 32
-  #define TOUCHPIN2      T8    // Pin for sensing touch input 33
+  #define TOUCHPIN       T7    // Pin for sensing touch input 27
+  #define TOUCHPIN1      T9    // Pin for sensing touch input 32 (labelled as 33)
+  #define TOUCHPIN2      T8    // Pin for sensing touch input 33 (labelled as 32)
   #define SENDPIN         4    // stub
-  #define TTHRESHOLD     40    // threshold for touch
-  #define DATA_PIN       12    // Pin for controlling NeoPixel
+  #define TTHRESHOLD     30    // threshold for touch
+  #define DATA_PIN       26    // Pin for controlling NeoPixel
 
   #include <TFT_eSPI.h>
   #include <SPI.h>
@@ -101,8 +101,10 @@ bool bsFlag = false;
 
 #define STATE_IDLE 0
 #define STATE_CODE 1
-uint32_t currentState = STATE_IDLE;
-uint32_t bondingCode = 0;
+uint8_t currentState = STATE_IDLE;
+
+uint16_t bondingCode = 0;
+
 
 void setup() {
   Serial.begin(115200);
@@ -141,7 +143,7 @@ void setup() {
 
 #if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   tft.init();
-  tft.setRotation(1);
+  tft.setRotation(3);
   tft.setTextSize(2);
   tft.setTextColor(TFT_WHITE);
   tft.fillScreen(TFT_BLACK);
@@ -217,6 +219,9 @@ void loop() {
         currentState = STATE_IDLE;
         bondingCode = 0;
         Serial.println("Switch from code-input to idle");
+
+        tft.fillScreen(TFT_BLACK);
+        tft.drawString("Code sent!", 0, 0);
       }
       break;
     default: //idle
