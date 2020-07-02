@@ -11,8 +11,8 @@
 //
 //************************************************************
 #include <painlessMesh.h>
-#include <FastLED.h>
 #include "CapacitiveKeyboard.h"
+#include "StatusVisualiser.h"
 
 #ifdef ESP8266 // Feather Huzzah ESP8266
   #define LED             0    // GPIO number of connected LED
@@ -21,7 +21,6 @@
   #define TOUCHPIN2      13    // Pin for sensing touch input
   #define SENDPIN         4    // Sending pulse from this pin to measure capacity
   #define TTHRESHOLD   5000    // threshold for touch
-  #define DATA_PIN       12    // Pin for controlling NeoPixel
 
 #elif defined(ARDUINO_FEATHER_ESP32)
   #define LED            13    // GPIO number of connected LED
@@ -30,7 +29,6 @@
   #define TOUCHPIN2      T8    // Pin for sensing touch input 33
   #define SENDPIN         4    // stub
   #define TTHRESHOLD     30    // threshold for touch
-  #define DATA_PIN       12    // Pin for controlling NeoPixel
 
 #else //ESP32 DEV Module
   #define LED            21    // GPIO number of connected LED
@@ -39,7 +37,6 @@
   #define TOUCHPIN2      T8    // Pin for sensing touch input 33 (labelled as 32)
   #define SENDPIN         4    // stub
   #define TTHRESHOLD     30    // threshold for touch
-  #define DATA_PIN       26    // Pin for controlling NeoPixel
 
   #include <TFT_eSPI.h>
   #include <SPI.h>
@@ -66,10 +63,6 @@
 #define   MESH_PASSWORD   "istanbul"
 #define   MESH_PORT       5555
 
-#define   NUM_LEDS        5    // Number of LEDs conrolled through FastLED
-#define   BS_PERIOD       360
-#define   BS_COUNT        10
-
 CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD, SENDPIN);
 
 // Prototypes
@@ -95,15 +88,14 @@ bool onFlag = false;
   TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom TFT library
 #endif
 
-CRGB leds[NUM_LEDS];// include variables for addresable LEDs
-Task blinkBonding;
-bool bsFlag = false;
+StatusVisualiser visualiser;
 
 #define STATE_IDLE 0
 #define STATE_CODE 1
 uint8_t currentState = STATE_IDLE;
 
 uint16_t bondingCode = 0;
+uint32_t bondingCodeCounter = 0;
 
 
 void setup() {
@@ -150,48 +142,18 @@ void setup() {
   tft.drawString("Started!", 0, 0);
 #endif
 
-  FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);  // GRB ordering is assumed  
-  FastLED.clear();
-  FastLED.setBrightness(64);
-  blinkBonding.set(0, BS_COUNT, []() {
-
-    for (int i = 0; i < NUM_LEDS; ++i)
-    {
-      if (i % 2 == bsFlag) {
-        leds[i].setHue(224);
-      } else {
-        leds[i].setHue(128);
-      }
-    }
-    bsFlag = !bsFlag;
-
-    blinkBonding.delay(BS_PERIOD);
-    if (blinkBonding.isLastIteration()) {
-      FastLED.clear();
-    }
-  });
-  userScheduler.addTask(blinkBonding);
-  blinkBonding.enableDelayed(5000);
-
   randomSeed(analogRead(A0));
 }
 
 void loop() {
   mesh.update();
 
-#if defined(ESP8266) // Feather Huzzah
-  digitalWrite(LED, !onFlag);
-#else // ESP32
-  digitalWrite(LED, onFlag);
-#endif
     
   int buttonInput = touchInput.checkTouch();
   switch (currentState) {
     case STATE_CODE:
-      // add button inputs into sequence
-      if (buttonInput == BTN_A || buttonInput == BTN_B || buttonInput == BTN_C) {
-        // add buttunInput to code sequene
-        //visual feedback
+      if (buttonInput == BTN_A || buttonInput == BTN_B || buttonInput == BTN_C) { // add buttunInput to code sequene
+        visualiser.setMeter(bondingCodeCounter++);
         bondingCode = buttonInput | (bondingCode << 3);
         if (DEBUG) {
           switch (buttonInput) {
@@ -211,14 +173,16 @@ void loop() {
         }
 
         tft.fillScreen(TFT_BLACK);
-        tft.drawString(String(bondingCode), 0, 0);
+        tft.drawString(codeString(bondingCode), 0, 0);
 
       }
-      if (buttonInput == BTN_AC || bondingCode > 1 << 12) {
+      if (buttonInput == BTN_AC || bondingCode > 1 << 12) { //send the code, either if A+C Button were pressed OR if code is longer then 4 digits (12 bit)
         sendMessage();
         currentState = STATE_IDLE;
         bondingCode = 0;
         Serial.println("Switch from code-input to idle");
+        bondingCodeCounter = 0;
+        visualiser.blink(200, 3);
 
         tft.fillScreen(TFT_BLACK);
         tft.drawString("Code sent!", 0, 0);
@@ -228,11 +192,18 @@ void loop() {
       if (buttonInput == BTN_AC) {
         currentState = STATE_CODE;
         Serial.println("Switch from idle to code-input");
+        visualiser.blink(200, 3);
       }
       break;
   }
 
-  FastLED.show();
+#if defined(ESP8266) // Feather Huzzah
+  digitalWrite(LED, !onFlag);
+#else // ESP32
+  digitalWrite(LED, onFlag);
+#endif
+
+  visualiser.show();
 }
 
 
@@ -260,6 +231,32 @@ void sendMessage() {
 
 }
 
+String codeString(uint16_t code) {
+  String codeword = "";
+  while (code >= 1) {
+
+    Serial.println("in the loop");
+    switch (code & 7) {
+      case 1:
+        codeword = "A" + codeword;
+        break;
+      case 2:
+        codeword = "B" + codeword;
+        break;
+      case 4:
+        codeword = "C" + codeword;
+        break;
+      default:
+
+    Serial.println("default case");
+        break;
+    }
+    code = code >> 3;
+    Serial.println(codeword);
+  }
+  return codeword;
+}
+
 /* Controller for incoming messages that prints all incoming messages and listens on touch and bonding events */
 void receivedCallback(uint32_t from, String & msg) {
   Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
@@ -270,10 +267,7 @@ void receivedCallback(uint32_t from, String & msg) {
     mesh.sendSingle(from, "Bonding"); // send bonding handshake
   }else if (msg.startsWith("Bonding")) {
     Serial.printf("Bonded with %u\n", from);Serial.println("");
-#if !defined(ESP8266) // ESP32
-    blinkBonding.setIterations(BS_COUNT);
-    blinkBonding.enable();
-#endif
+    visualiser.blink(360, 5);
   }
 }
 
