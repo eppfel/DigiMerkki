@@ -178,14 +178,15 @@ void loop() {
       }
       if (buttonInput == BTN_AC || bondingCode > 1 << 12) { //send the code, either if A+C Button were pressed OR if code is longer then 4 digits (12 bit)
         sendMessage();
+
+        visualiser.blink(200, 3);
+        tft.fillScreen(TFT_BLACK);
+        tft.drawString("Sent code: " + codeString(bondingCode), 0, 0);
+
+        Serial.println("Switch from code-input to idle");
         currentState = STATE_IDLE;
         bondingCode = 0;
-        Serial.println("Switch from code-input to idle");
         bondingCodeCounter = 0;
-        visualiser.blink(200, 3);
-
-        tft.fillScreen(TFT_BLACK);
-        tft.drawString("Code sent!", 0, 0);
       }
       break;
     default: //idle
@@ -206,30 +207,6 @@ void loop() {
   visualiser.show();
 }
 
-
-/* Broadcast a touch event to all nodes*/
-void sendMessage() {
-
-  String msg = "Touch from node ";
-  msg += mesh.getNodeId();
-  msg += " myNodeTime: " + String(mesh.getNodeTime());
-
-  Serial.printf("Sending message: %s\n", msg.c_str());
-  Serial.println("");
-
-  mesh.sendBroadcast(msg);
-  lastTouchSend = millis();
-
-  if (calc_delay) {
-    SimpleList<uint32_t>::iterator node = nodes.begin();
-    while (node != nodes.end()) {
-      mesh.startDelayMeas(*node);
-      node++;
-    }
-    calc_delay = false;
-  }
-
-}
 
 String codeString(uint16_t code) {
   String codeword = "";
@@ -257,6 +234,30 @@ String codeString(uint16_t code) {
   return codeword;
 }
 
+/* Broadcast a touch event to all nodes*/
+void sendMessage() {
+
+  String msg = "Touch from node ";
+  msg += mesh.getNodeId();
+  msg += " myNodeTime: " + String(mesh.getNodeTime());
+
+  Serial.printf("Sending message: %s\n", msg.c_str());
+  Serial.println("");
+
+  mesh.sendBroadcast(msg);
+  lastTouchSend = millis();
+
+  if (calc_delay) {
+    SimpleList<uint32_t>::iterator node = nodes.begin();
+    while (node != nodes.end()) {
+      mesh.startDelayMeas(*node);
+      node++;
+    }
+    calc_delay = false;
+  }
+
+}
+
 /* Controller for incoming messages that prints all incoming messages and listens on touch and bonding events */
 void receivedCallback(uint32_t from, String & msg) {
   Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
@@ -267,7 +268,7 @@ void receivedCallback(uint32_t from, String & msg) {
     mesh.sendSingle(from, "Bonding"); // send bonding handshake
   }else if (msg.startsWith("Bonding")) {
     Serial.printf("Bonded with %u\n", from);Serial.println("");
-    visualiser.blink(360, 5);
+    visualiser.blink(360, 8);
   }
 }
 
