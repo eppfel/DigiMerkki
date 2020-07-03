@@ -3,9 +3,11 @@
 //
 // 1. blinks led once for every node on the mesh
 // 2. blink cycle repeats every BLINK_PERIOD
-// 3. sends a message to every node on the mesh when a capacitive touch event happened
-// 4. prints anything it receives to Serial.print
-// 5. Flashes the RGB LEDs when touch event is received
+// 6. prints anything it receives to Serial.print
+// 3. awaits user input for typing a 5 digit code on capacitive touch sensors
+// 4. sends code to every node on the mesh
+// 5. makes handshake with node that sends the same code
+// 6. Flashes the RGB LEDs when when chaning mode and differently when bhandshake was successful
 //
 // TODO: Calibrate touch sensors on startup to avoid false positive touch events
 //
@@ -57,7 +59,8 @@
 
 #define   BLINK_PERIOD    3000 // milliseconds until cycle repeat
 #define   BLINK_DURATION  100  // milliseconds LED is on for
-#define   TOUCHDELAY      500  // delay to not spam with touch events
+
+#define   HANDSHAKETIME   5000  // delay to not spam with touch events
 
 #define   MESH_SSID       "nopainnogain"
 #define   MESH_PASSWORD   "istanbul"
@@ -66,7 +69,8 @@
 CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD, SENDPIN);
 
 // Prototypes
-void sendMessage();
+void sendBondingRequest();
+void sendMessage(String msg);
 void receivedCallback(uint32_t from, String & msg);
 void newConnectionCallback(uint32_t nodeId);
 void changedConnectionCallback();
@@ -78,7 +82,6 @@ painlessMesh  mesh;
 
 bool calc_delay = false;
 SimpleList<uint32_t> nodes;
-long lastTouchSend = 0;
 
 // Task to blink the number of nodes
 Task blinkNoNodes;
@@ -94,9 +97,13 @@ StatusVisualiser visualiser;
 #define STATE_CODE 1
 uint8_t currentState = STATE_IDLE;
 
-uint16_t bondingCode = 0;
-uint32_t bondingCodeCounter = 0;
-
+uint16_t bondingCode;
+uint16_t bondingCodePeer;
+uint32_t bondingCodeNode;
+uint8_t  bondingCodeCounter = 0;
+uint32_t bondingStarted = 0;
+uint32_t bondingRequestNode;
+uint32_t bondingSuccessNode;
 
 void setup() {
   Serial.begin(115200);
@@ -177,23 +184,23 @@ void loop() {
 
       }
       if (buttonInput == BTN_AC || bondingCode > 1 << 12) { //send the code, either if A+C Button were pressed OR if code is longer then 4 digits (12 bit)
-        sendMessage();
+        sendBondingRequest();
 
-        visualiser.blink(200, 3);
+        visualiser.blink(200, 3, CRGB::HotPink);
         tft.fillScreen(TFT_BLACK);
         tft.drawString("Sent code: " + codeString(bondingCode), 0, 0);
 
         Serial.println("Switch from code-input to idle");
         currentState = STATE_IDLE;
-        bondingCode = 0;
-        bondingCodeCounter = 0;
       }
       break;
     default: //idle
       if (buttonInput == BTN_AC) {
         currentState = STATE_CODE;
+        bondingCode = 0;
+        bondingCodeCounter = 0;
         Serial.println("Switch from idle to code-input");
-        visualiser.blink(200, 3);
+        visualiser.blink(200, 3, CRGB::HotPink);
       }
       break;
   }
@@ -212,7 +219,7 @@ String codeString(uint16_t code) {
   String codeword = "";
   while (code >= 1) {
 
-    Serial.println("in the loop");
+    // Serial.println("in the loop");
     switch (code & 7) {
       case 1:
         codeword = "A" + codeword;
@@ -224,28 +231,50 @@ String codeString(uint16_t code) {
         codeword = "C" + codeword;
         break;
       default:
-
-    Serial.println("default case");
+    // Serial.println("default case");
         break;
     }
     code = code >> 3;
-    Serial.println(codeword);
+    // Serial.println(codeword);
   }
   return codeword;
 }
 
-/* Broadcast a touch event to all nodes*/
-void sendMessage() {
+void sendBondingRequest() {
 
-  String msg = "Touch from node ";
-  msg += mesh.getNodeId();
-  msg += " myNodeTime: " + String(mesh.getNodeTime());
+  String msg = "Code : ";
+  msg += String(bondingCode);
+
+  sendMessage(msg);
+
+  if ((bondingStarted + HANDSHAKETIME) > millis()) {
+    // bondingRequest was received earlier
+    if (bondingCode == bondingCodePeer) {
+      //bondingCode correct, so we should bond
+      mesh.sendSingle(bondingCodeNode, "Bonding"); // send bonding handshake
+      bondingSuccessNode = bondingCodeNode;
+      Serial.printf("Bonding with %u\n", bondingCodeNode);Serial.println("");
+    } else {
+      Serial.println("Wrong code");
+    }
+  } else {
+    //no bondingrequest active
+    Serial.println("No open bonding request");
+  }
+
+  bondingStarted = millis(); //bonding code by user so time is reset
+}
+
+/* Broadcast a message to all nodes*/
+void sendMessage(String msg) {
+  // String msg = "Touch from node ";
+  // msg += mesh.getNodeId();
+  // msg += " myNodeTime: " + String(mesh.getNodeTime());
 
   Serial.printf("Sending message: %s\n", msg.c_str());
   Serial.println("");
 
   mesh.sendBroadcast(msg);
-  lastTouchSend = millis();
 
   if (calc_delay) {
     SimpleList<uint32_t>::iterator node = nodes.begin();
@@ -258,17 +287,50 @@ void sendMessage() {
 
 }
 
+//maybe move the handshake into a class whith one instance per Node to track states, instead of this if/else horror
+
 /* Controller for incoming messages that prints all incoming messages and listens on touch and bonding events */
 void receivedCallback(uint32_t from, String & msg) {
   Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
   Serial.println("");
 
-  if (msg.startsWith("Touch") && (lastTouchSend + TOUCHDELAY * 2) > millis()) { // check if another touch accordingly   
-    Serial.printf("Bonding with %u\n", from);Serial.println("");
-    mesh.sendSingle(from, "Bonding"); // send bonding handshake
-  }else if (msg.startsWith("Bonding")) {
-    Serial.printf("Bonded with %u\n", from);Serial.println("");
-    visualiser.blink(360, 8);
+  //FIX: remove the bonding code that was send after the response time winoow passed
+  if (msg.startsWith("Code")) { // check if another touch accordingly   
+
+    bondingCodePeer = msg.substring(7).toInt(); //other devices sending codes will override this value and block bonding -> connect to nodeid, because that is unique
+    bondingCodeNode = from;
+
+    Serial.println("Bonding code " + codeString(bondingCodePeer) + "received from " + from);
+
+    if ((bondingStarted + HANDSHAKETIME) > millis()) {
+      
+      //had started a request before
+      if (bondingCode == bondingCodePeer) {
+         // bonding code correct, so let's bond
+        mesh.sendSingle(from, "Bonding");
+        Serial.printf("Bonding with %u\n", from);Serial.println("");
+        bondingSuccessNode = from;
+        if (bondingRequestNode == bondingSuccessNode) {
+          Serial.printf("Bonded with %u\n", from);Serial.println("");
+          visualiser.blink(360, 8, CRGB::DeepSkyBlue);
+          //store in list
+        }
+      } else {
+        Serial.println("Wrong code");
+      }
+    } else {
+      //bonding was out of time or no request from this side
+      Serial.printf("No open request, yet");
+    }
+    bondingStarted = millis();
+  } else if (msg.startsWith("Bonding")) {
+    if (bondingSuccessNode == from) {
+      Serial.printf("Bonded with %u\n", from);Serial.println("");
+      visualiser.blink(360, 8, CRGB::DeepSkyBlue);
+      //store in list
+    } else {
+      bondingRequestNode = from;
+    }
   }
 }
 

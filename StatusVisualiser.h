@@ -33,6 +33,7 @@ class StatusVisualiser {
     uint32_t _animationStart = 0;
     uint32_t _animationPhase;
     uint8_t _animationIterations;
+    CRGB _blinkColor;
     
 
 
@@ -41,7 +42,7 @@ class StatusVisualiser {
     StatusVisualiser();
     
     void show();
-    void blink(uint32_t phase, uint8_t iterations);
+    void blink(uint32_t phase, uint8_t iterations, CRGB color);
     void setMeter(uint8_t ledIndex);
 };
 

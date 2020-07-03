@@ -27,7 +27,7 @@ void StatusVisualiser::show() {
 			_blinkFlag = !_blinkFlag;
 			if (_blinkFlag)
 			{
-				fill_solid( &(_leds[0]), NUM_LEDS, CRGB( 255, 68, 221) );
+				fill_solid( &(_leds[0]), NUM_LEDS, _blinkColor);
 			} else {
 				fill_solid( &(_leds[0]), NUM_LEDS, CRGB::Black );
 			}
@@ -46,10 +46,11 @@ void StatusVisualiser::show() {
 }
 
 
-void StatusVisualiser::blink(uint32_t phase, uint8_t iterations) {
+void StatusVisualiser::blink(uint32_t phase, uint8_t iterations, CRGB color) {
 	_animationStart = millis();
 	_animationPhase = (uint32_t) ((float) phase / 2);
 	_animationIterations = iterations * 2;
+	_blinkColor = color;
 
 	_currentState = STATE_BLINKING;
 	_blinkFlag = true;
