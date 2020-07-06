@@ -98,6 +98,7 @@ StatusVisualiser visualiser;
 uint8_t currentState = STATE_IDLE;
 
 uint16_t cypher;
+uint8_t  lastcypherKey;
 uint16_t cypherPeer;
 uint32_t cypherNode;
 uint8_t  cypherLength = 0;
@@ -153,40 +154,49 @@ void setup() {
 }
 
 void typeCypher(uint8_t buttonInput) {
-
-      if (buttonInput == BTN_A || buttonInput == BTN_B || buttonInput == BTN_C) { // add buttunInput to cypher sequene
-        visualiser.setMeter(cypherLength++);
-        cypher = buttonInput | (cypher << 3);
-        if (DEBUG) {
-          switch (buttonInput) {
-            case BTN_A:
-              Serial.println("Add A to cypher");
-              break;
-            case BTN_B:
-              Serial.println("Add B to cypher");
-              break;
-            case BTN_C:
-              Serial.println("Add C to cypher");
-              break;
-            default:
-              Serial.println("Adding nothing. This should not have been reached.");
-            break;
-          }
-        }
-
+  if (buttonInput == lastcypherKey){ //no change so nothing to do
+      return;
+  } else {
+    if (buttonInput == BTN_AC || cypher > 1 << 12) { //exit cyphertyping either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit)
+      
+      if (cypher == 0) {// only send cypher, if it is not empty
+        visualiser.blink(200, 1, CRGB::Blue);
         tft.fillScreen(TFT_BLACK);
-        tft.drawString(cypherString(cypher), 0, 0);
-
-      } else if (buttonInput == BTN_AC || cypher > 1 << 12) { //send the cypher, either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit)
+        tft.drawString("No cypher sent.", 0, 0);
+      } else {
         sendCypher();
-
         visualiser.blink(200, 3, CRGB::HotPink);
         tft.fillScreen(TFT_BLACK);
         tft.drawString("Sent cypher: " + cypherString(cypher), 0, 0);
-
-        Serial.println("Switch from cypher-input to idle");
-        currentState = STATE_IDLE;
       }
+
+      Serial.println("Switch from cypher-input to idle");
+      currentState = STATE_IDLE;
+    } else if (lastcypherKey == BTN_0 && (buttonInput == BTN_A || buttonInput == BTN_B || buttonInput == BTN_C)) { // add buttunInput to cypher sequene
+      visualiser.setMeter(cypherLength++);
+      cypher = buttonInput | (cypher << 3);
+      if (DEBUG) {
+        switch (buttonInput) {
+          case BTN_A:
+            Serial.println("Add A to cypher");
+            break;
+          case BTN_B:
+            Serial.println("Add B to cypher");
+            break;
+          case BTN_C:
+            Serial.println("Add C to cypher");
+            break;
+          default:
+            Serial.println("Adding nothing. This should not have been reached.");
+          break;
+        }
+      }
+      tft.fillScreen(TFT_BLACK);
+      tft.drawString(cypherString(cypher), 0, 0);
+    }
+
+    lastcypherKey = buttonInput ;
+  }
 }
 
 void loop() {
@@ -202,6 +212,7 @@ void loop() {
       if (buttonInput == BTN_AC) {
         currentState = STATE_CYPHER;
         cypher = 0;
+        lastcypherKey = BTN_AC;
         cypherLength = 0;
         Serial.println("Switch from idle to cypher-input");
         visualiser.blink(200, 3, CRGB::HotPink);

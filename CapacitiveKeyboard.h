@@ -11,6 +11,8 @@
   #include <CapacitiveSensor.h>
 #endif
 
+
+#define BTN_0   0
 #define BTN_A   1
 #define BTN_B   2
 #define BTN_C   4
@@ -37,7 +39,6 @@ class CapacitiveKeyboard
 	ExponentialFilter<long> ADCFilter;
 	ExponentialFilter<long> ADCFilter1;
 	ExponentialFilter<long> ADCFilter2;
-	unsigned long _lastTouch;
 	unsigned int _lastButton;
 };
 

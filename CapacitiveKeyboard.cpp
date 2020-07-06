@@ -7,13 +7,8 @@
 #include "Arduino.h"
 #include "CapacitiveKeyboard.h"
 
-#ifndef DEBUG
-#define DEBUG 0
-#endif
-
 CapacitiveKeyboard::CapacitiveKeyboard(int pin1, int pin2, int pin3, int treshhold, int sendPin):ADCFilter(5, treshhold), ADCFilter1(5, treshhold), ADCFilter2(5, treshhold)
 {
-	_lastTouch = 0;
 	_lastButton = 0;
 	_pin1 = pin1;
 	_pin2 = pin2;
@@ -62,59 +57,56 @@ int CapacitiveKeyboard::checkTouch() {
     
 #endif
 
-  if (DEBUG && buttonState > 0) {
-    switch (buttonState) {
-      case BTN_A:
-        Serial.print("Button press: A : ");
-        Serial.println(ADCFilter.Current());
-        break;
-      case BTN_B:
-        Serial.print("Button press: B : ");
-        Serial.println(ADCFilter1.Current());
-        break;
-      case BTN_C:
-        Serial.print("Button press: C : ");
-        Serial.println(ADCFilter2.Current());
-        break;
-      case BTN_AB:
-        Serial.print("Button press: A+B : ");
-        Serial.println(ADCFilter.Current());
-        Serial.print(", ");
-        Serial.println(ADCFilter1.Current());
-        break;
-      case BTN_AC:
-        Serial.print("Button press: A+C : ");
-        Serial.print(ADCFilter.Current());
-        Serial.print(", ");
-        Serial.println(ADCFilter2.Current());
-        break;
-      case BTN_BC:
-        Serial.print("Button press: B+C : ");
-        Serial.print(ADCFilter1.Current());
-        Serial.print(", ");
-        Serial.println(ADCFilter2.Current());
-        break;
-      case BTN_ABC:
-        Serial.print("Button press: A+B+C : ");
-        Serial.print(ADCFilter.Current());
-        Serial.print(", ");
-        Serial.print(ADCFilter1.Current());
-        Serial.print(", ");
-        Serial.println(ADCFilter2.Current());
-        break;
-      default:
-        Serial.println("No button was pressed, this message was not meant to be produced.");
-        break;
+#ifdef DEBUG
+  if (buttonState != _lastButton) {
+    if (buttonState > 0 && buttonState != _lastButton) {
+      switch (buttonState) {
+        case BTN_A:
+          Serial.print("Button press: A : ");
+          Serial.println(ADCFilter.Current());
+          break;
+        case BTN_B:
+          Serial.print("Button press: B : ");
+          Serial.println(ADCFilter1.Current());
+          break;
+        case BTN_C:
+          Serial.print("Button press: C : ");
+          Serial.println(ADCFilter2.Current());
+          break;
+        case BTN_AB:
+          Serial.print("Button press: A+B : ");
+          Serial.println(ADCFilter.Current());
+          Serial.print(", ");
+          Serial.println(ADCFilter1.Current());
+          break;
+        case BTN_AC:
+          Serial.print("Button press: A+C : ");
+          Serial.print(ADCFilter.Current());
+          Serial.print(", ");
+          Serial.println(ADCFilter2.Current());
+          break;
+        case BTN_BC:
+          Serial.print("Button press: B+C : ");
+          Serial.print(ADCFilter1.Current());
+          Serial.print(", ");
+          Serial.println(ADCFilter2.Current());
+          break;
+        case BTN_ABC:
+          Serial.print("Button press: A+B+C : ");
+          Serial.print(ADCFilter.Current());
+          Serial.print(", ");
+          Serial.print(ADCFilter1.Current());
+          Serial.print(", ");
+          Serial.println(ADCFilter2.Current());
+          break;
+        default:
+          Serial.println("No button was pressed, this message was not meant to be produced.");
+          break;
+      }
+    _lastButton = buttonState;
     }
   }
+#endif
 
-  if (buttonState != _lastButton) {
-    _lastButton = buttonState;
-    // if (lastTouch + TOUCHDELAY < millis()) { //check if touch event was broadcasted recently
-    //   lastTouch = millis();
-    // }
-    return buttonState;
-  }
-
-  return 0;
+  return buttonState;
 }
