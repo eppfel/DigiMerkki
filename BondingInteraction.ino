@@ -4,9 +4,9 @@
 // 1. blinks led once for every node on the mesh
 // 2. blink cycle repeats every BLINK_PERIOD
 // 6. prints anything it receives to Serial.print
-// 3. awaits user input for typing a 5 digit code on capacitive touch sensors
-// 4. sends code to every node on the mesh
-// 5. makes handshake with node that sends the same code
+// 3. awaits user input for typing a 5 digit cypher on capacitive touch sensors
+// 4. sends cypher to every node on the mesh
+// 5. makes handshake with node that sends the same cypher
 // 6. Flashes the RGB LEDs when when chaning mode and differently when bhandshake was successful
 //
 // TODO: Calibrate touch sensors on startup to avoid false positive touch events
@@ -69,7 +69,7 @@
 CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD, SENDPIN);
 
 // Prototypes
-void sendBondingRequest();
+void sendCypher();
 void sendMessage(String msg);
 void receivedCallback(uint32_t from, String & msg);
 void newConnectionCallback(uint32_t nodeId);
@@ -94,14 +94,14 @@ bool onFlag = false;
 StatusVisualiser visualiser;
 
 #define STATE_IDLE 0
-#define STATE_CODE 1
+#define STATE_CYPHER 1
 uint8_t currentState = STATE_IDLE;
 
-uint16_t bondingCode;
-uint16_t bondingCodePeer;
-uint32_t bondingCodeNode;
-uint8_t  bondingCodeCounter = 0;
-uint32_t bondingStarted = 0;
+uint16_t cypher;
+uint16_t cypherPeer;
+uint32_t cypherNode;
+uint8_t  cypherLength = 0;
+uint32_t bondingStarttime = 0;
 uint32_t bondingRequestNode;
 uint32_t bondingSuccessNode;
 
@@ -152,26 +152,21 @@ void setup() {
   randomSeed(analogRead(A0));
 }
 
-void loop() {
-  mesh.update();
+void typeCypher(uint8_t buttonInput) {
 
-    
-  int buttonInput = touchInput.checkTouch();
-  switch (currentState) {
-    case STATE_CODE:
-      if (buttonInput == BTN_A || buttonInput == BTN_B || buttonInput == BTN_C) { // add buttunInput to code sequene
-        visualiser.setMeter(bondingCodeCounter++);
-        bondingCode = buttonInput | (bondingCode << 3);
+      if (buttonInput == BTN_A || buttonInput == BTN_B || buttonInput == BTN_C) { // add buttunInput to cypher sequene
+        visualiser.setMeter(cypherLength++);
+        cypher = buttonInput | (cypher << 3);
         if (DEBUG) {
           switch (buttonInput) {
             case BTN_A:
-              Serial.println("Add A to code");
+              Serial.println("Add A to cypher");
               break;
             case BTN_B:
-              Serial.println("Add B to code");
+              Serial.println("Add B to cypher");
               break;
             case BTN_C:
-              Serial.println("Add C to code");
+              Serial.println("Add C to cypher");
               break;
             default:
               Serial.println("Adding nothing. This should not have been reached.");
@@ -180,26 +175,35 @@ void loop() {
         }
 
         tft.fillScreen(TFT_BLACK);
-        tft.drawString(codeString(bondingCode), 0, 0);
+        tft.drawString(cypherString(cypher), 0, 0);
 
-      }
-      if (buttonInput == BTN_AC || bondingCode > 1 << 12) { //send the code, either if A+C Button were pressed OR if code is longer then 4 digits (12 bit)
-        sendBondingRequest();
+      } else if (buttonInput == BTN_AC || cypher > 1 << 12) { //send the cypher, either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit)
+        sendCypher();
 
         visualiser.blink(200, 3, CRGB::HotPink);
         tft.fillScreen(TFT_BLACK);
-        tft.drawString("Sent code: " + codeString(bondingCode), 0, 0);
+        tft.drawString("Sent cypher: " + cypherString(cypher), 0, 0);
 
-        Serial.println("Switch from code-input to idle");
+        Serial.println("Switch from cypher-input to idle");
         currentState = STATE_IDLE;
       }
+}
+
+void loop() {
+  mesh.update();
+
+    
+  int buttonInput = touchInput.checkTouch();
+  switch (currentState) {
+    case STATE_CYPHER:
+      typeCypher(buttonInput);
       break;
     default: //idle
       if (buttonInput == BTN_AC) {
-        currentState = STATE_CODE;
-        bondingCode = 0;
-        bondingCodeCounter = 0;
-        Serial.println("Switch from idle to code-input");
+        currentState = STATE_CYPHER;
+        cypher = 0;
+        cypherLength = 0;
+        Serial.println("Switch from idle to cypher-input");
         visualiser.blink(200, 3, CRGB::HotPink);
       }
       break;
@@ -215,54 +219,54 @@ void loop() {
 }
 
 
-String codeString(uint16_t code) {
-  String codeword = "";
-  while (code >= 1) {
+String cypherString(uint16_t cypher) {
+  String cypherword = "";
+  while (cypher >= 1) {
 
     // Serial.println("in the loop");
-    switch (code & 7) {
+    switch (cypher & 7) {
       case 1:
-        codeword = "A" + codeword;
+        cypherword = "A" + cypherword;
         break;
       case 2:
-        codeword = "B" + codeword;
+        cypherword = "B" + cypherword;
         break;
       case 4:
-        codeword = "C" + codeword;
+        cypherword = "C" + cypherword;
         break;
       default:
     // Serial.println("default case");
         break;
     }
-    code = code >> 3;
-    // Serial.println(codeword);
+    cypher = cypher >> 3;
+    // Serial.println(cypherword);
   }
-  return codeword;
+  return cypherword;
 }
 
-void sendBondingRequest() {
+void sendCypher() {
 
-  String msg = "Code : ";
-  msg += String(bondingCode);
+  String msg = "Cypher : ";
+  msg += String(cypher);
 
   sendMessage(msg);
 
-  if ((bondingStarted + HANDSHAKETIME) > millis()) {
+  if ((bondingStarttime + HANDSHAKETIME) > millis()) {
     // bondingRequest was received earlier
-    if (bondingCode == bondingCodePeer) {
-      //bondingCode correct, so we should bond
-      mesh.sendSingle(bondingCodeNode, "Bonding"); // send bonding handshake
-      bondingSuccessNode = bondingCodeNode;
-      Serial.printf("Bonding with %u\n", bondingCodeNode);Serial.println("");
+    if (cypher == cypherPeer) {
+      //cypher correct, so we should bond
+      mesh.sendSingle(cypherNode, "Bonding"); // send bonding handshake
+      bondingSuccessNode = cypherNode;
+      Serial.printf("Bonding with %u\n", cypherNode);Serial.println("");
     } else {
-      Serial.println("Wrong code");
+      Serial.println("Wrong cypher");
     }
   } else {
     //no bondingrequest active
     Serial.println("No open bonding request");
   }
 
-  bondingStarted = millis(); //bonding code by user so time is reset
+  bondingStarttime = millis(); //bonding cypher by user so time is reset
 }
 
 /* Broadcast a message to all nodes*/
@@ -294,19 +298,19 @@ void receivedCallback(uint32_t from, String & msg) {
   Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
   Serial.println("");
 
-  //FIX: remove the bonding code that was send after the response time winoow passed
-  if (msg.startsWith("Code")) { // check if another touch accordingly   
+  //FIX: remove the bonding cypher that was send after the response time winoow passed
+  if (msg.startsWith("Cypher")) { // check if another touch accordingly   
 
-    bondingCodePeer = msg.substring(7).toInt(); //other devices sending codes will override this value and block bonding -> connect to nodeid, because that is unique
-    bondingCodeNode = from;
+    cypherPeer = msg.substring(7).toInt(); //other devices sending cyphers will override this value and block bonding -> connect to nodeid, because that is unique
+    cypherNode = from;
 
-    Serial.println("Bonding code " + codeString(bondingCodePeer) + "received from " + from);
+    Serial.println("Bonding cypher " + cypherString(cypherPeer) + "received from " + from);
 
-    if ((bondingStarted + HANDSHAKETIME) > millis()) {
+    if ((bondingStarttime + HANDSHAKETIME) > millis()) {
       
       //had started a request before
-      if (bondingCode == bondingCodePeer) {
-         // bonding code correct, so let's bond
+      if (cypher == cypherPeer) {
+         // bonding cypher correct, so let's bond
         mesh.sendSingle(from, "Bonding");
         Serial.printf("Bonding with %u\n", from);Serial.println("");
         bondingSuccessNode = from;
@@ -316,13 +320,13 @@ void receivedCallback(uint32_t from, String & msg) {
           //store in list
         }
       } else {
-        Serial.println("Wrong code");
+        Serial.println("Wrong cypher");
       }
     } else {
       //bonding was out of time or no request from this side
       Serial.printf("No open request, yet");
     }
-    bondingStarted = millis();
+    bondingStarttime = millis();
   } else if (msg.startsWith("Bonding")) {
     if (bondingSuccessNode == from) {
       Serial.printf("Bonded with %u\n", from);Serial.println("");
