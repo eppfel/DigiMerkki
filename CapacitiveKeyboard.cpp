@@ -59,52 +59,50 @@ int CapacitiveKeyboard::checkTouch() {
 
 #ifdef DEBUG
   if (buttonState != _lastButton) {
-    if (buttonState > 0 && buttonState != _lastButton) {
-      switch (buttonState) {
-        case BTN_A:
-          Serial.print("Button press: A : ");
-          Serial.println(ADCFilter.Current());
-          break;
-        case BTN_B:
-          Serial.print("Button press: B : ");
-          Serial.println(ADCFilter1.Current());
-          break;
-        case BTN_C:
-          Serial.print("Button press: C : ");
-          Serial.println(ADCFilter2.Current());
-          break;
-        case BTN_AB:
-          Serial.print("Button press: A+B : ");
-          Serial.println(ADCFilter.Current());
-          Serial.print(", ");
-          Serial.println(ADCFilter1.Current());
-          break;
-        case BTN_AC:
-          Serial.print("Button press: A+C : ");
-          Serial.print(ADCFilter.Current());
-          Serial.print(", ");
-          Serial.println(ADCFilter2.Current());
-          break;
-        case BTN_BC:
-          Serial.print("Button press: B+C : ");
-          Serial.print(ADCFilter1.Current());
-          Serial.print(", ");
-          Serial.println(ADCFilter2.Current());
-          break;
-        case BTN_ABC:
-          Serial.print("Button press: A+B+C : ");
-          Serial.print(ADCFilter.Current());
-          Serial.print(", ");
-          Serial.print(ADCFilter1.Current());
-          Serial.print(", ");
-          Serial.println(ADCFilter2.Current());
-          break;
-        default:
-          Serial.println("No button was pressed, this message was not meant to be produced.");
-          break;
-      }
-    _lastButton = buttonState;
+    switch (buttonState) {
+      case BTN_A:
+        Serial.print("Button press: A : ");
+        Serial.println(ADCFilter.Current());
+        break;
+      case BTN_B:
+        Serial.print("Button press: B : ");
+        Serial.println(ADCFilter1.Current());
+        break;
+      case BTN_C:
+        Serial.print("Button press: C : ");
+        Serial.println(ADCFilter2.Current());
+        break;
+      case BTN_AB:
+        Serial.print("Button press: A+B : ");
+        Serial.println(ADCFilter.Current());
+        Serial.print(", ");
+        Serial.println(ADCFilter1.Current());
+        break;
+      case BTN_AC:
+        Serial.print("Button press: A+C : ");
+        Serial.print(ADCFilter.Current());
+        Serial.print(", ");
+        Serial.println(ADCFilter2.Current());
+        break;
+      case BTN_BC:
+        Serial.print("Button press: B+C : ");
+        Serial.print(ADCFilter1.Current());
+        Serial.print(", ");
+        Serial.println(ADCFilter2.Current());
+        break;
+      case BTN_ABC:
+        Serial.print("Button press: A+B+C : ");
+        Serial.print(ADCFilter.Current());
+        Serial.print(", ");
+        Serial.print(ADCFilter1.Current());
+        Serial.print(", ");
+        Serial.println(ADCFilter2.Current());
+        break;
+      default:
+        Serial.println("No button was pressed.");
+        break;
     }
+    _lastButton = buttonState;
   }
 #endif
 

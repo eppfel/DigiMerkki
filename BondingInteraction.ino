@@ -192,7 +192,7 @@ void typeCypher(uint8_t buttonInput) {
         }
       }
       tft.fillScreen(TFT_BLACK);
-      tft.drawString(cypherString(cypher), 0, 0);
+      tft.drawString("Cypher: " + cypherString(cypher), 0, 0);
     }
 
     lastcypherKey = buttonInput ;
@@ -215,6 +215,8 @@ void loop() {
         lastcypherKey = BTN_AC;
         cypherLength = 0;
         Serial.println("Switch from idle to cypher-input");
+        tft.fillScreen(TFT_BLACK);
+        tft.drawString("Cypher: ", 0, 0);
         visualiser.blink(200, 3, CRGB::HotPink);
       }
       break;
@@ -339,7 +341,7 @@ void receivedCallback(uint32_t from, String & msg) {
     }
     bondingStarttime = millis();
   } else if (msg.startsWith("Bonding")) {
-    if (bondingSuccessNode == from) {
+    if (bondingSuccessNode == from) { //this has to be checked against a time
       Serial.printf("Bonded with %u\n", from);Serial.println("");
       visualiser.blink(360, 8, CRGB::DeepSkyBlue);
       //store in list
