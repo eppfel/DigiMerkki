@@ -101,7 +101,6 @@ uint16_t cypher;
 uint8_t  lastcypherKey;
 uint16_t cypherPeer;
 uint32_t cypherNode;
-uint8_t  cypherLength = 0;
 uint32_t bondingStarttime = 0;
 uint32_t bondingRequestNode;
 uint32_t bondingSuccessNode;
@@ -154,10 +153,11 @@ void setup() {
 }
 
 void typeCypher(uint8_t buttonInput) {
+  static uint8_t cypherLength = 0;
   if (buttonInput == lastcypherKey){ //no change so nothing to do
       return;
   } else {
-    if (buttonInput == BTN_AC || cypher > 1 << 12) { //exit cyphertyping either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit)
+    if (buttonInput == BTN_AC || cypherLength > 4) { //exit cyphertyping either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit) : cypher > 1 << 12
       
       if (cypher == 0) {// only send cypher, if it is not empty
         visualiser.blink(200, 1, CRGB::Blue);
@@ -172,6 +172,7 @@ void typeCypher(uint8_t buttonInput) {
 
       Serial.println("Switch from cypher-input to idle");
       currentState = STATE_IDLE;
+      cypherLength = 0;
     } else if (lastcypherKey == BTN_0 && (buttonInput == BTN_A || buttonInput == BTN_B || buttonInput == BTN_C)) { // add buttunInput to cypher sequene
       visualiser.setMeter(cypherLength++);
       cypher = buttonInput | (cypher << 3);
@@ -213,7 +214,6 @@ void loop() {
         currentState = STATE_CYPHER;
         cypher = 0;
         lastcypherKey = BTN_AC;
-        cypherLength = 0;
         Serial.println("Switch from idle to cypher-input");
         tft.fillScreen(TFT_BLACK);
         tft.drawString("Cypher: ", 0, 0);
