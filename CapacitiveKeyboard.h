@@ -6,11 +6,7 @@
 #define CapacitiveKeyboard_h
 
 #include "Arduino.h"
-#include <Filter.h>
-#ifndef ESP32 // e.g. Feather Huzzah ESP8266
-  #include <CapacitiveSensor.h>
-#endif
-
+#include <EasyButtonTouch.h>
 
 #define BTN_0   0
 #define BTN_A   1
@@ -21,25 +17,23 @@
 #define BTN_BC  6
 #define BTN_ABC 7
 
+#define DEBOUNCE_TIME 35
+
 class CapacitiveKeyboard
 {
   public:
-    CapacitiveKeyboard(int pin1, int pin2, int pin3, int treshhold, int sendPin);
+
+    CapacitiveKeyboard(int pin1, int pin2, int pin3, int treshhold);
     int checkTouch();
-  private:
-    unsigned int _pin1;
-    unsigned int _pin2;
-    unsigned int _pin3;
-    unsigned int _treshhold;
-#ifndef ESP32 // e.g. ESP8266
-    CapacitiveSensor _cap1;
-    CapacitiveSensor _cap2;
-    CapacitiveSensor _cap3;
-#endif
-	ExponentialFilter<long> ADCFilter;
-	ExponentialFilter<long> ADCFilter1;
-	ExponentialFilter<long> ADCFilter2;
-	unsigned int _lastButton;
-};
+    void begin();
+    void tick();
+    void onPressed(EasyButtonBase::callback_t callback);
+    protected:
+      EasyButtonBase::callback_t _pressed_callback; // Callback function for pressed events.
+      EasyButtonTouch _button1;
+      EasyButtonTouch _button2;
+      EasyButtonTouch _button3;
+      unsigned int _lastButton;
+    };
 
 #endif

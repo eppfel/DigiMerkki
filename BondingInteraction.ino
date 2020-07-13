@@ -66,9 +66,10 @@
 #define   MESH_PASSWORD   "istanbul"
 #define   MESH_PORT       5555
 
-CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD, SENDPIN);
+CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD);
 
 // Prototypes
+void onPressed();
 void sendCypher();
 void sendMessage(String msg);
 void receivedCallback(uint32_t from, String & msg);
@@ -140,6 +141,9 @@ void setup() {
   userScheduler.addTask(blinkNoNodes);
   blinkNoNodes.enable();
 
+  touchInput.begin();
+  touchInput.onPressed(onPressed);
+
 #if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   tft.init();
   tft.setRotation(3);
@@ -150,6 +154,12 @@ void setup() {
 #endif
 
   randomSeed(analogRead(A0));
+}
+
+void onPressed() {
+  tft.fillScreen(TFT_BLACK);
+  tft.drawString("Press detected", 0, 0);
+  Serial.println("touch detected");
 }
 
 void typeCypher(uint8_t buttonInput) {
@@ -197,8 +207,11 @@ void typeCypher(uint8_t buttonInput) {
 void loop() {
   mesh.update();
 
-    
-  int buttonInput = touchInput.checkTouch();
+  
+
+  touchInput.tick();
+  
+  int buttonInput = 0;//touchInput.checkTouch();
   if (lastKey != buttonInput) {
     switch (currentState) {
       case STATE_CYPHER:
