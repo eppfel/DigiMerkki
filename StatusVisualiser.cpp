@@ -31,16 +31,10 @@ void StatusVisualiser::show() {
 			} else {
 				fill_solid( &(_leds[0]), NUM_LEDS, CRGB::Black );
 			}
-			//    for (int i = 0; i < NUM_LEDS; ++i)
-	    // {
-	    //   if (i % 2 == bsFlag) {
-	    //     leds[i].setHue(224);
-	    //   } else {
-	    //     leds[i].setHue(128);
-	    //   }
-	    // }
+  			FastLED.show();
 		}
-  	FastLED.show();
+	} else {
+		EVERY_N_MILLISECONDS(80) { FastLED.show(); }
 	}
 
 }
