@@ -69,6 +69,7 @@
 CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD);
 
 // Prototypes
+void buttonHandler(uint8_t keyCode);
 void onPressed();
 void sendCypher();
 void sendMessage(String msg);
@@ -142,7 +143,7 @@ void setup() {
   blinkNoNodes.enable();
 
   touchInput.begin();
-  touchInput.onPressed(onPressed);
+  touchInput.onPressed(buttonHandler, onPressed);
 
 #if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   tft.init();
@@ -157,34 +158,16 @@ void setup() {
 }
 
 void onPressed() {
-  tft.fillScreen(TFT_BLACK);
-  tft.drawString("Press detected", 0, 0);
-  Serial.println("touch detected");
+  touchInput.pressed();
 }
 
-void typeCypher(uint8_t buttonInput) {
+void typeCypher(uint8_t keyCode) {
   static uint8_t cypherLength = 0;
-  if (buttonInput == BTN_AC || cypherLength > 4) { //exit cyphertyping either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit) : cypher > 1 << 12
-    
-    if (cypher == 0) {// only send cypher, if it is not empty
-      visualiser.blink(200, 1, CRGB::Blue);
-      tft.fillScreen(TFT_BLACK);
-      tft.drawString("No cypher sent.", 0, 0);
-    } else {
-      sendCypher();
-      visualiser.blink(200, 3, CRGB::HotPink);
-      tft.fillScreen(TFT_BLACK);
-      tft.drawString("Sent cypher: " + cypherString(cypher), 0, 0);
-    }
-
-    Serial.println("Switch from cypher-input to idle");
-    currentState = STATE_IDLE;
-    cypherLength = 0;
-  } else if (lastKey == BTN_0 && (buttonInput == BTN_A || buttonInput == BTN_B || buttonInput == BTN_C)) { // add buttunInput to cypher sequene
+  if (keyCode == BTN_A || keyCode == BTN_B || keyCode == BTN_C) { // add buttunInput to cypher sequene
     visualiser.setMeter(cypherLength++);
-    cypher = buttonInput | (cypher << 3);
+    cypher = keyCode | (cypher << 3);
     if (DEBUG) {
-      switch (buttonInput) {
+      switch (keyCode) {
         case BTN_A:
           Serial.println("Add A to cypher");
           break;
@@ -202,35 +185,28 @@ void typeCypher(uint8_t buttonInput) {
     tft.fillScreen(TFT_BLACK);
     tft.drawString("Cypher: " + cypherString(cypher), 0, 0);
   }
+  if (keyCode == BTN_AC || cypherLength > 4) { //exit cyphertyping either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit) : cypher > 1 << 12
+    
+    if (cypher == 0) {// only send cypher, if it is not empty
+      visualiser.blink(200, 1, CRGB::Blue);
+      tft.fillScreen(TFT_BLACK);
+      tft.drawString("No cypher sent.", 0, 0);
+    } else {
+      sendCypher();
+      visualiser.blink(200, 3, CRGB::HotPink);
+      tft.fillScreen(TFT_BLACK);
+      tft.drawString("Sent cypher: " + cypherString(cypher), 0, 0);
+    }
+
+    Serial.println("Switch from cypher-input to idle");
+    currentState = STATE_IDLE;
+    cypherLength = 0;
+  } 
 }
 
 void loop() {
   mesh.update();
-
-  
-
   touchInput.tick();
-  
-  int buttonInput = 0;//touchInput.checkTouch();
-  if (lastKey != buttonInput) {
-    switch (currentState) {
-      case STATE_CYPHER:
-        typeCypher(buttonInput);
-        break;
-      default: //idle
-        if (lastKey != buttonInput && buttonInput == BTN_AC) {
-          currentState = STATE_CYPHER;
-          cypher = 0;
-          lastKey = BTN_AC;
-          Serial.println("Switch from idle to cypher-input");
-          tft.fillScreen(TFT_BLACK);
-          tft.drawString("Cypher: ", 0, 0);
-          visualiser.blink(200, 3, CRGB::HotPink);
-        }
-        break;
-    }
-    lastKey = buttonInput;
-  }
 
 #if defined(ESP8266) // Feather Huzzah
   digitalWrite(LED, !onFlag);
@@ -241,6 +217,24 @@ void loop() {
   visualiser.show();
 }
 
+void buttonHandler(uint8_t keyCode)
+{
+  switch (currentState) {
+    case STATE_CYPHER:
+      typeCypher(keyCode);
+      break;
+    default: //idle
+      if (keyCode == BTN_AC) {
+        currentState = STATE_CYPHER;
+        cypher = 0;
+        Serial.println("Switch from idle to cypher-input");
+        tft.fillScreen(TFT_BLACK);
+        tft.drawString("Cypher: ", 0, 0);
+        visualiser.blink(200, 3, CRGB::HotPink);
+      }
+      break;
+  }
+}
 
 String cypherString(uint16_t cypher) {
   String cypherword = "";
