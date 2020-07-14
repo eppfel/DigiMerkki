@@ -39,6 +39,8 @@
   #define TOUCHPIN2      T8    // Pin for sensing touch input 33 (labelled as 32)
   #define SENDPIN         4    // stub
   #define TTHRESHOLD     30    // threshold for touch
+  #define HW_BUTTON_PIN1 35      // Hardware button 1 on the T-display board
+  #define HW_BUTTON_PIN2  0      // Hardware button 1 on the T-display board
 
   #include <TFT_eSPI.h>
   #include <SPI.h>
@@ -67,8 +69,12 @@
 #define   MESH_PORT       5555
 
 CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD);
+EasyButton hwbutton1(HW_BUTTON_PIN1);
+EasyButton hwbutton2(HW_BUTTON_PIN2);
 
 // Prototypes
+void sleep();
+void uploadUserData();
 void buttonHandler(uint8_t keyCode);
 void onPressed();
 void sendCypher();
@@ -144,6 +150,10 @@ void setup() {
 
   touchInput.begin();
   touchInput.onPressed(buttonHandler, onPressed);
+  hwbutton1.begin();
+  hwbutton2.begin();
+  hwbutton1.onPressed(sleep);
+  hwbutton2.onPressed(uploadUserData);
 
 #if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   tft.init();
@@ -159,6 +169,14 @@ void setup() {
 
 void onPressed() {
   touchInput.pressed();
+}
+
+void sleep() {
+  Serial.println("Button 1 was pressed!");
+}
+
+void uploadUserData() {
+  Serial.println("Button 2 was pressed!");
 }
 
 void typeCypher(uint8_t keyCode) {
@@ -207,6 +225,8 @@ void typeCypher(uint8_t keyCode) {
 void loop() {
   mesh.update();
   touchInput.tick();
+  hwbutton1.read();
+  hwbutton2.read();
 
 #if defined(ESP8266) // Feather Huzzah
   digitalWrite(LED, !onFlag);
