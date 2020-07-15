@@ -95,15 +95,19 @@ painlessMesh  mesh;
 bool calc_delay = false;
 SimpleList<uint32_t> nodes;
 
-// Task to blink the number of nodes
-Task blinkNoNodes;
-bool onFlag = false;
-
 #if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom TFT library
 #endif
 
+bool onFlag = false;
 StatusVisualiser visualiser;
+
+// Task variables
+#define TASK_CHECK_BUTTON_PRESS_INTERVAL 2     // in milliseconds
+#define VISUALISATION_UPDATE_INTERVAL 1 // default scheduling time for currentPatternSELECT, in milliseconds
+Task blinkNoNodes;
+Task taskCheckButtonPress(TASK_CHECK_BUTTON_PRESS_INTERVAL, TASK_FOREVER, &checkButtonPress);
+Task taskVisualiser(VISUALISATION_UPDATE_INTERVAL, TASK_FOREVER, &showVisualisations);
 
 #define STATE_IDLE 0
 #define STATE_CYPHER 1
@@ -119,8 +123,7 @@ uint32_t bondingSuccessNode;
 
 void setup() {
   Serial.begin(115200);
-
-  pinMode(LED, OUTPUT);
+  delay(1000);
 
   mesh.setDebugMsgTypes(ERROR | DEBUG);  // set before init() so that you can see error messages
 
@@ -131,6 +134,17 @@ void setup() {
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
   mesh.onNodeDelayReceived(&delayReceivedCallback);
 
+  touchInput.begin();
+  touchInput.onPressed(buttonHandler, onPressed);
+  hwbutton1.begin();
+  hwbutton2.begin();
+  hwbutton1.onPressed(sleep);
+  hwbutton2.onPressed(uploadUserData);
+
+  userScheduler.addTask(taskCheckButtonPress);
+  taskCheckButtonPress.enable();
+  
+  pinMode(LED, OUTPUT);
   blinkNoNodes.set(BLINK_PERIOD, (mesh.getNodeList().size() + 1) * 2, []() {
     // If on, switch off, else switch on
     if (onFlag)
@@ -149,15 +163,12 @@ void setup() {
                                  (mesh.getNodeTime() % (BLINK_PERIOD * 1000)) / 1000);
     }
   });
+  
   userScheduler.addTask(blinkNoNodes);
   blinkNoNodes.enable();
 
-  touchInput.begin();
-  touchInput.onPressed(buttonHandler, onPressed);
-  hwbutton1.begin();
-  hwbutton2.begin();
-  hwbutton1.onPressed(sleep);
-  hwbutton2.onPressed(uploadUserData);
+  userScheduler.addTask(taskVisualiser);
+  taskVisualiser.enable();
 
 #if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   tft.init();
@@ -240,19 +251,23 @@ void typeCypher(uint8_t keyCode) {
   } 
 }
 
-void loop() {
-  mesh.update();
+void checkButtonPress() {
   touchInput.tick();
   hwbutton1.read();
   hwbutton2.read();
+}
 
+void showVisualisations() {
+  visualiser.show();
 #if defined(ESP8266) // Feather Huzzah
   digitalWrite(LED, !onFlag);
 #else // ESP32
   digitalWrite(LED, onFlag);
 #endif
+}
 
-  visualiser.show();
+void loop() {
+  mesh.update();
 }
 
 void buttonHandler(uint8_t keyCode)
