@@ -39,6 +39,7 @@
   #define TOUCHPIN2      T8    // Pin for sensing touch input 33 (labelled as 32)
   #define SENDPIN         4    // stub
   #define TTHRESHOLD     30    // threshold for touch
+  #define STHRESHOLD     20    // threshold for wake up touch 
   #define HW_BUTTON_PIN1 35      // Hardware button 1 on the T-display board
   #define HW_BUTTON_PIN2  0      // Hardware button 1 on the T-display board
 
@@ -67,6 +68,9 @@
 #define   MESH_SSID       "nopainnogain"
 #define   MESH_PASSWORD   "istanbul"
 #define   MESH_PORT       5555
+
+// RTC_DATA_ATTR int bootCount = 0; //store data in the RTC (persistent in deep sleep but not after reset)
+// touch_pad_t touchPin; // for printing the touch pin
 
 CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD);
 EasyButton hwbutton1(HW_BUTTON_PIN1);
@@ -171,8 +175,22 @@ void onPressed() {
   touchInput.pressed();
 }
 
-void sleep() {
-  Serial.println("Button 1 was pressed!");
+void wakeup_callback()
+{
+  //placeholder callback function
+}
+
+// trigger deep sleep mode and wake up on any input from the touch buttons
+void sleep()
+{
+  mesh.stop();
+  Serial.println("Disconnected from mesh!");
+  touchAttachInterrupt(TOUCHPIN, wakeup_callback, STHRESHOLD);
+  touchAttachInterrupt(TOUCHPIN1, wakeup_callback, STHRESHOLD);
+  touchAttachInterrupt(TOUCHPIN2, wakeup_callback, STHRESHOLD);
+  esp_sleep_enable_touchpad_wakeup();
+  Serial.println("Goind to sleep now!");
+  esp_deep_sleep_start();
 }
 
 void uploadUserData() {
