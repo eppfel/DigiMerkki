@@ -68,7 +68,7 @@ TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom TFT library
 #define   BLINK_PERIOD    3000 // milliseconds until cycle repeat
 #define   BLINK_DURATION  100  // milliseconds LED is on for
 
-#define   HANDSHAKETIME   5000  // delay to not spam with touch events
+#define   HANDSHAKETIME   10000  // time to perform a usccessful handshake between people
 
 #define   MESH_SSID       "nopainnogain"
 #define   MESH_PASSWORD   "istanbul"
@@ -338,7 +338,7 @@ void sendCypher() {
       bondingSuccessNode = cypherNode;
       Serial.printf("Bonding with %u\n", cypherNode);Serial.println("");
     } else {
-      Serial.println("Wrong cypher");
+      Serial.println("Our cypher does not match");
     }
   } else {
     //no bondingrequest active
@@ -380,7 +380,7 @@ void receivedCallback(uint32_t from, String & msg) {
   //FIX: remove the bonding cypher that was send after the response time winoow passed
   if (msg.startsWith("Cypher")) { // check if another touch accordingly   
 
-    cypherPeer = msg.substring(7).toInt(); //other devices sending cyphers will override this value and block bonding -> connect to nodeid, because that is unique
+    cypherPeer = msg.substring(9).toInt(); //other devices sending cyphers will override this value and block bonding -> connect to nodeid, because that is unique
     cypherNode = from;
 
     Serial.println("Bonding cypher " + cypherString(cypherPeer) + "received from " + from);
@@ -399,7 +399,7 @@ void receivedCallback(uint32_t from, String & msg) {
           //store in list
         }
       } else {
-        Serial.println("Wrong cypher");
+        Serial.println("Their cypher does not match");
       }
     } else {
       //bonding was out of time or no request from this side
