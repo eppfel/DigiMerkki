@@ -26,11 +26,12 @@
 
 #elif defined(ARDUINO_FEATHER_ESP32)
   #define LED            13    // GPIO number of connected LED
-  #define TOUCHPIN       T0    // Pin for sensing touch input A5
-  #define TOUCHPIN1      T9    // Pin for sensing touch input 32
-  #define TOUCHPIN2      T8    // Pin for sensing touch input 33
+  #define TOUCHPIN       33    // Pin for sensing touch input 33 (labelled 32)
+  #define TOUCHPIN1      32    // Pin for sensing touch input 32 (labelled 33)
+  #define TOUCHPIN2      15    // Pin for sensing touch input 15
   #define SENDPIN         4    // stub
-  #define TTHRESHOLD     30    // threshold for touch
+#define TTHRESHOLD 30          // threshold for touch
+#define STHRESHOLD 20          // threshold for wake up touch
 
 #else //ESP32 DEV Module
   #define LED            21    // GPIO number of connected LED
@@ -58,6 +59,10 @@
   #define TFT_RST        23
   #define TFT_BL          4  // Display backlight control pin
 
+EasyButton hwbutton1(HW_BUTTON_PIN1);
+EasyButton hwbutton2(HW_BUTTON_PIN2);
+
+TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom TFT library
 #endif
 
 #define   BLINK_PERIOD    3000 // milliseconds until cycle repeat
@@ -67,14 +72,11 @@
 
 #define   MESH_SSID       "nopainnogain"
 #define   MESH_PASSWORD   "istanbul"
-#define   MESH_PORT       5555
 
 // RTC_DATA_ATTR int bootCount = 0; //store data in the RTC (persistent in deep sleep but not after reset)
 // touch_pad_t touchPin; // for printing the touch pin
 
 CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD);
-EasyButton hwbutton1(HW_BUTTON_PIN1);
-EasyButton hwbutton2(HW_BUTTON_PIN2);
 
 // Prototypes
 void sleep();
@@ -94,10 +96,6 @@ painlessMesh  mesh;
 
 bool calc_delay = false;
 SimpleList<uint32_t> nodes;
-
-#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
-  TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom TFT library
-#endif
 
 bool onFlag = false;
 StatusVisualiser visualiser;
@@ -127,7 +125,7 @@ void setup() {
 
   mesh.setDebugMsgTypes(ERROR | DEBUG);  // set before init() so that you can see error messages
 
-  mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler, MESH_PORT);
+  mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler);
   mesh.onReceive(&receivedCallback);
   mesh.onNewConnection(&newConnectionCallback);
   mesh.onChangedConnections(&changedConnectionCallback);
@@ -136,10 +134,6 @@ void setup() {
 
   touchInput.begin();
   touchInput.onPressed(buttonHandler, onPressed);
-  hwbutton1.begin();
-  hwbutton2.begin();
-  hwbutton1.onPressed(sleep);
-  hwbutton2.onPressed(uploadUserData);
 
   userScheduler.addTask(taskCheckButtonPress);
   taskCheckButtonPress.enable();
@@ -171,6 +165,11 @@ void setup() {
   taskVisualiser.enable();
 
 #if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
+  hwbutton1.begin();
+  hwbutton2.begin();
+  hwbutton1.onPressed(sleep);
+  hwbutton2.onPressed(uploadUserData);
+
   tft.init();
   tft.setRotation(3);
   tft.setTextSize(2);
@@ -229,20 +228,26 @@ void typeCypher(uint8_t keyCode) {
         break;
       }
     }
+#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
     tft.fillScreen(TFT_BLACK);
     tft.drawString("Cypher: " + cypherString(cypher), 0, 0);
+#endif
   }
   if (keyCode == BTN_AC || cypherLength > 4) { //exit cyphertyping either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit) : cypher > 1 << 12
     
     if (cypher == 0) {// only send cypher, if it is not empty
       visualiser.blink(200, 1, CRGB::Blue);
+#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
       tft.fillScreen(TFT_BLACK);
       tft.drawString("No cypher sent.", 0, 0);
+#endif
     } else {
       sendCypher();
       visualiser.blink(200, 3, CRGB::HotPink);
+#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
       tft.fillScreen(TFT_BLACK);
       tft.drawString("Sent cypher: " + cypherString(cypher), 0, 0);
+#endif
     }
 
     Serial.println("Switch from cypher-input to idle");
@@ -253,8 +258,10 @@ void typeCypher(uint8_t keyCode) {
 
 void checkButtonPress() {
   touchInput.tick();
+#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   hwbutton1.read();
   hwbutton2.read();
+#endif
 }
 
 void showVisualisations() {
@@ -281,8 +288,10 @@ void buttonHandler(uint8_t keyCode)
         currentState = STATE_CYPHER;
         cypher = 0;
         Serial.println("Switch from idle to cypher-input");
+#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
         tft.fillScreen(TFT_BLACK);
         tft.drawString("Cypher: ", 0, 0);
+#endif
         visualiser.blink(200, 3, CRGB::HotPink);
       }
       break;
