@@ -98,7 +98,7 @@ bool calc_delay = false;
 SimpleList<uint32_t> nodes;
 
 bool onFlag = false;
-StatusVisualiser visualiser;
+StatusVisualiser visualiser(64);
 
 // Task variables
 #define TASK_CHECK_BUTTON_PRESS_INTERVAL 2     // in milliseconds
@@ -279,12 +279,16 @@ void loop() {
 
 void buttonHandler(uint8_t keyCode)
 {
-  switch (currentState) {
+  // static const boolean isCylon = false;
+
+  switch (currentState)
+  {
     case STATE_CYPHER:
       typeCypher(keyCode);
       break;
     default: //idle
-      if (keyCode == BTN_AC) {
+      if (keyCode == BTN_AC)
+      {
         currentState = STATE_CYPHER;
         cypher = 0;
         Serial.println("Switch from idle to cypher-input");
@@ -293,6 +297,14 @@ void buttonHandler(uint8_t keyCode)
         tft.drawString("Cypher: ", 0, 0);
 #endif
         visualiser.blink(200, 3, CRGB::HotPink);
+      } else if (keyCode == BTN_B)
+      {
+        visualiser.cylon();
+        // isCylon != isCylon;
+        // if (isCylon) {
+        // } else {
+        //   visualiser.blink(0, 0, CRGB::Black);
+        // }
       }
       break;
   }

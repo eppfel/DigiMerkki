@@ -6,13 +6,13 @@
 #include "Arduino.h"
 #include "StatusVisualiser.h"
 
-
-StatusVisualiser::StatusVisualiser(){
-  FastLED.addLeds<NEOPIXEL, DATA_PIN>(_leds, NUM_LEDS);  // GRB ordering is assumed  
-  FastLED.clear();
-  FastLED.setBrightness(64);
+StatusVisualiser::StatusVisualiser(uint8_t maxBrightness = 64)
+{
+	FastLED.addLeds<NEOPIXEL, DATA_PIN>(_leds, NUM_LEDS); // GRB ordering is assumed
+	FastLED.clear();
+	_maxBrightness = maxBrightness;
+	FastLED.setBrightness(maxBrightness);
 }
-
 
 void StatusVisualiser::show() {
 
@@ -29,12 +29,21 @@ void StatusVisualiser::show() {
 			{
 				fill_solid( &(_leds[0]), NUM_LEDS, _blinkColor);
 			} else {
-				fill_solid( &(_leds[0]), NUM_LEDS, CRGB::Black );
+				FastLED.clear();
 			}
-  			FastLED.show();
 		}
+		FastLED.show();
+	} else if (_currentState == STATE_CYLON)
+	{
+		uint8_t ledPos = beatsin8(_bpm, 0, NUM_LEDS - 1);
+		_leds[ledPos] = CRGB(85, 0, 0);
+		uint8_t ledPos2 = beatsin8(_bpm, 0, NUM_LEDS - 1, 0, 20);
+		_leds[ledPos2] = CRGB::Red;
+		FastLED.setBrightness(_maxBrightness);
+		FastLED.show();
+		fadeToBlackBy(_leds, NUM_LEDS, 255);
 	} else {
-		EVERY_N_MILLISECONDS(80) { FastLED.show(); }
+		FastLED.show();
 	}
 
 }
@@ -66,3 +75,8 @@ void StatusVisualiser::setMeter(uint8_t ledIndex) {
   FastLED.show();
 }
 
+void StatusVisualiser::cylon(uint8_t bpm)
+{
+	_bpm = bpm;
+	_currentState = STATE_CYLON;
+}

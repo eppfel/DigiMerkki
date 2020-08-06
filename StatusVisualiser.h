@@ -21,29 +21,33 @@
 #define   BS_PERIOD       360
 #define   BS_COUNT        10
 
-
-#define STATE_IDLE     0
-#define STATE_METER    1
-#define STATE_BLINKING 2
-
 class StatusVisualiser {
-  public:
+  private:
+    CRGB _leds[NUM_LEDS];// include variables for addresable LEDs
     uint8_t _currentState = STATE_IDLE;
+    // uint8_t _suspendedState = NULL;
+    uint8_t _maxBrightness;
+    uint8_t _bpm;
+
     bool _blinkFlag;
     uint32_t _animationStart = 0;
     uint32_t _animationPhase;
     uint8_t _animationIterations;
     CRGB _blinkColor;
-    
 
+  public:
+    const uint8_t STATE_IDLE =     0;
+    const uint8_t STATE_METER =    1;
+    const uint8_t STATE_BLINKING = 2;
+    const uint8_t STATE_CYLON =    3;
 
-    CRGB _leds[NUM_LEDS];// include variables for addresable LEDs
-
-    StatusVisualiser();
+    StatusVisualiser(uint8_t maxBrightness);
     
     void show();
     void blink(uint32_t phase, uint8_t iterations, CRGB color);
     void setMeter(uint8_t ledIndex);
+    void cylon(uint8_t bpm = 60);
+
 };
 
 #endif
