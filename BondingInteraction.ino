@@ -98,7 +98,12 @@ bool calc_delay = false;
 SimpleList<uint32_t> nodes;
 
 bool onFlag = false;
-StatusVisualiser visualiser(64);
+// @Override This function is called by FastLED inside lib8tion.h.Requests it to use mesg.getNodeTime instead of internal millis() timer.
+uint32_t get_millisecond_timer_hook()
+{
+  return mesh.getNodeTime() / 1000;
+}
+StatusVisualiser visualiser(get_millisecond_timer_hook, 64);
 
 // Task variables
 #define TASK_CHECK_BUTTON_PRESS_INTERVAL 2     // in milliseconds

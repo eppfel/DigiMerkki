@@ -5,6 +5,8 @@
 #ifndef StatusVisualiser_h
 #define StatusVisualiser_h
 
+#define USE_GET_MILLISECOND_TIMER
+
 #include "Arduino.h"
 #include <FastLED.h>
 
@@ -41,8 +43,8 @@ class StatusVisualiser {
     const uint8_t STATE_BLINKING = 2;
     const uint8_t STATE_CYLON =    3;
 
-    StatusVisualiser(uint8_t maxBrightness);
-    
+    StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness);
+
     void show();
     void blink(uint32_t phase, uint8_t iterations, CRGB color);
     void setMeter(uint8_t ledIndex);
