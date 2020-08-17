@@ -6,11 +6,12 @@
 #include "Arduino.h"
 #include "StatusVisualiser.h"
 
+uint32_t (*getMeshNodeTime)();
+
 // @Override This function is called by FastLED inside lib8tion.h.Requests it to use mesg.getNodeTime instead of internal millis() timer.
 // Makes every pattern on each node synced!! So awesome!
 uint32_t get_millisecond_timer()
 {
-	EVERY_N_SECONDS(5) Serial.println(getMeshNodeTime());
 	return getMeshNodeTime();
 }
 
@@ -27,10 +28,10 @@ void StatusVisualiser::show() {
 
 	if (_currentState == STATE_BLINKING)
 	{
-		if ((millis() - _animationStart) > _animationPhase * _animationIterations) {
+		if ((get_millisecond_timer() - _animationStart) > _animationPhase * _animationIterations) {
 			_currentState = STATE_IDLE;
 			FastLED.clear();
-		} else if (((millis() - _animationStart) / _animationPhase) % 2 != _blinkFlag)
+		} else if (((get_millisecond_timer() - _animationStart) / _animationPhase) % 2 != _blinkFlag)
 		{
 			// Serial.println()
 			_blinkFlag = !_blinkFlag;
@@ -59,7 +60,7 @@ void StatusVisualiser::show() {
 
 
 void StatusVisualiser::blink(uint32_t phase, uint8_t iterations, CRGB color) {
-	_animationStart = millis();
+	_animationStart = get_millisecond_timer();
 	_animationPhase = (uint32_t) ((float) phase / 2);
 	_animationIterations = iterations * 2;
 	_blinkColor = color;

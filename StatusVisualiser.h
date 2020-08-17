@@ -23,9 +23,6 @@
 #define   BS_PERIOD       360
 #define   BS_COUNT        10
 
-uint32_t (*getMeshNodeTime)();
-uint32_t get_millisecond_timer();
-
 class StatusVisualiser {
   private:
     CRGB _leds[NUM_LEDS];// include variables for addresable LEDs
