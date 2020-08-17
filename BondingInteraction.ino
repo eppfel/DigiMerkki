@@ -41,8 +41,8 @@
   #define SENDPIN         4    // stub
   #define TTHRESHOLD     30    // threshold for touch
   #define STHRESHOLD     20    // threshold for wake up touch 
-  #define HW_BUTTON_PIN1 35      // Hardware button 1 on the T-display board
-  #define HW_BUTTON_PIN2  0      // Hardware button 1 on the T-display board
+  #define HW_BUTTON_PIN1 35    // Hardware button 1 on the T-display board
+  #define HW_BUTTON_PIN2  0    // Hardware button 1 on the T-display board
 
   #include <TFT_eSPI.h>
   #include <SPI.h>
@@ -286,6 +286,7 @@ void showVisualisations() {
 }
 
 void loop() {
+  // EVERY_N_SECONDS(3) mesh.sendBroadcast("Touch debugging: " + String(touchRead(33)));
   mesh.update();
 }
 
@@ -398,7 +399,7 @@ void sendMessage(String msg) {
 
 /* Controller for incoming messages that prints all incoming messages and listens on touch and bonding events */
 void receivedCallback(uint32_t from, String & msg) {
-  Serial.printf("startHere: Received from %u msg=%s\n", from, msg.c_str());
+  Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
   Serial.println("");
 
   //FIX: remove the bonding cypher that was send after the response time winoow passed
@@ -407,7 +408,7 @@ void receivedCallback(uint32_t from, String & msg) {
     cypherPeer = msg.substring(9).toInt(); //other devices sending cyphers will override this value and block bonding -> connect to nodeid, because that is unique
     cypherNode = from;
 
-    Serial.println("Bonding cypher " + cypherString(cypherPeer) + "received from " + from);
+    Serial.println("Bonding cypher " + cypherString(cypherPeer) + " received from " + from);
 
     if ((bondingStarttime + HANDSHAKETIME) > millis()) {
       
@@ -427,7 +428,7 @@ void receivedCallback(uint32_t from, String & msg) {
       }
     } else {
       //bonding was out of time or no request from this side
-      Serial.printf("No open request, yet");
+      Serial.println("No open request, yet");
     }
     bondingStarttime = millis();
   } else if (msg.startsWith("Bonding")) {
