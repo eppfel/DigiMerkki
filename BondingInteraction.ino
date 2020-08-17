@@ -204,7 +204,19 @@ void sleep()
 }
 
 void uploadUserData() {
+  static bool isFirstCall = true;
   Serial.println("Button 2 was pressed!");
+  if (isFirstCall) {
+    mesh.stop();
+    Serial.println("Disconnected from mesh! Wait for 5 seconds to reconnect.");
+    Task taskReconnectMesh(
+        5000, TASK_ONCE, []() {
+          Serial.println("Trying to reconnect to mesh!");
+          mesh.initStation();
+        },
+        &userScheduler);
+    isFirstCall = false;
+  }
 }
 
 void typeCypher(uint8_t keyCode) {
