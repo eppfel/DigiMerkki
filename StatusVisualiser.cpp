@@ -6,11 +6,20 @@
 #include "Arduino.h"
 #include "StatusVisualiser.h"
 
-StatusVisualiser::StatusVisualiser(uint8_t maxBrightness = 64)
+// @Override This function is called by FastLED inside lib8tion.h.Requests it to use mesg.getNodeTime instead of internal millis() timer.
+// Makes every pattern on each node synced!! So awesome!
+uint32_t get_millisecond_timer()
+{
+	EVERY_N_SECONDS(5) Serial.println(getMeshNodeTime());
+	return getMeshNodeTime();
+}
+
+StatusVisualiser::StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness = 64)
 {
 	FastLED.addLeds<NEOPIXEL, DATA_PIN>(_leds, NUM_LEDS); // GRB ordering is assumed
 	FastLED.clear();
 	_maxBrightness = maxBrightness;
+	getMeshNodeTime = t;
 	FastLED.setBrightness(maxBrightness);
 }
 

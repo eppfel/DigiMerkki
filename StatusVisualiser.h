@@ -5,6 +5,8 @@
 #ifndef StatusVisualiser_h
 #define StatusVisualiser_h
 
+#define USE_GET_MILLISECOND_TIMER
+
 #include "Arduino.h"
 #include <FastLED.h>
 
@@ -20,6 +22,9 @@
 #define   NUM_LEDS        5    // Number of LEDs conrolled through FastLED
 #define   BS_PERIOD       360
 #define   BS_COUNT        10
+
+uint32_t (*getMeshNodeTime)();
+uint32_t get_millisecond_timer();
 
 class StatusVisualiser {
   private:
@@ -41,8 +46,8 @@ class StatusVisualiser {
     const uint8_t STATE_BLINKING = 2;
     const uint8_t STATE_CYLON =    3;
 
-    StatusVisualiser(uint8_t maxBrightness);
-    
+    StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness);
+
     void show();
     void blink(uint32_t phase, uint8_t iterations, CRGB color);
     void setMeter(uint8_t ledIndex);
