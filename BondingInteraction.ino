@@ -424,8 +424,8 @@ void receivedCallback(uint32_t from, String & msg) {
         Serial.printf("Bonding with %u\n", from);Serial.println("");
         bondingSuccessNode = from;
         if (bondingRequestNode == bondingSuccessNode) {
-          Serial.printf("Bonded with %u\n", from);Serial.println("");
-          visualiser.blink(360, 8, CRGB::DeepSkyBlue);
+          Serial.println("Bonded with" + from);
+          visualiser.cylon();
           //store in list
         }
       } else {
@@ -438,9 +438,8 @@ void receivedCallback(uint32_t from, String & msg) {
     bondingStarttime = millis();
   } else if (msg.startsWith("Bonding")) {
     if (bondingSuccessNode == from) { //this has to be checked against a time
-      Serial.printf("Bonded with %u\n", from);Serial.println("");
-      visualiser.blink(360, 8, CRGB::DeepSkyBlue);
-      //store in list
+      Serial.println("Bonded with" + from);
+      visualiser.cylon();
     } else {
       bondingRequestNode = from;
     }
