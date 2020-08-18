@@ -200,6 +200,7 @@ void sleep()
 {
   mesh.stop();
   Serial.println("Disconnected from mesh!");
+  visualiser.turnOff();
   touchAttachInterrupt(TOUCHPIN, wakeup_callback, STHRESHOLD);
   touchAttachInterrupt(TOUCHPIN1, wakeup_callback, STHRESHOLD);
   touchAttachInterrupt(TOUCHPIN2, wakeup_callback, STHRESHOLD);
@@ -291,14 +292,11 @@ void showVisualisations() {
 }
 
 void loop() {
-  // EVERY_N_SECONDS(3) mesh.sendBroadcast("Touch debugging: " + String(touchRead(33)));
   mesh.update();
 }
 
 void buttonHandler(uint8_t keyCode)
 {
-  // static const boolean isCylon = false;
-
   switch (currentState)
   {
     case STATE_CYPHER:
@@ -314,7 +312,7 @@ void buttonHandler(uint8_t keyCode)
         tft.fillScreen(TFT_BLACK);
         tft.drawString("Cypher: ", 0, 0);
 #endif
-        visualiser.blink(200, 3, CRGB::HotPink);
+        visualiser.blink(200, 3, CRGB::HotPink, StatusVisualiser::STATE_METER);
       } else if (keyCode == BTN_B)
       {
         visualiser.cylon();

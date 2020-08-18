@@ -29,7 +29,7 @@ void StatusVisualiser::show() {
 	if (_currentState == STATE_BLINKING)
 	{
 		if ((get_millisecond_timer() - _animationStart) > _animationPhase * _animationIterations) {
-			_currentState = STATE_ANIMATION;
+			_currentState = _transitionState;
 			FastLED.clear();
 		} else if (((get_millisecond_timer() - _animationStart) / _animationPhase) % 2 != _blinkFlag)
 		{
@@ -62,21 +62,30 @@ void StatusVisualiser::show() {
 
 }
 
+void StatusVisualiser::turnOff()
+{
+	_currentState = STATE_ANIMATION;
+	_currentPattern = PATTERN_OFF;
+	FastLED.clear();
+	FastLED.show();
+}
 
-void StatusVisualiser::blink(uint32_t phase, uint8_t iterations, CRGB color) {
+void StatusVisualiser::blink(uint32_t phase, uint8_t iterations, CRGB color, uint8_t transitionState)
+{
 	_animationStart = get_millisecond_timer();
 	_animationPhase = (uint32_t) ((float) phase / 2);
 	_animationIterations = iterations * 2;
 	_blinkColor = color;
-
+	_transitionState = transitionState;
 	_currentState = STATE_BLINKING;
 	_blinkFlag = true;
 }
 
-void StatusVisualiser::setMeter(uint8_t ledIndex) {
+//Todo: Make function bidirectional (fill LEDs from back to front based on a flag)
+void StatusVisualiser::setMeter(int8_t ledIndex) {
 	_currentState = STATE_METER;
 
-	for (int i = 0; i < NUM_LEDS; ++i)
+	for (int8_t i = 0; i < NUM_LEDS; ++i)
 	{
 		if (ledIndex < i)
 		{
@@ -85,8 +94,6 @@ void StatusVisualiser::setMeter(uint8_t ledIndex) {
 			_leds[i] = CRGB::HotPink;
 		}
 	}
-
-  FastLED.show();
 }
 
 void StatusVisualiser::cylon(uint8_t bpm)
