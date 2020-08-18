@@ -26,8 +26,8 @@
 class StatusVisualiser {
   private:
     CRGB _leds[NUM_LEDS];// include variables for addresable LEDs
-    uint8_t _currentState = STATE_IDLE;
-    // uint8_t _suspendedState = NULL;
+    uint8_t _currentState = STATE_ANIMATION;
+    uint8_t _currentPattern = PATTERN_OFF;
     uint8_t _maxBrightness;
     uint8_t _bpm;
 
@@ -38,10 +38,11 @@ class StatusVisualiser {
     CRGB _blinkColor;
 
   public:
-    const uint8_t STATE_IDLE =     0;
-    const uint8_t STATE_METER =    1;
-    const uint8_t STATE_BLINKING = 2;
-    const uint8_t STATE_CYLON =    3;
+    const uint8_t STATE_ANIMATION = 0;
+    const uint8_t STATE_METER =     1;
+    const uint8_t STATE_BLINKING =  2;
+    const uint8_t PATTERN_OFF =     0;
+    const uint8_t PATTERN_CYLON =   1;
 
     StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness);
 

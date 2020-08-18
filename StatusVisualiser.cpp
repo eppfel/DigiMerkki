@@ -29,7 +29,7 @@ void StatusVisualiser::show() {
 	if (_currentState == STATE_BLINKING)
 	{
 		if ((get_millisecond_timer() - _animationStart) > _animationPhase * _animationIterations) {
-			_currentState = STATE_IDLE;
+			_currentState = STATE_ANIMATION;
 			FastLED.clear();
 		} else if (((get_millisecond_timer() - _animationStart) / _animationPhase) % 2 != _blinkFlag)
 		{
@@ -43,15 +43,19 @@ void StatusVisualiser::show() {
 			}
 		}
 		FastLED.show();
-	} else if (_currentState == STATE_CYLON)
+	} else if (_currentState == STATE_ANIMATION)
 	{
-		uint8_t ledPos = beatsin8(_bpm, 0, NUM_LEDS - 1);
-		_leds[ledPos] = CRGB(85, 0, 0);
-		uint8_t ledPos2 = beatsin8(_bpm, 0, NUM_LEDS - 1, 0, 20);
-		_leds[ledPos2] = CRGB::Red;
-		FastLED.setBrightness(_maxBrightness);
-		FastLED.show();
-		fadeToBlackBy(_leds, NUM_LEDS, 255);
+		if (_currentPattern == PATTERN_CYLON) {
+				uint8_t ledPos = beatsin8(_bpm, 0, NUM_LEDS - 1);
+				_leds[ledPos] = CRGB(85, 0, 0);
+				uint8_t ledPos2 = beatsin8(_bpm, 0, NUM_LEDS - 1, 0, 20);
+				_leds[ledPos2] = CRGB::Red;
+				FastLED.setBrightness(_maxBrightness);
+				FastLED.show();
+				fadeToBlackBy(_leds, NUM_LEDS, 255);
+		} else {
+			FastLED.show();
+		}
 	} else {
 		FastLED.show();
 	}
@@ -88,5 +92,6 @@ void StatusVisualiser::setMeter(uint8_t ledIndex) {
 void StatusVisualiser::cylon(uint8_t bpm)
 {
 	_bpm = bpm;
-	_currentState = STATE_CYLON;
+	_currentState = STATE_ANIMATION;
+	_currentPattern = PATTERN_CYLON;
 }
