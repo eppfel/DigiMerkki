@@ -34,30 +34,32 @@
 #define STHRESHOLD 20          // threshold for wake up touch
 
 #else //ESP32 DEV Module
-  #define LED            21    // GPIO number of connected LED
-  #define TOUCHPIN       T7    // Pin for sensing touch input 27
-  #define TOUCHPIN1      T9    // Pin for sensing touch input 32 (labelled as 33)
-  #define TOUCHPIN2      T8    // Pin for sensing touch input 33 (labelled as 32)
-  #define SENDPIN         4    // stub
-  #define TTHRESHOLD     30    // threshold for touch
-  #define STHRESHOLD     20    // threshold for wake up touch 
-  #define HW_BUTTON_PIN1 35    // Hardware button 1 on the T-display board
-  #define HW_BUTTON_PIN2  0    // Hardware button 1 on the T-display board
+#define LED            21    // GPIO number of connected LED
+#define TOUCHPIN       T7    // Pin for sensing touch input 27
+#define TOUCHPIN1      T9    // Pin for sensing touch input 32 (labelled as 33)
+#define TOUCHPIN2      T8    // Pin for sensing touch input 33 (labelled as 32)
+#define SENDPIN         4    // stub
+#define TTHRESHOLD     30    // threshold for touch
+#define STHRESHOLD     20    // threshold for wake up touch 
+#define HW_BUTTON_PIN1 35    // Hardware button 1 on the T-display board
+#define HW_BUTTON_PIN2  0    // Hardware button 1 on the T-display board
 
-  #include <TFT_eSPI.h>
-  #include <SPI.h>
-  #ifndef TFT_DISPOFF
-  #define TFT_DISPOFF  0x28
-  #endif
-  #ifndef TFT_SLPIN
-  #define TFT_SLPIN    0x10
-  #endif
-  #define TFT_MOSI       19
-  #define TFT_SCLK       18
-  #define TFT_CS          5
-  #define TFT_DC         16
-  #define TFT_RST        23
-  #define TFT_BL          4  // Display backlight control pin
+#include <TFT_eSPI.h>
+#include <SPI.h>
+#ifndef TFT_DISPOFF
+#define TFT_DISPOFF  0x28
+#endif
+#ifndef TFT_SLPIN
+#define TFT_SLPIN    0x10
+#endif
+#define TFT_MOSI       19
+#define TFT_SCLK       18
+#define TFT_CS          5
+#define TFT_DC         16
+#define TFT_RST        23
+#define TFT_BL          4  // Display backlight control pin
+
+#define ADC_PIN        34
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
@@ -173,7 +175,7 @@ void setup() {
   hwbutton1.begin();
   hwbutton2.begin();
   hwbutton1.onPressed(sleep);
-  hwbutton2.onPressed(uploadUserData);
+  hwbutton2.onPressed(showVoltage);
 
   tft.init();
   tft.setRotation(3);
@@ -193,6 +195,23 @@ void onPressed() {
 void wakeup_callback()
 {
   //placeholder callback function
+}
+
+int vref = 1100;
+void showVoltage()
+{
+  static uint64_t timeStamp = 0;
+  if (millis() - timeStamp > 1000)
+  {
+    timeStamp = millis();
+    uint16_t v = analogRead(ADC_PIN);
+    float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
+    String voltage = "Voltage :" + String(battery_voltage) + "V";
+    Serial.println(voltage);
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString(voltage, tft.width() / 2, tft.height() / 2);
+  }
 }
 
 // trigger deep sleep mode and wake up on any input from the touch buttons
