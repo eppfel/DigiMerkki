@@ -130,7 +130,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  mesh.setDebugMsgTypes(ERROR | DEBUG);  // set before init() so that you can see error messages
+  mesh.setDebugMsgTypes(ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | DEBUG); // set before init() so that you can see error messages
 
   mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler);
   mesh.onReceive(&receivedCallback);
@@ -469,10 +469,9 @@ void newConnectionCallback(uint32_t nodeId) {
   blinkNoNodes.setIterations((mesh.getNodeList().size() + 1) * 2);
   blinkNoNodes.enableDelayed(BLINK_PERIOD - (mesh.getNodeTime() % (BLINK_PERIOD * 1000)) / 1000);
 
-  Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
-  Serial.println("");
-  Serial.printf("--> startHere: New Connection, %s\n", mesh.subConnectionJson(true).c_str());
-  Serial.println("");
+  Serial.println("New Connection, nodeId = " + nodeId);
+  // Serial.printf("--> startHere: New Connection, %s\n", mesh.subConnectionJson(true).c_str());
+  // Serial.println("");
 }
 
 void changedConnectionCallback() {
