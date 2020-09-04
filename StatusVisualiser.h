@@ -10,13 +10,8 @@
 #include "Arduino.h"
 #include <FastLED.h>
 
-
-#ifdef ESP8266 // Feather Huzzah ESP8266
-  #define DATA_PIN       12    // Pin for controlling NeoPixel
-#elif defined(ARDUINO_FEATHER_ESP32)
-  #define DATA_PIN       12    // Pin for controlling NeoPixel
-#else //ESP32 DEV Module
-  #define DATA_PIN       26    // Pin for controlling NeoPixel
+#ifndef NEOPIXEL_PIN
+#define NEOPIXEL_PIN 12 // Pin for controlling NeoPixel
 #endif
 
 #define   NUM_LEDS        5    // Number of LEDs conrolled through FastLED

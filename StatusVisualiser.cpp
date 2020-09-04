@@ -17,7 +17,7 @@ uint32_t get_millisecond_timer()
 
 StatusVisualiser::StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness = 64)
 {
-	FastLED.addLeds<NEOPIXEL, DATA_PIN>(_leds, NUM_LEDS); // GRB ordering is assumed
+	FastLED.addLeds<NEOPIXEL, NEOPIXEL_PIN>(_leds, NUM_LEDS); // GRB ordering is assumed
 	FastLED.clear();
 	_maxBrightness = maxBrightness;
 	getMeshNodeTime = t;
