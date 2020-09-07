@@ -130,7 +130,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  mesh.setDebugMsgTypes(ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | DEBUG); // set before init() so that you can see error messages
+  mesh.setDebugMsgTypes(ERROR | DEBUG); // set before init() so that you can see error messages
 
   mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler);
   mesh.onReceive(&receivedCallback);
@@ -430,7 +430,7 @@ void receivedCallback(uint32_t from, String & msg) {
     cypherPeer = msg.substring(9).toInt(); //other devices sending cyphers will override this value and block bonding -> connect to nodeid, because that is unique
     cypherNode = from;
 
-    Serial.println("Bonding cypher " + cypherString(cypherPeer) + " received from " + from);
+    Serial.printf("Bonding cypher %s received from %u\n", cypherString(cypherPeer), from);
 
     if ((bondingStarttime + HANDSHAKETIME) > millis()) {
       
@@ -441,7 +441,7 @@ void receivedCallback(uint32_t from, String & msg) {
         Serial.printf("Bonding with %u\n", from);Serial.println("");
         bondingSuccessNode = from;
         if (bondingRequestNode == bondingSuccessNode) {
-          Serial.println("Bonded with" + from);
+          Serial.printf("Bonded with %u\n", from);
           visualiser.cylon();
           //store in list
         }
@@ -455,7 +455,7 @@ void receivedCallback(uint32_t from, String & msg) {
     bondingStarttime = millis();
   } else if (msg.startsWith("Bonding")) {
     if (bondingSuccessNode == from) { //this has to be checked against a time
-      Serial.println("Bonded with" + from);
+      Serial.printf("Bonded with %u\n", from);
       visualiser.cylon();
     } else {
       bondingRequestNode = from;
@@ -469,7 +469,7 @@ void newConnectionCallback(uint32_t nodeId) {
   blinkNoNodes.setIterations((mesh.getNodeList().size() + 1) * 2);
   blinkNoNodes.enableDelayed(BLINK_PERIOD - (mesh.getNodeTime() % (BLINK_PERIOD * 1000)) / 1000);
 
-  Serial.println("New Connection, nodeId = " + nodeId);
+  Serial.printf("New Connection, nodeId = %u", nodeId);
   // Serial.printf("--> startHere: New Connection, %s\n", mesh.subConnectionJson(true).c_str());
   // Serial.println("");
 }
