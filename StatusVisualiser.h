@@ -26,6 +26,7 @@ class StatusVisualiser {
     uint8_t _currentPattern = PATTERN_OFF;
     uint8_t _maxBrightness;
     uint8_t _bpm;
+    uint8_t _cylonHue;
 
     bool _blinkFlag;
     uint32_t _animationStart = 0;
@@ -46,8 +47,7 @@ class StatusVisualiser {
     void turnOff();
     void blink(uint32_t phase, uint8_t iterations, CRGB color, uint8_t transitionState = STATE_ANIMATION);
     void setMeter(int8_t ledIndex = -1);
-    void cylon(uint8_t bpm = 60);
-
+    void cylon(uint32_t bondingCypher, uint8_t bpm = 60);
 };
 
 #endif

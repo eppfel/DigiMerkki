@@ -244,7 +244,7 @@ void buttonHandler(uint8_t keyCode)
         visualiser.blink(200, 3, CRGB::HotPink, StatusVisualiser::STATE_METER);
       } else if (keyCode == BTN_B)
       {
-        visualiser.cylon();
+        visualiser.cylon(0);
         // isCylon != isCylon;
         // if (isCylon) {
         // } else {
@@ -352,7 +352,7 @@ void receivedCallback(uint32_t from, String & msg) {
         bondingSuccessNode = from;
         if (bondingRequestNode == bondingSuccessNode) {
           Serial.printf("Bonded with %u\n", from);
-          visualiser.cylon();
+          visualiser.cylon(cypher);
           //store in list
         }
       } else {
@@ -366,7 +366,7 @@ void receivedCallback(uint32_t from, String & msg) {
   } else if (msg.startsWith("Bonding")) {
     if (bondingSuccessNode == from) { //this has to be checked against a time
       Serial.printf("Bonded with %u\n", from);
-      visualiser.cylon();
+      visualiser.cylon(cypher);
     } else {
       bondingRequestNode = from;
     }

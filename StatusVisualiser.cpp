@@ -47,9 +47,9 @@ void StatusVisualiser::show() {
 	{
 		if (_currentPattern == PATTERN_CYLON) {
 				uint8_t ledPos = beatsin8(_bpm, 0, NUM_LEDS - 1);
-				_leds[ledPos] = CRGB(85, 0, 0);
-				uint8_t ledPos2 = beatsin8(_bpm, 0, NUM_LEDS - 1, 0, 20);
-				_leds[ledPos2] = CRGB::Red;
+				_leds[ledPos].setHSV(_cylonHue, 255, 64);
+				ledPos = beatsin8(_bpm, 0, NUM_LEDS - 1, 0, 20);
+				_leds[ledPos].setHSV(_cylonHue, 255, 255);
 				FastLED.setBrightness(_maxBrightness);
 				FastLED.show();
 				fadeToBlackBy(_leds, NUM_LEDS, 255);
@@ -96,8 +96,9 @@ void StatusVisualiser::setMeter(int8_t ledIndex) {
 	}
 }
 
-void StatusVisualiser::cylon(uint8_t bpm)
+void StatusVisualiser::cylon(uint32_t bondingCypher, uint8_t bpm)
 {
+	_cylonHue = bondingCypher / 60;
 	_bpm = bpm;
 	_currentState = STATE_ANIMATION;
 	_currentPattern = PATTERN_CYLON;
