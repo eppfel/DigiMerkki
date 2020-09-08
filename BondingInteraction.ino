@@ -12,68 +12,20 @@
 // TODO: Calibrate touch sensors on startup to avoid false positive touch events
 //
 //************************************************************
+// #include "headers/tdisplay.h"
+
 #include <painlessMesh.h>
 #include "CapacitiveKeyboard.h"
 #include "StatusVisualiser.h"
 
-#ifdef ESP8266 // Feather Huzzah ESP8266
-  #define LED             0    // GPIO number of connected LED
-  #define TOUCHPIN       13    // Pin for sensing touch input
-  #define TOUCHPIN1      13    // Pin for sensing touch input
-  #define TOUCHPIN2      13    // Pin for sensing touch input
-  #define SENDPIN         4    // Sending pulse from this pin to measure capacity
-  #define TTHRESHOLD   5000    // threshold for touch
-
-#elif defined(ARDUINO_FEATHER_ESP32)
-  #define LED            13    // GPIO number of connected LED
-  #define TOUCHPIN       33    // Pin for sensing touch input 33 (labelled 32)
-  #define TOUCHPIN1      32    // Pin for sensing touch input 32 (labelled 33)
-  #define TOUCHPIN2      15    // Pin for sensing touch input 15
-  #define SENDPIN         4    // stub
-#define TTHRESHOLD 30          // threshold for touch
-#define STHRESHOLD 20          // threshold for wake up touch
-
-#else //ESP32 DEV Module
-#define LED            21    // GPIO number of connected LED
-#define TOUCHPIN       T7    // Pin for sensing touch input 27
-#define TOUCHPIN1      T9    // Pin for sensing touch input 32 (labelled as 33)
-#define TOUCHPIN2      T8    // Pin for sensing touch input 33 (labelled as 32)
-#define SENDPIN         4    // stub
-#define TTHRESHOLD     30    // threshold for touch
-#define STHRESHOLD     20    // threshold for wake up touch 
-#define HW_BUTTON_PIN1 35    // Hardware button 1 on the T-display board
-#define HW_BUTTON_PIN2  0    // Hardware button 1 on the T-display board
-
 #include <TFT_eSPI.h>
 #include <SPI.h>
-#ifndef TFT_DISPOFF
-#define TFT_DISPOFF  0x28
-#endif
-#ifndef TFT_SLPIN
-#define TFT_SLPIN    0x10
-#endif
-#define TFT_MOSI       19
-#define TFT_SCLK       18
-#define TFT_CS          5
-#define TFT_DC         16
-#define TFT_RST        23
-#define TFT_BL          4  // Display backlight control pin
 
-#define ADC_PIN        34
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
 
-TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom TFT library
-#endif
-
-#define   BLINK_PERIOD    3000 // milliseconds until cycle repeat
-#define   BLINK_DURATION  100  // milliseconds LED is on for
-
-#define   HANDSHAKETIME   10000  // time to perform a usccessful handshake between people
-
-#define   MESH_SSID       "nopainnogain"
-#define   MESH_PASSWORD   "istanbul"
+TFT_eSPI tft = TFT_eSPI(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
 
 // RTC_DATA_ATTR int bootCount = 0; //store data in the RTC (persistent in deep sleep but not after reset)
 // touch_pad_t touchPin; // for printing the touch pin
