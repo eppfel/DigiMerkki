@@ -51,7 +51,6 @@ painlessMesh  mesh;
 bool calc_delay = false;
 SimpleList<uint32_t> nodes;
 
-bool onFlag = false;
 // @Override This function is called by FastLED inside lib8tion.h.Requests it to use mesg.getNodeTime instead of internal millis() timer.
 uint32_t get_millisecond_timer_hook()
 {
@@ -62,7 +61,6 @@ StatusVisualiser visualiser(get_millisecond_timer_hook, 64);
 // Task variables
 #define TASK_CHECK_BUTTON_PRESS_INTERVAL 2     // in milliseconds
 #define VISUALISATION_UPDATE_INTERVAL 1 // default scheduling time for currentPatternSELECT, in milliseconds
-Task blinkNoNodes;
 Task taskCheckButtonPress(TASK_CHECK_BUTTON_PRESS_INTERVAL, TASK_FOREVER, &checkButtonPress);
 Task taskVisualiser(VISUALISATION_UPDATE_INTERVAL, TASK_FOREVER, &showVisualisations);
 
@@ -96,34 +94,10 @@ void setup() {
 
   userScheduler.addTask(taskCheckButtonPress);
   taskCheckButtonPress.enable();
-  
-  pinMode(LED, OUTPUT);
-  blinkNoNodes.set(BLINK_PERIOD, (mesh.getNodeList().size() + 1) * 2, []() {
-    // If on, switch off, else switch on
-    if (onFlag)
-      onFlag = false;
-    else
-      onFlag = true;
-    blinkNoNodes.delay(BLINK_DURATION);
-
-    if (blinkNoNodes.isLastIteration()) {
-      // Finished blinking. Reset task for next run
-      // blink number of nodes (including this node) times
-      blinkNoNodes.setIterations((mesh.getNodeList().size() + 1) * 2);
-      // Calculate delay based on current mesh time and BLINK_PERIOD
-      // This results in blinks between nodes being synced
-      blinkNoNodes.enableDelayed(BLINK_PERIOD -
-                                 (mesh.getNodeTime() % (BLINK_PERIOD * 1000)) / 1000);
-    }
-  });
-  
-  userScheduler.addTask(blinkNoNodes);
-  blinkNoNodes.enable();
 
   userScheduler.addTask(taskVisualiser);
   taskVisualiser.enable();
 
-#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   hwbutton1.begin();
   hwbutton2.begin();
   hwbutton1.onPressed(sleep);
@@ -135,7 +109,6 @@ void setup() {
   tft.setTextColor(TFT_WHITE);
   tft.fillScreen(TFT_BLACK);
   tft.drawString("Started!", 0, 0);
-#endif
 
   randomSeed(analogRead(A0));
 }
@@ -217,26 +190,20 @@ void typeCypher(uint8_t keyCode) {
         break;
       }
     }
-#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
     tft.fillScreen(TFT_BLACK);
     tft.drawString("Cypher: " + cypherString(cypher), 0, 0);
-#endif
   }
   if (keyCode == BTN_AC || cypherLength > 4) { //exit cyphertyping either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit) : cypher > 1 << 12
     
     if (cypher == 0) {// only send cypher, if it is not empty
       visualiser.blink(200, 1, CRGB::Blue);
-#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
       tft.fillScreen(TFT_BLACK);
       tft.drawString("No cypher sent.", 0, 0);
-#endif
     } else {
       sendCypher();
       visualiser.blink(200, 3, CRGB::HotPink);
-#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
       tft.fillScreen(TFT_BLACK);
       tft.drawString("Sent cypher: " + cypherString(cypher), 0, 0);
-#endif
     }
 
     Serial.println("Switch from cypher-input to idle");
@@ -247,19 +214,12 @@ void typeCypher(uint8_t keyCode) {
 
 void checkButtonPress() {
   touchInput.tick();
-#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
   hwbutton1.read();
   hwbutton2.read();
-#endif
 }
 
 void showVisualisations() {
   visualiser.show();
-#if defined(ESP8266) // Feather Huzzah
-  digitalWrite(LED, !onFlag);
-#else // ESP32
-  digitalWrite(LED, onFlag);
-#endif
 }
 
 void loop() {
@@ -279,10 +239,8 @@ void buttonHandler(uint8_t keyCode)
         currentState = STATE_CYPHER;
         cypher = 0;
         Serial.println("Switch from idle to cypher-input");
-#if !defined(ARDUINO_FEATHER_ESP32) && !defined(ESP8266)
         tft.fillScreen(TFT_BLACK);
         tft.drawString("Cypher: ", 0, 0);
-#endif
         visualiser.blink(200, 3, CRGB::HotPink, StatusVisualiser::STATE_METER);
       } else if (keyCode == BTN_B)
       {
@@ -416,10 +374,7 @@ void receivedCallback(uint32_t from, String & msg) {
 }
 
 void newConnectionCallback(uint32_t nodeId) {
-  // Reset blink task
-  onFlag = false;
-  blinkNoNodes.setIterations((mesh.getNodeList().size() + 1) * 2);
-  blinkNoNodes.enableDelayed(BLINK_PERIOD - (mesh.getNodeTime() % (BLINK_PERIOD * 1000)) / 1000);
+  // Display change on tft
 
   Serial.printf("New Connection, nodeId = %u", nodeId);
   // Serial.printf("--> startHere: New Connection, %s\n", mesh.subConnectionJson(true).c_str());
@@ -428,10 +383,7 @@ void newConnectionCallback(uint32_t nodeId) {
 
 void changedConnectionCallback() {
   Serial.printf("Changed connections\n");
-  // Reset blink task
-  onFlag = false;
-  blinkNoNodes.setIterations((mesh.getNodeList().size() + 1) * 2);
-  blinkNoNodes.enableDelayed(BLINK_PERIOD - (mesh.getNodeTime() % (BLINK_PERIOD * 1000)) / 1000);
+  // Display changes on tft
 
   nodes = mesh.getNodeList();
 
