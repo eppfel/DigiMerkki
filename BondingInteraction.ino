@@ -21,11 +21,13 @@
 #include <TFT_eSPI.h>
 #include <SPI.h>
 
+#include "ressources/aalto.h"
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
 
 TFT_eSPI tft = TFT_eSPI(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
+// int media = 2;
 
 // RTC_DATA_ATTR int bootCount = 0; //store data in the RTC (persistent in deep sleep but not after reset)
 // touch_pad_t touchPin; // for printing the touch pin
@@ -33,6 +35,7 @@ TFT_eSPI tft = TFT_eSPI(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
 CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD);
 
 // Prototypes
+void showLogo();
 void broadcastCapSense();
 void sleep();
 void uploadUserData();
@@ -62,8 +65,10 @@ StatusVisualiser visualiser(get_millisecond_timer_hook, 64);
 // Task variables
 #define TASK_CHECK_BUTTON_PRESS_INTERVAL 2     // in milliseconds
 #define VISUALISATION_UPDATE_INTERVAL 1 // default scheduling time for currentPatternSELECT, in milliseconds
+#define LOGO_DELAY 5000
 Task taskCheckButtonPress(TASK_CHECK_BUTTON_PRESS_INTERVAL, TASK_FOREVER, &checkButtonPress);
 Task taskVisualiser(VISUALISATION_UPDATE_INTERVAL, TASK_FOREVER, &showVisualisations);
+Task taskShowLogo(LOGO_DELAY, TASK_ONCE, &showLogo);
 
 #define STATE_IDLE 0
 #define STATE_CYPHER 1
@@ -111,6 +116,9 @@ void setup() {
   tft.fillScreen(TFT_BLACK);
   tft.drawString("Started!", 0, 0);
 
+  userScheduler.addTask(taskShowLogo);
+  taskShowLogo.enableDelayed(LOGO_DELAY);
+
   randomSeed(analogRead(A0));
 }
 
@@ -121,6 +129,30 @@ void onPressed() {
 void wakeup_callback()
 {
   //placeholder callback function
+}
+
+void showLogo()
+{
+  // tft.setRotation(3);
+  // switch (media)
+  // {
+  // case 0:
+  //   tft.pushImage(0, 0, 240, 135, digitalhaalarit);
+  //   break;
+  // case 1:
+  //   tft.pushImage(0, 0, 240, 135, digitalhaalaritbmo);
+  //   break;
+  // case 2:
+  tft.pushImage(0, 0, 240, 135, digitalhaalaritaalto);
+  //   break;
+  // case 3:
+  //   tft.pushImage(0, 0, 240, 135, digitalhaalaritnude);
+  //   break;
+  // default:
+  //   tft.pushImage(0, 0, 240, 135, digitalhaalarit);
+  //   break;
+  // }
+  // tft.setRotation(DISPLAY_ORIENTATION);
 }
 
 int vref = 1100;
@@ -200,11 +232,13 @@ void typeCypher(uint8_t keyCode) {
       visualiser.blink(200, 1, CRGB::Blue);
       tft.fillScreen(TFT_BLACK);
       tft.drawString("No cypher sent.", 0, 0);
+      taskShowLogo.restartDelayed(5000);
     } else {
       sendCypher();
       visualiser.blink(200, 3, CRGB::HotPink);
       tft.fillScreen(TFT_BLACK);
       tft.drawString("Sent cypher: " + cypherString(cypher), 0, 0);
+      taskShowLogo.restartDelayed(5000);
     }
 
     Serial.println("Switch from cypher-input to idle");
@@ -245,12 +279,13 @@ void buttonHandler(uint8_t keyCode)
         currentState = STATE_CYPHER;
         cypher = 0;
         Serial.println("Switch from idle to cypher-input");
+        taskShowLogo.disable();
         tft.fillScreen(TFT_BLACK);
         tft.drawString("Cypher: ", 0, 0);
         visualiser.blink(200, 3, CRGB::HotPink, StatusVisualiser::STATE_METER);
       } else if (keyCode == BTN_B)
       {
-        visualiser.cylon(0);
+        // visualiser.cylon(0);
         // isCylon != isCylon;
         // if (isCylon) {
         // } else {
