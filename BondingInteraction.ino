@@ -106,7 +106,7 @@ void setup() {
 
   hwbutton1.begin();
   hwbutton2.begin();
-  hwbutton1.onPressed(broadcastCapSense);
+  hwbutton1.onPressed(sleep);
   hwbutton2.onPressed(showVoltage);
 
   tft.init();
