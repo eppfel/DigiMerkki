@@ -24,7 +24,7 @@
 #define TOUCHPIN1 T9      // Pin for sensing touch input 32 (labelled as 33)
 #define TOUCHPIN2 T8      // Pin for sensing touch input 33 (labelled as 32)
 #define SENDPIN 4         // stub
-#define TTHRESHOLD 30     // threshold for touch
+#define TTHRESHOLD 80     // threshold for touch
 #define STHRESHOLD 20     // threshold for wake up touch
 #define HW_BUTTON_PIN1 35 // Hardware button 1 on the T-display board
 #define HW_BUTTON_PIN2 0  // Hardware button 1 on the T-display board

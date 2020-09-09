@@ -33,6 +33,7 @@ TFT_eSPI tft = TFT_eSPI(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
 CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD);
 
 // Prototypes
+void broadcastCapSense();
 void sleep();
 void uploadUserData();
 void buttonHandler(uint8_t keyCode);
@@ -100,7 +101,7 @@ void setup() {
 
   hwbutton1.begin();
   hwbutton2.begin();
-  hwbutton1.onPressed(sleep);
+  hwbutton1.onPressed(broadcastCapSense);
   hwbutton2.onPressed(showVoltage);
 
   tft.init();
@@ -210,6 +211,11 @@ void typeCypher(uint8_t keyCode) {
     currentState = STATE_IDLE;
     cypherLength = 0;
   } 
+}
+
+void broadcastCapSense() {
+  String msg = String(touchRead(TOUCHPIN)) + " : " + String(touchRead(TOUCHPIN1)) + " : " + String(touchRead(TOUCHPIN2));
+  mesh.sendBroadcast(msg);
 }
 
 void checkButtonPress() {
