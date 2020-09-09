@@ -105,7 +105,7 @@ void setup() {
   hwbutton2.onPressed(showVoltage);
 
   tft.init();
-  tft.setRotation(3);
+  tft.setRotation(DISPLAY_ORIENTATION);
   tft.setTextSize(2);
   tft.setTextColor(TFT_WHITE);
   tft.fillScreen(TFT_BLACK);

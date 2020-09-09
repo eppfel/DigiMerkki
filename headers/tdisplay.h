@@ -19,6 +19,7 @@
 #define LOAD_GFXFF 1
 #define SMOOTH_FONT 1
 #define SPI_FREQUENCY 40000000
+#define DISPLAY_ORIENTATION 3 //Rotation of the display in 90° steps form 0 to 3
 
 #define TOUCHPIN T7       // Pin for sensing touch input 27
 #define TOUCHPIN1 T9      // Pin for sensing touch input 32 (labelled as 33)
