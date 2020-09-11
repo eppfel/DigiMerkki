@@ -111,6 +111,7 @@ void setup() {
 
   tft.init();
   tft.setRotation(DISPLAY_ORIENTATION);
+  tft.setSwapBytes(true);
   tft.setTextSize(2);
   tft.setTextColor(TFT_WHITE);
   tft.fillScreen(TFT_BLACK);

@@ -19,6 +19,8 @@
 #define LOAD_GFXFF 1
 #define SMOOTH_FONT 1
 #define SPI_FREQUENCY 40000000
+#define SPI_READ_FREQUENCY 6000000 // 6 MHz is the maximum SPI read speed for the ST7789V
+
 #define DISPLAY_ORIENTATION 3 //Rotation of the display in 90° steps form 0 to 3
 
 #define TOUCHPIN T7       // Pin for sensing touch input 27
