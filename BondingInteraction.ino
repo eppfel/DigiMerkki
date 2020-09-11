@@ -104,6 +104,8 @@ void setup() {
   userScheduler.addTask(taskVisualiser);
   taskVisualiser.enable();
 
+  userScheduler.addTask(taskShowLogo);
+
   hwbutton1.begin();
   hwbutton2.begin();
   hwbutton1.onPressed(sleep);
@@ -114,11 +116,8 @@ void setup() {
   tft.setSwapBytes(true);
   tft.setTextSize(2);
   tft.setTextColor(TFT_WHITE);
-  tft.fillScreen(TFT_BLACK);
-  tft.drawString("Started!", 0, 0);
 
-  userScheduler.addTask(taskShowLogo);
-  taskShowLogo.enableDelayed(LOGO_DELAY);
+  showPopMessage("Started!");
 
   randomSeed(analogRead(A0));
 }
@@ -130,6 +129,13 @@ void onPressed() {
 void wakeup_callback()
 {
   //placeholder callback function
+}
+
+void showPopMessage(String msg) {
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString(msg, tft.width() / 2, tft.height() / 2);
+  taskShowLogo.restartDelayed(5000);
 }
 
 void showLogo()
@@ -163,10 +169,7 @@ void showVoltage()
     float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
     String voltage = "Voltage :" + String(battery_voltage) + "V";
     Serial.println(voltage);
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextDatum(MC_DATUM);
-    tft.drawString(voltage, tft.width() / 2, tft.height() / 2);
-    taskShowLogo.restartDelayed(LOGO_DELAY);
+    showPopMessage(voltage);
 }
 
 // trigger deep sleep mode and wake up on any input from the touch buttons
@@ -221,20 +224,18 @@ void typeCypher(uint8_t keyCode) {
       }
     }
     tft.fillScreen(TFT_BLACK);
-    tft.drawString("Cypher: " + cypherString(cypher), 0, 0);
+    tft.setTextDatum(ML_DATUM);
+    tft.drawString("Cypher: " + cypherString(cypher), 0, tft.height() / 2);
   }
   if (keyCode == BTN_AC || cypherLength > 4) { //exit cyphertyping either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit) : cypher > 1 << 12
     
     if (cypher == 0) {// only send cypher, if it is not empty
       visualiser.blink(200, 1, CRGB::Blue);
-      tft.fillScreen(TFT_BLACK);
-      tft.drawString("No cypher sent.", 0, 0);
-      taskShowLogo.restartDelayed(5000);
+      showPopMessage("No cypher sent.");
     } else {
       sendCypher();
       visualiser.blink(200, 3, CRGB::HotPink);
-      tft.fillScreen(TFT_BLACK);
-      tft.drawString("Sent cypher: " + cypherString(cypher), 0, 0);
+      showPopMessage("Sent cypher: " + cypherString(cypher));
       taskShowLogo.restartDelayed(5000);
     }
 
@@ -278,7 +279,8 @@ void buttonHandler(uint8_t keyCode)
         Serial.println("Switch from idle to cypher-input");
         taskShowLogo.disable();
         tft.fillScreen(TFT_BLACK);
-        tft.drawString("Cypher: ", 0, 0);
+        tft.setTextDatum(ML_DATUM);
+        tft.drawString("Cypher: ", 0, tft.height() / 2);
         visualiser.blink(200, 3, CRGB::HotPink, StatusVisualiser::STATE_METER);
       } else if (keyCode == BTN_B)
       {
