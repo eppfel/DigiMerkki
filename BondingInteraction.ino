@@ -172,6 +172,17 @@ void showVoltage()
     showPopMessage(voltage);
 }
 
+void toggleDisplay()
+{
+  Serial.println("Turning display off");
+  int r = digitalRead(TFT_BL);
+  Serial.println(r);
+  digitalWrite(TFT_BL, !r);
+
+  // tft.writecommand(TFT_DISPOFF);
+  // tft.writecommand(TFT_SLPIN);
+}
+
 // trigger deep sleep mode and wake up on any input from the touch buttons
 void sleep()
 {
