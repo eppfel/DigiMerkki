@@ -22,12 +22,17 @@
 #include <SPI.h>
 
 #include "ressources/aalto.h"
+#include "ressources/octopus.h"
+#include "ressources/nude.h"
+#include "ressources/bmo.h"
+#include "ressources/bmp.h"
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
 
 TFT_eSPI tft = TFT_eSPI(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
-// int media = 2;
+int8_t wallpaper = 2;
+const static uint8_t NUM_WALLPAPERS= 5;
 
 // RTC_DATA_ATTR int bootCount = 0; //store data in the RTC (persistent in deep sleep but not after reset)
 // touch_pad_t touchPin; // for printing the touch pin
@@ -140,26 +145,27 @@ void showPopMessage(String msg) {
 
 void showLogo()
 {
-  // tft.setRotation(3);
-  // switch (media)
-  // {
-  // case 0:
-  //   tft.pushImage(0, 0, 240, 135, digitalhaalarit);
-  //   break;
-  // case 1:
-  //   tft.pushImage(0, 0, 240, 135, digitalhaalaritbmo);
-  //   break;
-  // case 2:
+  switch (wallpaper)
+  {
+  case 0:
+    tft.pushImage(0, 0, 240, 135, digitalhaalaritaalto);
+    break;
+  case 1:
+    tft.pushImage(0, 0, 240, 135, digitalhaalaritbmo);
+    break;
+  case 2:
+  tft.pushImage(0, 0, 240, 135, octopus);
+    break;
+  case 3:
+    tft.pushImage(0, 0, 240, 135, digitalhaalaritnude);
+    break;
+  case 4:
+    tft.pushImage(0, 0, 240, 135, digitalhaalarit);
+    break;
+  default:
   tft.pushImage(0, 0, 240, 135, digitalhaalaritaalto);
-  //   break;
-  // case 3:
-  //   tft.pushImage(0, 0, 240, 135, digitalhaalaritnude);
-  //   break;
-  // default:
-  //   tft.pushImage(0, 0, 240, 135, digitalhaalarit);
-  //   break;
-  // }
-  // tft.setRotation(DISPLAY_ORIENTATION);
+    break;
+  }
 }
 
 int vref = 1100;
@@ -293,14 +299,21 @@ void buttonHandler(uint8_t keyCode)
         tft.setTextDatum(ML_DATUM);
         tft.drawString("Cypher: ", 0, tft.height() / 2);
         visualiser.blink(200, 3, CRGB::HotPink, StatusVisualiser::STATE_METER);
-      } else if (keyCode == BTN_B)
+      } else if (keyCode == BTN_A)
       {
-        // visualiser.cylon(0);
-        // isCylon != isCylon;
-        // if (isCylon) {
-        // } else {
-        //   visualiser.blink(0, 0, CRGB::Black);
-        // }
+        wallpaper--;
+        if (wallpaper < 0) {
+          wallpaper = NUM_WALLPAPERS - 1;
+        }
+        showLogo();
+      } else if (keyCode == BTN_C)
+      {
+        wallpaper++;
+        if (wallpaper >= NUM_WALLPAPERS)
+        {
+          wallpaper = 0;
+        }
+        showLogo();
       }
       break;
   }
