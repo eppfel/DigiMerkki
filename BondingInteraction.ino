@@ -215,10 +215,7 @@ void sleep()
   mesh.stop();
   Serial.println("Disconnected from mesh!");
   visualiser.turnOff();
-  touchAttachInterrupt(TOUCHPIN, wakeup_callback, STHRESHOLD);
-  touchAttachInterrupt(TOUCHPIN1, wakeup_callback, STHRESHOLD);
-  touchAttachInterrupt(TOUCHPIN2, wakeup_callback, STHRESHOLD);
-  esp_sleep_enable_touchpad_wakeup();
+  esp_sleep_enable_ext0_wakeup((gpio_num_t)HW_BUTTON_PIN1, 0);
   Serial.println("Goind to sleep now!");
   esp_deep_sleep_start();
 }
