@@ -37,3 +37,6 @@
 #define MESH_PASSWORD "istanbul"
 
 #define ADC_PIN 34
+
+#define NUM_LEDS 5 // Number of LEDs conrolled through FastLED
+#define NEOPIXEL_PIN 26

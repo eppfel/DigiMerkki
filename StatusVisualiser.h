@@ -14,10 +14,6 @@
 #define NEOPIXEL_PIN 12 // Pin for controlling NeoPixel
 #endif
 
-#define   NUM_LEDS        5    // Number of LEDs conrolled through FastLED
-#define   BS_PERIOD       360
-#define   BS_COUNT        10
-
 class StatusVisualiser {
   private:
     CRGB _leds[NUM_LEDS];// include variables for addresable LEDs
