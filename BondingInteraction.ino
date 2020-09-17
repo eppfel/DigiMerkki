@@ -18,22 +18,22 @@
 #include "CapacitiveKeyboard.h"
 #include "StatusVisualiser.h"
 
-#include <TFT_eSPI.h>
+#include <TJpg_Decoder.h>
+#define FS_NO_GLOBALS
+#include <FS.h>
+#include "SPIFFS.h" // For ESP32 only
 #include <SPI.h>
+#include <TFT_eSPI.h>
 
-#include "ressources/aalto.h"
-#include "ressources/octopus.h"
-#include "ressources/nude.h"
-#include "ressources/bmo.h"
-#include "ressources/bmp.h"
+char *imgfiles[] = {"Baboon", "bmo", "nude", "aalto", "octopus", "digital-haalarit"};
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
 
 TFT_eSPI tft = TFT_eSPI(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
-int8_t wallpaper = 2;
+int8_t wallpaper = 1;
 const static uint8_t NUM_WALLPAPERS= 5;
-
+ 
 // RTC_DATA_ATTR int bootCount = 0; //store data in the RTC (persistent in deep sleep but not after reset)
 // touch_pad_t touchPin; // for printing the touch pin
 
@@ -87,9 +87,36 @@ uint32_t bondingStarttime = 0;
 uint32_t bondingRequestNode;
 uint32_t bondingSuccessNode;
 
+// This next function will be called during decoding of the jpeg file to
+// render each block to the TFT.  If you use a different TFT library
+// you will need to adapt this function to suit.
+bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bitmap)
+{
+  // Stop further decoding as image is running off bottom of screen
+  if (y >= tft.height())
+    return 0;
+
+  // This function will clip the image block rendering automatically at the TFT boundaries
+  tft.pushImage(x, y, w, h, bitmap);
+
+  // This might work instead if you adapt the sketch to use the Adafruit_GFX library
+  // tft.drawRGBBitmap(x, y, bitmap, w, h);
+
+  // Return 1 to decode next block
+  return 1;
+}
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
+
+  if (!SPIFFS.begin())
+  {
+    Serial.println("SPIFFS initialisation failed!");
+    while (1)
+      yield(); // Stay here twiddling thumbs waiting
+  }
+  Serial.println("\r\nSPIFFS initialised.");
 
   mesh.setDebugMsgTypes(ERROR | DEBUG); // set before init() so that you can see error messages
 
@@ -122,6 +149,9 @@ void setup() {
   tft.setTextSize(2);
   tft.setTextColor(TFT_WHITE);
 
+  TJpgDec.setJpgScale(1);
+  TJpgDec.setCallback(tft_output);
+
   showPopMessage("Started!");
 
   randomSeed(analogRead(A0));
@@ -145,27 +175,17 @@ void showPopMessage(String msg) {
 
 void showLogo()
 {
-  switch (wallpaper)
-  {
-  case 0:
-    tft.pushImage(0, 0, 240, 135, digitalhaalaritaalto);
-    break;
-  case 1:
-    tft.pushImage(0, 0, 240, 135, digitalhaalaritbmo);
-    break;
-  case 2:
-  tft.pushImage(0, 0, 240, 135, octopus);
-    break;
-  case 3:
-    tft.pushImage(0, 0, 240, 135, digitalhaalaritnude);
-    break;
-  case 4:
-    tft.pushImage(0, 0, 240, 135, digitalhaalarit);
-    break;
-  default:
-  tft.pushImage(0, 0, 240, 135, digitalhaalaritaalto);
-    break;
-  }
+  // Time recorded for test purposes
+  // uint32_t t = millis();
+
+  char picturefilename [24];
+  sprintf(picturefilename, "/%s.jpg", imgfiles[wallpaper]);
+  TJpgDec.drawFsJpg(0, 0, picturefilename);
+
+  // How much time did rendering take (ESP8266 80MHz 271ms, 160MHz 157ms, ESP32 SPI 120ms, 8bit parallel 105ms
+  // t = millis() - t;
+  // Serial.print(t);
+  // Serial.println(" ms");
 }
 
 int vref = 1100;
