@@ -108,7 +108,31 @@ bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bitmap)
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
+  delay(25);
+
+  // Start Display for Feedback first
+  tft.init();
+  tft.setRotation(DISPLAY_ORIENTATION);
+  tft.setSwapBytes(true);
+  tft.setTextSize(2);
+  tft.setTextColor(TFT_WHITE);
+
+  TJpgDec.setJpgScale(1);
+  TJpgDec.setCallback(tft_output);
+
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("Just a sec...", tft.width() / 2, tft.height() / 2);
+
+  // Check if on Battery and empty, if so go to sleep to protect boot loop on low voltage
+  if (checkVoltage() < 3.0) {
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString("Got no juice :.(", tft.width() / 2, tft.height() / 2);
+    esp_sleep_enable_ext0_wakeup((gpio_num_t)HW_BUTTON_PIN1, 0);
+    delay(2000);
+    esp_deep_sleep_start();
+  }
 
   if (!SPIFFS.begin())
   {
@@ -142,15 +166,6 @@ void setup() {
   hwbutton2.begin();
   hwbutton1.onPressed(sleep);
   hwbutton2.onPressed(showVoltage);
-
-  tft.init();
-  tft.setRotation(DISPLAY_ORIENTATION);
-  tft.setSwapBytes(true);
-  tft.setTextSize(2);
-  tft.setTextColor(TFT_WHITE);
-
-  TJpgDec.setJpgScale(1);
-  TJpgDec.setCallback(tft_output);
 
   showPopMessage("Started!");
 
@@ -189,11 +204,15 @@ void showLogo()
 }
 
 int vref = 1100;
+
+float checkVoltage() {
+  uint16_t v = analogRead(ADC_PIN);
+  return ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
+} 
+
 void showVoltage()
 {
-    uint16_t v = analogRead(ADC_PIN);
-    float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
-    String voltage = "Voltage :" + String(battery_voltage) + "V";
+    String voltage = "Voltage :" + String(checkVoltage()) + "V";
     Serial.println(voltage);
     showPopMessage(voltage);
 }
