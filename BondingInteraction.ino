@@ -40,6 +40,8 @@ const static uint8_t NUM_WALLPAPERS= 5;
 CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD);
 
 // Prototypes
+void showPopMessage(String msg, int16_t delay = LOGO_DELAY);
+void checkBatteryCharge();
 void showLogo();
 void broadcastCapSense();
 void sleep();
@@ -68,9 +70,7 @@ uint32_t get_millisecond_timer_hook()
 StatusVisualiser visualiser(get_millisecond_timer_hook, 64);
 
 // Task variables
-#define TASK_CHECK_BUTTON_PRESS_INTERVAL 2     // in milliseconds
-#define VISUALISATION_UPDATE_INTERVAL 1 // default scheduling time for currentPatternSELECT, in milliseconds
-#define LOGO_DELAY 5000
+Task taskCheckBattery(BATTERY_CHARGE_CHECK_INTERVAL, TASK_FOREVER, &checkBatteryCharge);
 Task taskCheckButtonPress(TASK_CHECK_BUTTON_PRESS_INTERVAL, TASK_FOREVER, &checkButtonPress);
 Task taskVisualiser(VISUALISATION_UPDATE_INTERVAL, TASK_FOREVER, &showVisualisations);
 Task taskShowLogo(LOGO_DELAY, TASK_ONCE, &showLogo);
@@ -106,6 +106,19 @@ bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bitmap)
   return 1;
 }
 
+// Check if on Battery and empty, if so go to sleep to protect boot loop on low voltage
+void checkBatteryCharge() {
+  if (getInputVoltage() < 3.0)
+  {
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString("Got no juice :(", tft.width() / 2, tft.height() / 2);
+    esp_sleep_enable_ext0_wakeup((gpio_num_t)HW_BUTTON_PIN1, 0);
+    delay(2000);
+    esp_deep_sleep_start();
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   delay(25);
@@ -124,15 +137,7 @@ void setup() {
   tft.setTextDatum(MC_DATUM);
   tft.drawString("Just a sec...", tft.width() / 2, tft.height() / 2);
 
-  // Check if on Battery and empty, if so go to sleep to protect boot loop on low voltage
-  if (checkVoltage() < 3.0) {
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextDatum(MC_DATUM);
-    tft.drawString("Got no juice :.(", tft.width() / 2, tft.height() / 2);
-    esp_sleep_enable_ext0_wakeup((gpio_num_t)HW_BUTTON_PIN1, 0);
-    delay(2000);
-    esp_deep_sleep_start();
-  }
+  checkBatteryCharge();
 
   if (!SPIFFS.begin())
   {
@@ -151,6 +156,10 @@ void setup() {
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
   mesh.onNodeDelayReceived(&delayReceivedCallback);
 
+  userScheduler.addTask(taskShowLogo);
+  userScheduler.addTask(taskCheckBattery);
+  taskCheckBattery.enableDelayed(BATTERY_CHARGE_CHECK_INTERVAL);
+
   touchInput.begin();
   touchInput.onPressed(buttonHandler, onPressed);
 
@@ -159,8 +168,6 @@ void setup() {
 
   userScheduler.addTask(taskVisualiser);
   taskVisualiser.enable();
-
-  userScheduler.addTask(taskShowLogo);
 
   hwbutton1.begin();
   hwbutton2.begin();
@@ -181,7 +188,7 @@ void wakeup_callback()
   //placeholder callback function
 }
 
-void showPopMessage(String msg, int16_t delay = LOGO_DELAY)
+void showPopMessage(String msg, int16_t delay)
 {
   tft.fillScreen(TFT_BLACK);
   tft.setTextDatum(MC_DATUM);
@@ -206,14 +213,14 @@ void showLogo()
 
 int vref = 1100;
 
-float checkVoltage() {
+float getInputVoltage() {
   uint16_t v = analogRead(ADC_PIN);
   return ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
 } 
 
 void showVoltage()
 {
-    String voltage = "Voltage :" + String(checkVoltage()) + "V";
+    String voltage = "Voltage :" + String(getInputVoltage()) + "V";
     Serial.println(voltage);
     showPopMessage(voltage);
 }

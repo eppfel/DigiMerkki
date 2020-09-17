@@ -39,4 +39,9 @@
 #define ADC_PIN 34
 
 #define NUM_LEDS 5 // Number of LEDs conrolled through FastLED
-#define NEOPIXEL_PIN 26
+#define NEOPIXEL_PIN 12
+
+#define TASK_CHECK_BUTTON_PRESS_INTERVAL 2 // in milliseconds
+#define VISUALISATION_UPDATE_INTERVAL 1    // default scheduling time for currentPatternSELECT, in milliseconds
+#define LOGO_DELAY 5000
+#define BATTERY_CHARGE_CHECK_INTERVAL 30000
