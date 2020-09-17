@@ -167,7 +167,7 @@ void setup() {
   hwbutton1.onPressed(sleep);
   hwbutton2.onPressed(showVoltage);
 
-  showPopMessage("Started!");
+  showPopMessage("Here we go!", 2000);
 
   randomSeed(analogRead(A0));
 }
@@ -181,11 +181,12 @@ void wakeup_callback()
   //placeholder callback function
 }
 
-void showPopMessage(String msg) {
+void showPopMessage(String msg, int16_t delay = LOGO_DELAY)
+{
   tft.fillScreen(TFT_BLACK);
   tft.setTextDatum(MC_DATUM);
   tft.drawString(msg, tft.width() / 2, tft.height() / 2);
-  taskShowLogo.restartDelayed(5000);
+  taskShowLogo.restartDelayed(delay);
 }
 
 void showLogo()
@@ -289,7 +290,6 @@ void typeCypher(uint8_t keyCode) {
       sendCypher();
       visualiser.blink(200, 3, CRGB::HotPink);
       showPopMessage("Sent cypher: " + cypherString(cypher));
-      taskShowLogo.restartDelayed(5000);
     }
 
     Serial.println("Switch from cypher-input to idle");
