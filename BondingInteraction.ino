@@ -204,6 +204,13 @@ void showLogo()
   char picturefilename [24];
   sprintf(picturefilename, "/%s.jpg", imgfiles[wallpaper]);
   TJpgDec.drawFsJpg(0, 0, picturefilename);
+  yield();
+  if (getInputVoltage() < 3.3) {
+    tft.setTextColor(TFT_WHITE, TFT_RED);
+    tft.setTextDatum(BC_DATUM);
+    tft.drawString("Battery low", tft.width(), tft.height());
+    tft.setTextColor(TFT_WHITE);
+  }
 
   // How much time did rendering take (ESP8266 80MHz 271ms, 160MHz 157ms, ESP32 SPI 120ms, 8bit parallel 105ms
   // t = millis() - t;
