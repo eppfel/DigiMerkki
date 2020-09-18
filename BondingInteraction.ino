@@ -25,7 +25,7 @@
 #include <SPI.h>
 #include <TFT_eSPI.h>
 
-char *imgfiles[] = {"Baboon", "bmo", "nude", "aalto", "octopus", "digital-haalarit"};
+char const *imgfiles[] = {"Baboon", "bmo", "nude", "aalto", "octopus", "digital-haalarit"};
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
