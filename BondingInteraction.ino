@@ -42,7 +42,7 @@ CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD);
 // Prototypes
 void showPopMessage(String msg, int16_t delay = LOGO_DELAY);
 void checkBatteryCharge();
-void showLogo();
+void showHomescreen();
 void broadcastCapSense();
 void sleep();
 void uploadUserData();
@@ -73,7 +73,7 @@ StatusVisualiser visualiser(get_millisecond_timer_hook, 64);
 Task taskCheckBattery(BATTERY_CHARGE_CHECK_INTERVAL, TASK_FOREVER, &checkBatteryCharge);
 Task taskCheckButtonPress(TASK_CHECK_BUTTON_PRESS_INTERVAL, TASK_FOREVER, &checkButtonPress);
 Task taskVisualiser(VISUALISATION_UPDATE_INTERVAL, TASK_FOREVER, &showVisualisations);
-Task taskShowLogo(LOGO_DELAY, TASK_ONCE, &showLogo);
+Task taskShowLogo(LOGO_DELAY, TASK_ONCE, &showHomescreen);
 
 #define STATE_IDLE 0
 #define STATE_CYPHER 1
@@ -196,7 +196,7 @@ void showPopMessage(String msg, int16_t delay)
   taskShowLogo.restartDelayed(delay);
 }
 
-void showLogo()
+void showHomescreen()
 {
   // Time recorded for test purposes
   // uint32_t t = millis();
@@ -205,9 +205,25 @@ void showLogo()
   sprintf(picturefilename, "/%s.jpg", imgfiles[wallpaper]);
   TJpgDec.drawFsJpg(0, 0, picturefilename);
   yield();
+
+  //Status bar
+
+  uint8_t numnodes = mesh.getNodeList().size();
+  if (numnodes) {
+    tft.setTextColor(TFT_BLACK, TFT_WHITE);
+    tft.setTextDatum(BL_DATUM);
+    tft.drawString(String(numnodes) + " close", 0, tft.height());
+    tft.setTextColor(TFT_WHITE);
+  } else {
+    tft.setTextColor(TFT_BLACK, TFT_WHITE);
+    tft.setTextDatum(BL_DATUM);
+    tft.drawString("No one around", 0, tft.height());
+    tft.setTextColor(TFT_WHITE);
+  }
+
   if (getInputVoltage() < 3.3) {
     tft.setTextColor(TFT_WHITE, TFT_RED);
-    tft.setTextDatum(BC_DATUM);
+    tft.setTextDatum(BR_DATUM);
     tft.drawString("Battery low", tft.width(), tft.height());
     tft.setTextColor(TFT_WHITE);
   }
@@ -355,7 +371,7 @@ void buttonHandler(uint8_t keyCode)
         if (wallpaper < 0) {
           wallpaper = NUM_WALLPAPERS - 1;
         }
-        showLogo();
+        showHomescreen();
       } else if (keyCode == BTN_C)
       {
         wallpaper++;
@@ -363,7 +379,7 @@ void buttonHandler(uint8_t keyCode)
         {
           wallpaper = 0;
         }
-        showLogo();
+        showHomescreen();
       }
       break;
   }
@@ -493,6 +509,7 @@ void newConnectionCallback(uint32_t nodeId) {
   Serial.printf("New Connection, nodeId = %u", nodeId);
   // Serial.printf("--> startHere: New Connection, %s\n", mesh.subConnectionJson(true).c_str());
   // Serial.println("");
+  showHomescreen();
 }
 
 void changedConnectionCallback() {
@@ -513,6 +530,8 @@ void changedConnectionCallback() {
   Serial.print("Nodetime: ");
   Serial.println(mesh.getNodeTime());
   calc_delay = true;
+
+  showHomescreen();
 }
 
 void nodeTimeAdjustedCallback(int32_t offset) {
