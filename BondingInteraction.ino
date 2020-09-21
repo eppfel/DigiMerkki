@@ -44,7 +44,7 @@ void showPopMessage(String msg, int16_t delay = LOGO_DELAY);
 void checkBatteryCharge();
 void showHomescreen();
 void broadcastCapSense();
-void sleep();
+void goToSleep();
 void uploadUserData();
 void buttonHandler(uint8_t keyCode);
 void onPressed();
@@ -113,9 +113,7 @@ void checkBatteryCharge() {
     tft.fillScreen(TFT_BLACK);
     tft.setTextDatum(MC_DATUM);
     tft.drawString("Got no juice :(", tft.width() / 2, tft.height() / 2);
-    esp_sleep_enable_ext0_wakeup((gpio_num_t)HW_BUTTON_PIN1, 0);
-    delay(2000);
-    esp_deep_sleep_start();
+    goToSleep();
   }
 }
 
@@ -171,7 +169,7 @@ void setup() {
 
   hwbutton1.begin();
   hwbutton2.begin();
-  hwbutton1.onPressed(sleep);
+  hwbutton1.onPressed(pressedShutdown);
   hwbutton2.onPressed(showVoltage);
 
   showPopMessage("Here we go!", 2000);
@@ -259,14 +257,22 @@ void toggleDisplay()
   // tft.writecommand(TFT_SLPIN);
 }
 
+void pressedShutdown() {
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("Shutting down", tft.width() / 2, tft.height() / 2);
+  goToSleep();
+}  
+
 // trigger deep sleep mode and wake up on any input from the touch buttons
-void sleep()
+void goToSleep()
 {
   mesh.stop();
   Serial.println("Disconnected from mesh!");
   visualiser.turnOff();
   esp_sleep_enable_ext0_wakeup((gpio_num_t)HW_BUTTON_PIN1, 0);
-  Serial.println("Goind to sleep now!");
+  Serial.println("Goind to sleep in 2 sec!");
+  delay(2000);
   esp_deep_sleep_start();
 }
 
