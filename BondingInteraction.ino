@@ -324,12 +324,7 @@ void buttonHandler(uint8_t keyCode)
     }
     else if (keyCode == BTN_A)
     {
-      wallpaper--;
-      if (wallpaper < 0)
-      {
-        wallpaper = NUM_WALLPAPERS - 1;
-      }
-      showHomescreen();
+      visualiser.nextPattern();
     }
     else if (keyCode == BTN_C)
     {
