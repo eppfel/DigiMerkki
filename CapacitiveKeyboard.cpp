@@ -12,20 +12,17 @@ void CapacitiveKeyboard::begin()
   _buttonState = 0;
   _button1.begin();
   _button2.begin();
-  _button3.begin();
 }
 
 void CapacitiveKeyboard::pressed(){
 
   if (_button1.wasReleased()) {
-    _buttonState = _buttonState | BTN_A;
+    _buttonState = _buttonState | TAP_LEFT;
   } else if (_button2.wasReleased()) {
-    _buttonState = _buttonState | BTN_B;
-  } else if (_button3.wasReleased()) {
-    _buttonState = _buttonState | BTN_C;
+    _buttonState = _buttonState | TAP_RIGHT;
   }
 
-  if (_button1.isReleased() && _button2.isReleased() && _button3.isReleased()) {
+  if (_button1.isReleased() && _button2.isReleased()) {
     _multipressed_callback_int(_buttonState);
     _buttonState = 0;
   }
@@ -36,11 +33,9 @@ void CapacitiveKeyboard::onPressed(CapacitiveKeyboard::callback_int_t callback_i
   _multipressed_callback_int = callback_int;
   _button1.onPressed(callback);
   _button2.onPressed(callback);
-  _button3.onPressed(callback);
 }
 
 void CapacitiveKeyboard::tick() {
   _button1.read();
   _button2.read();
-  _button3.read();
 }

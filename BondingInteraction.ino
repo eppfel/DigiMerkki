@@ -36,7 +36,7 @@ void delayReceivedCallback(uint32_t from, int32_t delay);
  
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
-CapacitiveKeyboard touchInput(TOUCHPIN, TOUCHPIN1, TOUCHPIN2, TTHRESHOLD);
+CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, TTHRESHOLD);
 
 Scheduler userScheduler; // to control your personal task
 painlessMesh mesh;
@@ -225,61 +225,9 @@ void uploadUserData()
   }
 }
 
-void typeCypher(uint8_t keyCode)
-{
-  static uint8_t cypherLength = 0;
-  if (keyCode == BTN_A || keyCode == BTN_B || keyCode == BTN_C)
-  { // add buttunInput to cypher sequene
-    visualiser.setMeter(cypherLength++);
-    cypher = keyCode | (cypher << 3);
-    if (DEBUG)
-    {
-      switch (keyCode)
-      {
-      case BTN_A:
-        Serial.println("Add A to cypher");
-        break;
-      case BTN_B:
-        Serial.println("Add B to cypher");
-        break;
-      case BTN_C:
-        Serial.println("Add C to cypher");
-        break;
-      default:
-        Serial.println("Adding nothing. This should not have been reached.");
-        break;
-      }
-    }
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextDatum(ML_DATUM);
-    tft.drawString("Cypher: " + cypherString(cypher), 0, tft.height() / 2);
-  }
-  if (keyCode == BTN_AC || cypherLength > 4)
-  { //exit cyphertyping either if A+C Button were pressed OR if cypher is longer then 4 digits (12 bit) : cypher > 1 << 12
-
-    if (cypher == 0)
-    { // only send cypher, if it is not empty
-      visualiser.blink(200, 1, CRGB::Blue);
-      displayMessage("No cypher sent.");
-      taskShowLogo.restartDelayed();
-    }
-    else
-    {
-      sendCypher();
-      visualiser.blink(200, 3, CRGB::HotPink);
-      displayMessage("Sent cypher: " + cypherString(cypher));
-      taskShowLogo.restartDelayed();
-    }
-
-    Serial.println("Switch from cypher-input to idle");
-    currentState = STATE_IDLE;
-    cypherLength = 0;
-  }
-}
-
 void broadcastCapSense()
 {
-  String msg = String(touchRead(TOUCHPIN)) + " : " + String(touchRead(TOUCHPIN1)) + " : " + String(touchRead(TOUCHPIN2));
+  String msg = String(touchRead(TOUCHPIN_LEFT)) + " : " + String(touchRead(TOUCHPIN_RIGHT));
   mesh.sendBroadcast(msg);
 }
 
@@ -288,27 +236,31 @@ void buttonHandler(uint8_t keyCode)
   switch (currentState)
   {
   case STATE_CYPHER:
-    typeCypher(keyCode);
+    // typeCypher(keyCode);
     break;
   default: //idle
-    if (keyCode == BTN_AC)
+
+    Serial.println("Tap " + String(keyCode));
+    if (keyCode == HOLD_BOTH)
     {
       currentState = STATE_CYPHER;
       cypher = 0;
       Serial.println("Switch from idle to cypher-input");
-      taskShowLogo.disable()
+      taskShowLogo.disable();
       tft.fillScreen(TFT_BLACK);
       tft.setTextDatum(ML_DATUM);
       tft.drawString("Cypher: ", 0, tft.height() / 2);
       visualiser.blink(200, 3, CRGB::HotPink, StatusVisualiser::STATE_METER);
     }
-    else if (keyCode == BTN_A)
+    else if (keyCode == TAP_LEFT)
     {
       visualiser.nextPattern();
     }
-    else if (keyCode == BTN_C)
+    else if (keyCode == TAP_RIGHT)
     {
       nextWallpaper();
+    } else if (keyCode == TAP_BOTH) {
+      displayMessage("Tappd both");
     }
     break;
   }

@@ -21,11 +21,9 @@
 #define SPI_FREQUENCY 40000000
 #define SPI_READ_FREQUENCY 6000000 // 6 MHz is the maximum SPI read speed for the ST7789V
 
-#define TOUCHPIN 13       // Pin for sensing touch input A
-#define TOUCHPIN1 15      // Pin for sensing touch input B
-#define TOUCHPIN2 2       // Pin for sensing touch input C
-#define TTHRESHOLD 90     // threshold for touch
-#define STHRESHOLD 60     // threshold for wake up touch
+#define TOUCHPIN_LEFT 13       // Pin for sensing touch input A
+#define TOUCHPIN_RIGHT 2      // Pin for sensing touch input B
+#define TTHRESHOLD 60     // threshold for touch
 #define HW_BUTTON_PIN1 35 // Hardware button 1 on the T-display board
 #define HW_BUTTON_PIN2 0  // Hardware button 1 on the T-display board
 
