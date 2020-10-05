@@ -17,12 +17,7 @@
 #include <painlessMesh.h>
 #include "CapacitiveKeyboard.h"
 #include "StatusVisualiser.h"
-
-#include <TJpg_Decoder.h>
-#include <FS.h>
-#include "SPIFFS.h" // For ESP32 only
-#include <SPI.h>
-#include <TFT_eSPI.h>
+#include "ScreenController.h"
 
 // Prototypes
 void checkBatteryCharge();
@@ -32,19 +27,12 @@ void broadcastCapSense();
 void buttonHandler(uint8_t keyCode);
 void onPressed();
 void sendCypher();
-void showPopMessage(String msg, int16_t delay = LOGO_DELAY);
-void showHomescreen();
 void sendMessage(String msg);
 void receivedCallback(uint32_t from, String &msg);
 void newConnectionCallback(uint32_t nodeId);
 void changedConnectionCallback();
 void nodeTimeAdjustedCallback(int32_t offset);
 void delayReceivedCallback(uint32_t from, int32_t delay);
-
-char const *imgfiles[] = {"Baboon", "bmo", "nude", "aalto", "octopus", "digital-haalarit"};
-int8_t wallpaper = 1;
-const static uint8_t NUM_WALLPAPERS= 5;
-TFT_eSPI tft = TFT_eSPI(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
  
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
@@ -86,18 +74,7 @@ void setup() {
   delay(25);
 
   // Start Display for Feedback first
-  tft.init();
-  tft.setRotation(DISPLAY_ORIENTATION);
-  tft.setSwapBytes(true);
-  tft.setTextSize(2);
-  tft.setTextColor(TFT_WHITE);
-
-  TJpgDec.setJpgScale(1);
-  TJpgDec.setCallback(tft_output);
-
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextDatum(MC_DATUM);
-  tft.drawString("Just a sec...", tft.width() / 2, tft.height() / 2);
+  initScreen();
 
   checkBatteryCharge();
 
@@ -136,7 +113,8 @@ void setup() {
   hwbutton1.onPressed(pressedShutdown);
   hwbutton2.onPressed(showVoltage);
 
-  showPopMessage("Here we go!", 2000);
+  displayMessage("Here we go!");
+  taskShowLogo.restartDelayed(2000);
 
   randomSeed(analogRead(A0));
 }
@@ -168,18 +146,20 @@ void checkBatteryCharge()
 }
 
 int vref = 1100;
-
 float getInputVoltage()
 {
-  uint16_t v = analogRead(ADC_PIN);
-  return ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
+  uint16_t vPin = analogRead(ADC_PIN);
+  float v = ((float)vPin / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
+  updateVoltage(v);
+  return v;
 }
 
 void showVoltage()
 {
   String voltage = "Voltage :" + String(getInputVoltage()) + "V";
   Serial.println(voltage);
-  showPopMessage(voltage);
+  displayMessage(voltage);
+  taskShowLogo.restartDelayed();
 }
 
 void toggleDisplay()
@@ -195,9 +175,7 @@ void toggleDisplay()
 
 void pressedShutdown()
 {
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextDatum(MC_DATUM);
-  tft.drawString("Shutting down", tft.width() / 2, tft.height() / 2);
+  displayMessage("Shutting down");
   goToSleep();
 }
 
@@ -282,13 +260,15 @@ void typeCypher(uint8_t keyCode)
     if (cypher == 0)
     { // only send cypher, if it is not empty
       visualiser.blink(200, 1, CRGB::Blue);
-      showPopMessage("No cypher sent.");
+      displayMessage("No cypher sent.");
+      taskShowLogo.restartDelayed();
     }
     else
     {
       sendCypher();
       visualiser.blink(200, 3, CRGB::HotPink);
-      showPopMessage("Sent cypher: " + cypherString(cypher));
+      displayMessage("Sent cypher: " + cypherString(cypher));
+      taskShowLogo.restartDelayed();
     }
 
     Serial.println("Switch from cypher-input to idle");
@@ -316,7 +296,7 @@ void buttonHandler(uint8_t keyCode)
       currentState = STATE_CYPHER;
       cypher = 0;
       Serial.println("Switch from idle to cypher-input");
-      taskShowLogo.disable();
+      taskShowLogo.disable()
       tft.fillScreen(TFT_BLACK);
       tft.setTextDatum(ML_DATUM);
       tft.drawString("Cypher: ", 0, tft.height() / 2);
@@ -328,12 +308,7 @@ void buttonHandler(uint8_t keyCode)
     }
     else if (keyCode == BTN_C)
     {
-      wallpaper++;
-      if (wallpaper >= NUM_WALLPAPERS)
-      {
-        wallpaper = 0;
-      }
-      showHomescreen();
+      nextWallpaper();
     }
     break;
   }
@@ -407,75 +382,6 @@ void sendCypher()
 void showVisualisations()
 {
   visualiser.show();
-}
-
-void showPopMessage(String msg, int16_t delay)
-{
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextDatum(MC_DATUM);
-  tft.drawString(msg, tft.width() / 2, tft.height() / 2);
-  taskShowLogo.restartDelayed(delay);
-}
-
-// This next function will be called during decoding of the jpeg file to
-// render each block to the TFT.  If you use a different TFT library
-// you will need to adapt this function to suit.
-bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bitmap)
-{
-  // Stop further decoding as image is running off bottom of screen
-  if (y >= tft.height())
-    return 0;
-
-  // This function will clip the image block rendering automatically at the TFT boundaries
-  tft.pushImage(x, y, w, h, bitmap);
-
-  // This might work instead if you adapt the sketch to use the Adafruit_GFX library
-  // tft.drawRGBBitmap(x, y, bitmap, w, h);
-
-  // Return 1 to decode next block
-  return 1;
-}
-
-void showHomescreen()
-{
-  // Time recorded for test purposes
-  // uint32_t t = millis();
-
-  char picturefilename[24];
-  sprintf(picturefilename, "/%s.jpg", imgfiles[wallpaper]);
-  TJpgDec.drawFsJpg(0, 0, picturefilename);
-  yield();
-
-  //Status bar
-
-  uint8_t numnodes = mesh.getNodeList().size();
-  if (numnodes)
-  {
-    tft.setTextColor(TFT_BLACK, TFT_WHITE);
-    tft.setTextDatum(BL_DATUM);
-    tft.drawString(String(numnodes) + " close", 0, tft.height());
-    tft.setTextColor(TFT_WHITE);
-  }
-  else
-  {
-    tft.setTextColor(TFT_BLACK, TFT_WHITE);
-    tft.setTextDatum(BL_DATUM);
-    tft.drawString("No one around", 0, tft.height());
-    tft.setTextColor(TFT_WHITE);
-  }
-
-  if (getInputVoltage() < 3.3)
-  {
-    tft.setTextColor(TFT_WHITE, TFT_RED);
-    tft.setTextDatum(BR_DATUM);
-    tft.drawString("Battery low", tft.width(), tft.height());
-    tft.setTextColor(TFT_WHITE);
-  }
-
-  // How much time did rendering take (ESP8266 80MHz 271ms, 160MHz 157ms, ESP32 SPI 120ms, 8bit parallel 105ms
-  // t = millis() - t;
-  // Serial.print(t);
-  // Serial.println(" ms");
 }
 
 /*
@@ -574,6 +480,7 @@ void newConnectionCallback(uint32_t nodeId)
   Serial.printf("New Connection, nodeId = %u", nodeId);
   // Serial.printf("--> startHere: New Connection, %s\n", mesh.subConnectionJson(true).c_str());
   // Serial.println("");
+  updateNumNodes(nodes.size());
   showHomescreen();
 }
 
@@ -598,6 +505,7 @@ void changedConnectionCallback()
   Serial.println(mesh.getNodeTime());
   calc_delay = true;
 
+  updateNumNodes(nodes.size());
   showHomescreen();
 }
 
