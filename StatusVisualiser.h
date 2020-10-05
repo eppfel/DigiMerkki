@@ -39,6 +39,7 @@ class StatusVisualiser {
     static const uint8_t PATTERN_SPREAD = 2;
     static const uint8_t PATTERN_SUCK = 3;
     static const uint8_t PATTERN_RAINBOWBEAT = 4;
+    static const uint8_t PATTERN_BEATFADE = 5;
 
     StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness);
 

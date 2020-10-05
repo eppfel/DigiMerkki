@@ -85,10 +85,19 @@ void StatusVisualiser::show() {
 		}
 		else if (_currentPattern == PATTERN_RAINBOWBEAT)
 		{	
-			uint8_t beatA = beatsin8(17, 0, 255); // Starting hue
-			uint8_t beatB = beatsin8(13, 0, 255);
-			fill_rainbow(_leds, NUM_LEDS, (beatA + beatB) / 2, 8); // Use FastLED's fill_rainbow routine.
+			uint8_t beatA = beatsin8(_bpm / 2, 0, 255); // Starting hue
+			fill_rainbow(_leds, NUM_LEDS, beatA, 8); // Use FastLED's fill_rainbow routine.
 			FastLED.show();
+		}
+		else if (_currentPattern == PATTERN_BEATFADE)
+		{
+			if ((get_millisecond_timer() - _animationStart) > _animationPhase)
+			{
+				fill_solid(&(_leds[0]), NUM_LEDS, CHSV(_cylonHue, 255, 255));
+				_animationStart += _animationPhase;
+			}
+			FastLED.show();
+			fadeToBlackBy(_leds, NUM_LEDS, 16);
 		}
 		else
 		{
@@ -147,7 +156,11 @@ void StatusVisualiser::cylon(uint32_t bondingCypher, uint8_t bpm)
 void StatusVisualiser::nextPattern()
 {
 	_currentPattern++;
-	if (_currentPattern > PATTERN_RAINBOWBEAT) {
+	if (_currentPattern == PATTERN_BEATFADE) {
+		_animationStart = get_millisecond_timer();
+		_animationPhase = 60000 / _bpm;
+	}
+	if (_currentPattern > PATTERN_BEATFADE) {
 		_currentPattern = PATTERN_OFF;
 	}
 }
