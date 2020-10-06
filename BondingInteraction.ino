@@ -26,7 +26,7 @@ void uploadUserData();
 void broadcastCapSense();
 void buttonHandler(uint8_t keyCode);
 void onPressed();
-void sendCypher();
+void startBonding();
 void sendMessage(String msg);
 void receivedCallback(uint32_t from, String &msg);
 void newConnectionCallback(uint32_t nodeId);
@@ -58,16 +58,25 @@ Task taskVisualiser(VISUALISATION_UPDATE_INTERVAL, TASK_FOREVER, &showVisualisat
 Task taskShowLogo(LOGO_DELAY, TASK_ONCE, &showHomescreen);
 
 #define STATE_IDLE 0
-#define STATE_CYPHER 1
+#define STATE_BONDING 1
+#define STATE_SCORE 2
+#define STATE_PROXIMITY 3
+#define STATE_GROUP 4
 uint8_t currentState = STATE_IDLE;
 
-uint16_t cypher;
-uint8_t lastKey;
-uint16_t cypherPeer;
-uint32_t cypherNode;
-uint32_t bondingStarttime = 0;
-uint32_t bondingRequestNode;
-uint32_t bondingSuccessNode;
+#define BONDING_IDLE 0
+#define BONDING_REQUESTED 1
+#define BONDING_STARTED 2
+#define BONDING_INPROGRESS 3
+uint8_t bondingState = BONDING_IDLE;
+
+struct bondingRequest_t {
+  uint32_t node;
+  uint32_t startt;
+};
+
+SimpleList<bondingRequest_t> bondingCandidates;
+bondingRequest_t bondingCandidate;
 
 void setup() {
   Serial.begin(115200);
@@ -235,22 +244,24 @@ void buttonHandler(uint8_t keyCode)
 {
   switch (currentState)
   {
-  case STATE_CYPHER:
-    // typeCypher(keyCode);
+  case STATE_BONDING:
+    // fill meter based on time
+    if (keyCode == TAP_BOTH)
+    {
+      abortBonding();
+      currentState = STATE_IDLE;
+    }
     break;
   default: //idle
 
     Serial.println("Tap " + String(keyCode));
     if (keyCode == HOLD_BOTH)
     {
-      currentState = STATE_CYPHER;
-      cypher = 0;
+      // currentState = STATE_CYPHER;
       Serial.println("Switch from idle to cypher-input");
       taskShowLogo.disable();
-      tft.fillScreen(TFT_BLACK);
-      tft.setTextDatum(ML_DATUM);
-      tft.drawString("Cypher: ", 0, tft.height() / 2);
-      visualiser.blink(200, 3, CRGB::HotPink, StatusVisualiser::STATE_METER);
+      displayMessage("Wating for partner...");
+      visualiser.blink(300, 99, CRGB::White, StatusVisualiser::STATE_ANIMATION);
     }
     else if (keyCode == TAP_LEFT)
     {
@@ -260,71 +271,116 @@ void buttonHandler(uint8_t keyCode)
     {
       nextWallpaper();
     } else if (keyCode == TAP_BOTH) {
-      displayMessage("Tappd both");
+      currentState = STATE_BONDING;
+      startBonding();
     }
     break;
   }
 }
 
-String cypherString(uint16_t cypher)
-{
-  String cypherword = "";
-  while (cypher >= 1)
-  {
+/*
+* HANDLE BONDING
+*/
 
-    // Serial.println("in the loop");
-    switch (cypher & 7)
-    {
-    case 1:
-      cypherword = "A" + cypherword;
-      break;
-    case 2:
-      cypherword = "B" + cypherword;
-      break;
-    case 4:
-      cypherword = "C" + cypherword;
-      break;
-    default:
-      // Serial.println("default case");
-      break;
-    }
-    cypher = cypher >> 3;
-    // Serial.println(cypherword);
+void startBonding()
+{
+  displayMessage("Search Peer");
+  taskShowLogo.restartDelayed();
+
+  sendMessage("BRQA");
+  bondingState = BONDING_REQUESTED;
+
+  if(bondingCandidates.empty()) {
+    Serial.println("No Requests stored");
   }
-  return cypherword;
+  else // bondingRequest was received earlier
+  {
+    while(!bondingCandidates.empty() && bondingState != BONDING_STARTED)
+    {
+      bondingCandidate = bondingCandidates.front();
+      if ((bondingCandidate.startt + BONDINGTIMEOUT) > mesh.getNodeTime()) {
+        bondingCandidates.pop_front();
+        Serial.println("Request timeout");
+      } else {
+        mesh.sendSingle(bondingCandidate.node, "BRQS"); // send bonding handshake
+        bondingState = BONDING_STARTED;
+        // start timer based on
+        Serial.printf("Bonding requested from %u\n", bondingCandidate.node);
+      }
+    }
+  }
 }
 
-void sendCypher()
+void abortBonding()
 {
+  displayMessage("Abort");
+  taskShowLogo.restartDelayed();
+  sendMessage("BRAB");
+  bondingState = BONDING_IDLE;
+  if (!bondingCandidates.empty()) bondingCandidates.pop_front();
+  Serial.println("Bonding aborted by user");
+}
 
-  String msg = "Cypher : ";
-  msg += String(cypher);
+void handleBonding(uint32_t from, String &msg)
+{
+  if (msg.startsWith("BRQA")) {
 
-  sendMessage(msg);
+    // Add new request to the cue
+    bondingRequest_t newCandidate;
+    newCandidate.node = from;
+    newCandidate.startt = mesh.getNodeTime();
+    bondingCandidates.remove_if([&from](bondingRequest_t c) { return c.node == from; });
 
-  if ((bondingStarttime + HANDSHAKETIME) > millis())
-  {
-    // bondingRequest was received earlier
-    if (cypher == cypherPeer)
-    {
-      //cypher correct, so we should bond
-      mesh.sendSingle(cypherNode, "Bonding"); // send bonding handshake
-      bondingSuccessNode = cypherNode;
-      Serial.printf("Bonding with %u\n", cypherNode);
-      Serial.println("");
+    if (bondingState == BONDING_REQUESTED) { //user had requested before, so start bonding
+      bondingCandidate = newCandidate;
+      bondingCandidates.push_front(newCandidate);
+      mesh.sendSingle(bondingCandidate.node, "BRQS"); // send bonding handshake
+      bondingState = BONDING_STARTED;
+      Serial.printf("Bonding requested from %u\n", bondingCandidate.node);
     }
-    else
+    else //save for later
     {
-      Serial.println("Our cypher does not match");
+      bondingCandidates.push_back(newCandidate);
+      Serial.printf("User has not initiated Bonding yet!");
     }
   }
-  else
-  {
-    //no bondingrequest active
-    Serial.println("No open bonding request");
+  else if (msg.startsWith("BRAB")) { // Abort ercevied
+    if (bondingState == BONDING_STARTED && bondingCandidate.node == from) { // abort current bonding procedure
+      //visualise abort
+      bondingState = BONDING_IDLE;
+      bondingCandidates.pop_front();
+    }
+    else //remove frim request cue
+    {
+      bondingCandidates.remove_if([&from](bondingRequest_t c) { return c.node == from; });
+    }
   }
-
-  bondingStarttime = millis(); //bonding cypher by user so time is reset
+  else if (msg.startsWith("BRQS"))
+  {
+    if (bondingState == BONDING_REQUESTED) // if bonding hasnt strted but was requested, skip start and bond immediatly
+    {
+      bondingCandidate.node = from;
+      bondingCandidate.startt = mesh.getNodeTime();
+      bondingCandidates.push_front(bondingCandidate);
+      mesh.sendSingle(bondingCandidate.node, "BRQS"); // send bonding handshake
+      bondingState = BONDING_INPROGRESS;
+      Serial.printf("Bonding now with %u\n", bondingCandidate.node);
+      visualiser.blink(500, 3, CRGB::Green, StatusVisualiser::STATE_ANIMATION);
+      // start timer based on
+    }
+    else if (bondingState == BONDING_STARTED && bondingCandidate.node == from) // we started first and now 
+    {
+      //start animation and timer
+      bondingState = BONDING_INPROGRESS;
+      Serial.printf("Bonding now with %u\n", bondingCandidate.node);
+      visualiser.blink(500, 3, CRGB::Green, StatusVisualiser::STATE_ANIMATION);
+      // start timer based on
+    }
+    else {
+      // user did mno start it, so discard this? Or shouled we store it? 
+      Serial.println("User hasn't started bonding or is in progtress with other peer, so we do not react");
+    }
+  }
 }
 
 /*
@@ -348,7 +404,6 @@ void sendMessage(String msg)
   // msg += " myNodeTime: " + String(mesh.getNodeTime());
 
   Serial.printf("Sending message: %s\n", msg.c_str());
-  Serial.println("");
 
   mesh.sendBroadcast(msg);
 
@@ -364,64 +419,20 @@ void sendMessage(String msg)
   }
 }
 
-//maybe move the handshake into a class whith one instance per Node to track states, instead of this if/else horror
-
 /* Controller for incoming messages that prints all incoming messages and listens on touch and bonding events */
 void receivedCallback(uint32_t from, String &msg)
 {
   Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
   Serial.println("");
 
-  //FIX: remove the bonding cypher that was send after the response time winoow passed
-  if (msg.startsWith("Cypher"))
-  { // check if another touch accordingly
-
-    cypherPeer = msg.substring(9).toInt(); //other devices sending cyphers will override this value and block bonding -> connect to nodeid, because that is unique
-    cypherNode = from;
-
-    Serial.printf("Bonding cypher %s received from %u\n", cypherString(cypherPeer), from);
-
-    if ((bondingStarttime + HANDSHAKETIME) > millis())
-    {
-
-      //had started a request before
-      if (cypher == cypherPeer)
-      {
-        // bonding cypher correct, so let's bond
-        mesh.sendSingle(from, "Bonding");
-        Serial.printf("Bonding with %u\n", from);
-        Serial.println("");
-        bondingSuccessNode = from;
-        if (bondingRequestNode == bondingSuccessNode)
-        {
-          Serial.printf("Bonded with %u\n", from);
-          visualiser.cylon(cypher);
-          //store in list
-        }
-      }
-      else
-      {
-        Serial.println("Their cypher does not match");
-      }
-    }
-    else
-    {
-      //bonding was out of time or no request from this side
-      Serial.println("No open request, yet");
-    }
-    bondingStarttime = millis();
-  }
-  else if (msg.startsWith("Bonding"))
+  String protocol = msg.substring(0,4);
+  if (protocol == "BRQA" || protocol == "BRAB" || protocol == "BRQS")
   {
-    if (bondingSuccessNode == from)
-    { //this has to be checked against a time
-      Serial.printf("Bonded with %u\n", from);
-      visualiser.cylon(cypher);
-    }
-    else
-    {
-      bondingRequestNode = from;
-    }
+    handleBonding(from, msg);
+  }
+  else if (msg.startsWith("Anythgin else"))
+  {
+    //do anything else based on network
   }
 }
 

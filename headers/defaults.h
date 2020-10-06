@@ -1,5 +1,6 @@
 #define DISPLAY_ORIENTATION 3 //Rotation of the display in 90° steps form 0 to 3
 
+#define BONDINGTIMEOUT 60000
 #define HANDSHAKETIME 60000 // time to perform a usccessful handshake between people
 
 #define MESH_SSID "nopainnogain"
