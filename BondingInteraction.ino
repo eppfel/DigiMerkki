@@ -26,7 +26,8 @@ void uploadUserData();
 void broadcastCapSense();
 void buttonHandler(uint8_t keyCode);
 void onPressed();
-void startBonding();
+void userStartBonding();
+void sendBondingPing();
 void sendMessage(String msg);
 void receivedCallback(uint32_t from, String &msg);
 void newConnectionCallback(uint32_t nodeId);
@@ -56,19 +57,24 @@ Task taskCheckBattery(BATTERY_CHARGE_CHECK_INTERVAL, TASK_FOREVER, &checkBattery
 Task taskCheckButtonPress(TASK_CHECK_BUTTON_PRESS_INTERVAL, TASK_FOREVER, &checkButtonPress);
 Task taskVisualiser(VISUALISATION_UPDATE_INTERVAL, TASK_FOREVER, &showVisualisations);
 Task taskShowLogo(LOGO_DELAY, TASK_ONCE, &showHomescreen);
+Task taskBondingPing(BONDINGPING, TASK_FOREVER, &sendBondingPing);
 
 #define STATE_IDLE 0
 #define STATE_BONDING 1
-#define STATE_SCORE 2
-#define STATE_PROXIMITY 3
-#define STATE_GROUP 4
+#define STATE_BOND 2
+#define STATE_SCORE 3
+#define STATE_PROXIMITY 4
+#define STATE_GROUP 5
 uint8_t currentState = STATE_IDLE;
 
 #define BONDING_IDLE 0
 #define BONDING_REQUESTED 1
 #define BONDING_STARTED 2
 #define BONDING_INPROGRESS 3
+#define BONDING_COMPLETE 4
 uint8_t bondingState = BONDING_IDLE;
+uint32_t localStarttime = 0;
+bool peerCompleted = false;
 
 struct bondingRequest_t {
   uint32_t node;
@@ -121,6 +127,8 @@ void setup() {
   hwbutton2.begin();
   hwbutton1.onPressed(pressedShutdown);
   hwbutton2.onPressed(showVoltage);
+
+  userScheduler.addTask(taskBondingPing);
 
   displayMessage("Here we go!");
   taskShowLogo.restartDelayed(2000);
@@ -242,19 +250,26 @@ void broadcastCapSense()
 
 void buttonHandler(uint8_t keyCode)
 {
+  Serial.println("Tap " + String(keyCode));
+
+  static bool firsttime = true;
+  if (firsttime) {
+    firsttime = !firsttime;
+    return;
+  }
+
   switch (currentState)
   {
   case STATE_BONDING:
     // fill meter based on time
     if (keyCode == TAP_BOTH)
     {
-      abortBonding();
+      userAbortBonding();
       currentState = STATE_IDLE;
     }
     break;
   default: //idle
 
-    Serial.println("Tap " + String(keyCode));
     if (keyCode == HOLD_BOTH)
     {
       // currentState = STATE_CYPHER;
@@ -272,113 +287,204 @@ void buttonHandler(uint8_t keyCode)
       nextWallpaper();
     } else if (keyCode == TAP_BOTH) {
       currentState = STATE_BONDING;
-      startBonding();
+      userStartBonding();
     }
     break;
   }
 }
 
 /*
-* HANDLE BONDING
+* HANDLE BONDING (check when the pin is active and when not / end seems sus)
 */
 
-void startBonding()
-{
-  displayMessage("Search Peer");
-  taskShowLogo.restartDelayed();
+void initiateBonding() {
+  displayMessage("Searching Peer ...");
+  taskShowLogo.disable();
 
-  sendMessage("BRQA");
   bondingState = BONDING_REQUESTED;
+  peerCompleted = false;
+  taskBondingPing.enable();
 
-  if(bondingCandidates.empty()) {
-    Serial.println("No Requests stored");
+
+  bondingCandidates.remove_if([](bondingRequest_t c) { return mesh.getNodeTime() - c.startt > BONDINGTIMEOUT * 1000; }); // clean out old requests
+  if (bondingCandidates.empty())
+  {
+    Serial.println("No Valid Requests stored");
   }
   else // bondingRequest was received earlier
   {
-    while(!bondingCandidates.empty() && bondingState != BONDING_STARTED)
-    {
-      bondingCandidate = bondingCandidates.front();
-      if ((bondingCandidate.startt + BONDINGTIMEOUT) > mesh.getNodeTime()) {
-        bondingCandidates.pop_front();
-        Serial.println("Request timeout");
-      } else {
-        mesh.sendSingle(bondingCandidate.node, "BRQS"); // send bonding handshake
-        bondingState = BONDING_STARTED;
-        // start timer based on
-        Serial.printf("Bonding requested from %u\n", bondingCandidate.node);
-      }
-    }
+    bondingCandidate = bondingCandidates.front();
+    initiateBondingHandShake();
   }
 }
 
-void abortBonding()
+void initiateBondingHandShake() {
+  bondingState = BONDING_STARTED;
+  localStarttime = mesh.getNodeTime();
+  taskBondingPing.enable();
+  Serial.printf("Bonding requested to %u\n", bondingCandidate.node);
+}
+
+void initiateBondingSequence() {
+  bondingState = BONDING_INPROGRESS;
+  taskBondingPing.enable();
+  displayMessage("Bonding...");
+  visualiser.blink(300, 3, CRGB::Blue); // fill meter
+  Serial.printf("Bonding now with %u\n", bondingCandidate.node);
+}
+
+void abortBondingSequence() {
+  bondingState = BONDING_IDLE;
+  taskBondingPing.disable();
+  visualiser.blink(300, 3, CRGB::Red);
+}
+
+void completeBondingSequence()
 {
+  peerCompleted = false;
+
+  currentState = STATE_BOND;
+  taskShowLogo.restartDelayed();
+  
+  //write into storage
+
+  visualiser.blink(500, 3, CRGB::Green); // fill meter
+  displayMessage("Bonding Complete!");
+}
+
+void userStartBonding()
+{
+  if (!nodes.empty())
+  {
+    initiateBonding();
+  }
+  else
+  {
+    displayMessage("No one around...");
+    taskShowLogo.restartDelayed();
+    visualiser.blink(300, 3, CRGB::Red);
+    currentState = STATE_IDLE;
+  }
+}
+
+void userAbortBonding()
+{
+  sendMessage("BRAB");
+  taskBondingPing.disable();
+  peerCompleted = false;
+  if (bondingState == BONDING_INPROGRESS || bondingState == BONDING_COMPLETE)
+    bondingCandidates.remove_if([](bondingRequest_t c) { return c.node == bondingCandidate.node; });
+  abortBondingSequence();
   displayMessage("Abort");
   taskShowLogo.restartDelayed();
-  sendMessage("BRAB");
-  bondingState = BONDING_IDLE;
-  if (!bondingCandidates.empty()) bondingCandidates.pop_front();
   Serial.println("Bonding aborted by user");
 }
 
-void handleBonding(uint32_t from, String &msg)
+void userFinishBonding()
+{
+  bondingState = BONDING_COMPLETE;
+  Serial.printf("Bonding completed by user, sending to %u/n", bondingCandidate.node);
+  taskBondingPing.enable();
+  if (peerCompleted) {
+    completeBondingSequence();
+  }
+}
+
+void sendBondingPing() {
+  Serial.printf("Ping:BondingState:%u:%u\n", bondingState, taskBondingPing.getRunCounter());
+  switch (bondingState)
+  {
+  case BONDING_REQUESTED:
+    sendMessage("BRQA");
+    break;
+  case BONDING_INPROGRESS:
+    if (taskBondingPing.getRunCounter() > HANDSHAKETIME / BONDINGPING) {
+      userFinishBonding();
+    }
+  case BONDING_STARTED:
+    mesh.sendSingle(bondingCandidate.node, "BRQS" + String(localStarttime)); // send bonding handshake
+    break;
+  case BONDING_COMPLETE:
+    if (taskBondingPing.getRunCounter() > 3)
+    {
+      abortBondingSequence();
+    }
+    mesh.sendSingle(bondingCandidate.node, "BRQC");
+    break;
+
+  default:
+    //IDLE do nothing
+    break;
+  }
+}
+
+void handleBondingRequests(uint32_t from, String &msg)
 {
   if (msg.startsWith("BRQA")) {
-
+    bondingCandidates.remove_if([](bondingRequest_t c) { return mesh.getNodeTime() - c.startt > BONDINGTIMEOUT * 1000; });
     // Add new request to the cue
     bondingRequest_t newCandidate;
     newCandidate.node = from;
     newCandidate.startt = mesh.getNodeTime();
-    bondingCandidates.remove_if([&from](bondingRequest_t c) { return c.node == from; });
 
     if (bondingState == BONDING_REQUESTED) { //user had requested before, so start bonding
       bondingCandidate = newCandidate;
       bondingCandidates.push_front(newCandidate);
-      mesh.sendSingle(bondingCandidate.node, "BRQS"); // send bonding handshake
-      bondingState = BONDING_STARTED;
-      Serial.printf("Bonding requested from %u\n", bondingCandidate.node);
+      initiateBondingHandShake();
     }
     else //save for later
     {
       bondingCandidates.push_back(newCandidate);
-      Serial.printf("User has not initiated Bonding yet!");
+      if (bondingState == BONDING_IDLE)
+        Serial.println("User has not initiated Bonding yet!");
+      else
+        Serial.println("Bonding already started/In Progress.");
     }
   }
   else if (msg.startsWith("BRAB")) { // Abort ercevied
-    if (bondingState == BONDING_STARTED && bondingCandidate.node == from) { // abort current bonding procedure
-      //visualise abort
-      bondingState = BONDING_IDLE;
-      bondingCandidates.pop_front();
+    if ((bondingState == BONDING_STARTED || bondingState == BONDING_INPROGRESS || bondingState == BONDING_COMPLETE) && bondingCandidate.node == from)
+    { // abort current bonding procedure
+      Serial.println("Bonding aborted by peer");
+      abortBondingSequence();
+      initiateBonding();
     }
-    else //remove frim request cue
-    {
-      bondingCandidates.remove_if([&from](bondingRequest_t c) { return c.node == from; });
-    }
+    bondingCandidates.remove_if([&from](bondingRequest_t c) { return c.node == from; });
   }
   else if (msg.startsWith("BRQS"))
   {
-    if (bondingState == BONDING_REQUESTED) // if bonding hasnt strted but was requested, skip start and bond immediatly
+    if (bondingState == BONDING_STARTED && bondingCandidate.node == from) // we started first and now
+    {
+      initiateBondingSequence();
+    }
+    else if (bondingState == BONDING_REQUESTED) // if bonding hasnt strted but was requested, skip start and bond immediatly
     {
       bondingCandidate.node = from;
-      bondingCandidate.startt = mesh.getNodeTime();
+      bondingCandidate.startt = msg.substring(9).toInt();
       bondingCandidates.push_front(bondingCandidate);
-      mesh.sendSingle(bondingCandidate.node, "BRQS"); // send bonding handshake
-      bondingState = BONDING_INPROGRESS;
-      Serial.printf("Bonding now with %u\n", bondingCandidate.node);
-      visualiser.blink(500, 3, CRGB::Green, StatusVisualiser::STATE_ANIMATION);
-      // start timer based on
+      initiateBondingHandShake();
+      initiateBondingSequence();
     }
-    else if (bondingState == BONDING_STARTED && bondingCandidate.node == from) // we started first and now 
+    else if (bondingState == BONDING_IDLE) // this is faulty / unecessary
     {
-      //start animation and timer
-      bondingState = BONDING_INPROGRESS;
-      Serial.printf("Bonding now with %u\n", bondingCandidate.node);
-      visualiser.blink(500, 3, CRGB::Green, StatusVisualiser::STATE_ANIMATION);
-      // start timer based on
+      bondingCandidate.node = from;
+      bondingCandidate.startt = msg.substring(9).toInt();
+      bondingCandidates.push_front(bondingCandidate);
+      // user did mno start it, so discard this? Or shouled we store it? 
+      Serial.println("User hasn't started bonding or is in progress with other peer, so we do not react");
+    }
+  }
+  else if (msg.startsWith("BRQC"))
+  {
+    if (from == bondingCandidate.node) {
+      Serial.println("Bonding completed by peer");
+      if (bondingState == BONDING_COMPLETE) {
+        completeBondingSequence();
+      } else {
+        peerCompleted = true;
+      }
     }
     else {
-      // user did mno start it, so discard this? Or shouled we store it? 
-      Serial.println("User hasn't started bonding or is in progtress with other peer, so we do not react");
+      Serial.println("Bonding completed by non-peer");
     }
   }
 }
@@ -426,9 +532,9 @@ void receivedCallback(uint32_t from, String &msg)
   Serial.println("");
 
   String protocol = msg.substring(0,4);
-  if (protocol == "BRQA" || protocol == "BRAB" || protocol == "BRQS")
+  if (protocol == "BRQA" || protocol == "BRAB" || protocol == "BRQS" || protocol  == "BRQC")
   {
-    handleBonding(from, msg);
+    handleBondingRequests(from, msg);
   }
   else if (msg.startsWith("Anythgin else"))
   {
