@@ -73,8 +73,8 @@ uint8_t currentState = STATE_IDLE;
 #define BONDING_INPROGRESS 3
 #define BONDING_COMPLETE 4
 uint8_t bondingState = BONDING_IDLE;
-uint32_t localStarttime = 0;
-bool peerCompleted = false;
+uint32_t bondingStarttime = 0;
+bool candidateCompleted = false;
 
 struct bondingRequest_t {
   uint32_t node;
@@ -302,7 +302,7 @@ void initiateBonding() {
   taskShowLogo.disable();
 
   bondingState = BONDING_REQUESTED;
-  peerCompleted = false;
+  candidateCompleted = false;
   taskBondingPing.enable();
 
 
@@ -320,7 +320,7 @@ void initiateBonding() {
 
 void initiateBondingHandShake() {
   bondingState = BONDING_STARTED;
-  localStarttime = mesh.getNodeTime();
+  bondingStarttime = mesh.getNodeTime();
   taskBondingPing.enable();
   Serial.printf("Bonding requested to %u\n", bondingCandidate.node);
 }
@@ -329,7 +329,7 @@ void initiateBondingSequence() {
   bondingState = BONDING_INPROGRESS;
   taskBondingPing.enable();
   displayMessage("Bonding...");
-  visualiser.blink(300, 3, CRGB::Blue); // fill meter
+  visualiser.fillMeter((bondingCandidate.startt+bondingStarttime) / 2000, HANDSHAKETIME, CRGB::Blue); // fill meter
   Serial.printf("Bonding now with %u\n", bondingCandidate.node);
 }
 
@@ -341,7 +341,7 @@ void abortBondingSequence() {
 
 void completeBondingSequence()
 {
-  peerCompleted = false;
+  candidateCompleted = false;
 
   currentState = STATE_BOND;
   taskShowLogo.restartDelayed();
@@ -371,7 +371,7 @@ void userAbortBonding()
 {
   sendMessage("BRAB");
   taskBondingPing.disable();
-  peerCompleted = false;
+  candidateCompleted = false;
   if (bondingState == BONDING_INPROGRESS || bondingState == BONDING_COMPLETE)
     bondingCandidates.remove_if([](bondingRequest_t c) { return c.node == bondingCandidate.node; });
   abortBondingSequence();
@@ -385,7 +385,7 @@ void userFinishBonding()
   bondingState = BONDING_COMPLETE;
   Serial.printf("Bonding completed by user, sending to %u/n", bondingCandidate.node);
   taskBondingPing.enable();
-  if (peerCompleted) {
+  if (candidateCompleted) {
     completeBondingSequence();
   }
 }
@@ -402,7 +402,7 @@ void sendBondingPing() {
       userFinishBonding();
     }
   case BONDING_STARTED:
-    mesh.sendSingle(bondingCandidate.node, "BRQS" + String(localStarttime)); // send bonding handshake
+    mesh.sendSingle(bondingCandidate.node, "BRQS" + String(bondingStarttime)); // send bonding handshake
     break;
   case BONDING_COMPLETE:
     if (taskBondingPing.getRunCounter() > 3)
@@ -452,14 +452,16 @@ void handleBondingRequests(uint32_t from, String &msg)
   }
   else if (msg.startsWith("BRQS"))
   {
+    uint32_t candidateTime = msg.substring(4).toInt();
     if (bondingState == BONDING_STARTED && bondingCandidate.node == from) // we started first and now
     {
+      bondingCandidate.startt = candidateTime;
       initiateBondingSequence();
     }
     else if (bondingState == BONDING_REQUESTED) // if bonding hasnt strted but was requested, skip start and bond immediatly
     {
       bondingCandidate.node = from;
-      bondingCandidate.startt = msg.substring(9).toInt();
+      bondingCandidate.startt = candidateTime;
       bondingCandidates.push_front(bondingCandidate);
       initiateBondingHandShake();
       initiateBondingSequence();
@@ -467,7 +469,7 @@ void handleBondingRequests(uint32_t from, String &msg)
     else if (bondingState == BONDING_IDLE) // this is faulty / unecessary
     {
       bondingCandidate.node = from;
-      bondingCandidate.startt = msg.substring(9).toInt();
+      bondingCandidate.startt = candidateTime;
       bondingCandidates.push_front(bondingCandidate);
       // user did mno start it, so discard this? Or shouled we store it? 
       Serial.println("User hasn't started bonding or is in progress with other peer, so we do not react");
@@ -480,7 +482,7 @@ void handleBondingRequests(uint32_t from, String &msg)
       if (bondingState == BONDING_COMPLETE) {
         completeBondingSequence();
       } else {
-        peerCompleted = true;
+        candidateCompleted = true;
       }
     }
     else {

@@ -31,9 +31,10 @@ class StatusVisualiser {
     CRGB _blinkColor;
 
   public:
-    static const uint8_t STATE_ANIMATION = 0;
-    static const uint8_t STATE_METER =     1;
-    static const uint8_t STATE_BLINKING =  2;
+    static const uint8_t STATE_STATIC = 0;
+    static const uint8_t STATE_ANIMATION = 1;
+    static const uint8_t STATE_METER =     2;
+    static const uint8_t STATE_BLINKING =  3;
     static const uint8_t PATTERN_OFF =     0;
     static const uint8_t PATTERN_CYLON =   1;
     static const uint8_t PATTERN_SPREAD = 2;
@@ -46,7 +47,9 @@ class StatusVisualiser {
     void show();
     void turnOff();
     void blink(uint32_t phase, uint8_t iterations, CRGB color, uint8_t transitionState = STATE_ANIMATION);
+    void setMeterFromIndex(int8_t ledIndex);
     void setMeter(int8_t ledIndex = -1);
+    void fillMeter(uint32_t fromT, uint32_t toT, int32_t colorCode = CRGB::White);
     void cylon(uint32_t bondingCypher, uint8_t bpm = 60);
     void nextPattern();
 };
