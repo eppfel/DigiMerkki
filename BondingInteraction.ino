@@ -99,7 +99,7 @@ void setup() {
     while (1)
       yield(); // Stay here twiddling thumbs waiting
   }
-  Serial.println("\r\nSPIFFS initialised.");
+  Serial.print("SPIFFS initialised.\r\n");
 
   mesh.setDebugMsgTypes(ERROR | DEBUG); // set before init() so that you can see error messages
 
@@ -322,7 +322,7 @@ void initiateBondingHandShake() {
   bondingState = BONDING_STARTED;
   bondingStarttime = mesh.getNodeTime();
   taskBondingPing.enable();
-  Serial.printf("Bonding requested to %u\n", bondingCandidate.node);
+  Serial.printf("Bonding requested to %u\r\n", bondingCandidate.node);
 }
 
 void initiateBondingSequence() {
@@ -330,7 +330,7 @@ void initiateBondingSequence() {
   taskBondingPing.enable();
   displayMessage("Bonding...");
   visualiser.fillMeter((bondingCandidate.startt+bondingStarttime) / 2000, HANDSHAKETIME, CRGB::Blue); // fill meter
-  Serial.printf("Bonding now with %u\n", bondingCandidate.node);
+  Serial.printf("Bonding now with %u\r\n", bondingCandidate.node);
 }
 
 void abortBondingSequence() {
@@ -344,7 +344,7 @@ void completeBondingSequence()
   candidateCompleted = false;
 
   currentState = STATE_BOND;
-  taskShowLogo.restartDelayed();
+  bondingState =BONDING_IDLE;
   
   //write into storage
 
@@ -391,7 +391,7 @@ void userFinishBonding()
 }
 
 void sendBondingPing() {
-  Serial.printf("Ping:BondingState:%u:%u\n", bondingState, taskBondingPing.getRunCounter());
+  Serial.printf("Ping:BondingState:%u:%u\r\n", bondingState, taskBondingPing.getRunCounter());
   switch (bondingState)
   {
   case BONDING_REQUESTED:
@@ -511,7 +511,7 @@ void sendMessage(String msg)
   // msg += mesh.getNodeId();
   // msg += " myNodeTime: " + String(mesh.getNodeTime());
 
-  Serial.printf("Sending message: %s\n", msg.c_str());
+  Serial.printf("Sending message: %s\r\n", msg.c_str());
 
   mesh.sendBroadcast(msg);
 
@@ -530,7 +530,7 @@ void sendMessage(String msg)
 /* Controller for incoming messages that prints all incoming messages and listens on touch and bonding events */
 void receivedCallback(uint32_t from, String &msg)
 {
-  Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
+  Serial.printf("Received from %u msg=%s\r\n", from, msg.c_str());
   Serial.println("");
 
   String protocol = msg.substring(0,4);
@@ -549,7 +549,7 @@ void newConnectionCallback(uint32_t nodeId)
   // Display change on tft
 
   Serial.printf("New Connection, nodeId = %u", nodeId);
-  // Serial.printf("--> startHere: New Connection, %s\n", mesh.subConnectionJson(true).c_str());
+  // Serial.printf("--> startHere: New Connection, %s\r\n", mesh.subConnectionJson(true).c_str());
   // Serial.println("");
   updateNumNodes(nodes.size());
   showHomescreen();
@@ -557,12 +557,12 @@ void newConnectionCallback(uint32_t nodeId)
 
 void changedConnectionCallback()
 {
-  Serial.printf("Changed connections\n");
+  Serial.printf("Changed connections\r\n");
   // Display changes on tft
 
   nodes = mesh.getNodeList();
 
-  Serial.printf("Num nodes: %d\n", nodes.size());
+  Serial.printf("Num nodes: %d\r\n", nodes.size());
   Serial.printf("Connection list:");
 
   SimpleList<uint32_t>::iterator node = nodes.begin();
@@ -582,10 +582,10 @@ void changedConnectionCallback()
 
 void nodeTimeAdjustedCallback(int32_t offset)
 {
-  Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(), offset);
+  Serial.printf("Adjusted time %u. Offset = %d\r\n", mesh.getNodeTime(), offset);
 }
 
 void delayReceivedCallback(uint32_t from, int32_t delay)
 {
-  Serial.printf("Delay to node %u is %d us\n", from, delay);
+  Serial.printf("Delay to node %u is %d us\r\n", from, delay);
 }
