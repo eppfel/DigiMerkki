@@ -18,11 +18,11 @@ class StatusVisualiser {
   private:
     CRGB _leds[NUM_LEDS];// include variables for addresable LEDs
     uint8_t _currentState = STATE_ANIMATION;
-    uint8_t _transitionState;
+    uint8_t _transitionState = _currentState;
     uint8_t _currentPattern = PATTERN_OFF;
-    uint8_t _maxBrightness;
-    uint8_t _bpm;
-    uint8_t _cylonHue;
+    uint8_t _maxBrightness = 64;
+    uint8_t _bpm = 60;
+    CRGB _animationColor = CRGB::White; 
 
     bool _blinkFlag;
     uint32_t _animationStart = 0;
@@ -39,8 +39,9 @@ class StatusVisualiser {
     static const uint8_t PATTERN_CYLON =   1;
     static const uint8_t PATTERN_SPREAD = 2;
     static const uint8_t PATTERN_SUCK = 3;
-    static const uint8_t PATTERN_RAINBOWBEAT = 4;
-    static const uint8_t PATTERN_BEATFADE = 5;
+    static const uint8_t PATTERN_MOVINGRAINBOW = 4;
+    static const uint8_t PATTERN_RAINBOWBEAT = 5;
+    static const uint8_t PATTERN_BEATFADE = 6;
 
     StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness);
 
@@ -50,7 +51,7 @@ class StatusVisualiser {
     void setMeterFromIndex(int8_t ledIndex);
     void setMeter(int8_t ledIndex = -1);
     void fillMeter(uint32_t fromT, uint32_t toT, int32_t colorCode = CRGB::White);
-    void cylon(uint32_t bondingCypher, uint8_t bpm = 60);
+    void cylon(CRGB color = CRGB::White, uint8_t bpm = 60);
     void nextPattern();
 };
 

@@ -22,7 +22,6 @@ StatusVisualiser::StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness = 64)
 	_maxBrightness = maxBrightness;
 	getMeshNodeTime = t;
 	FastLED.setBrightness(maxBrightness);
-	cylon(0, 60);
 }
 
 void StatusVisualiser::show() {
@@ -34,7 +33,6 @@ void StatusVisualiser::show() {
 			FastLED.clear();
 		} else if (((get_millisecond_timer() - _animationStart) / _animationPhase) % 2 != _blinkFlag)
 		{
-			// Serial.println()
 			_blinkFlag = !_blinkFlag;
 			if (_blinkFlag)
 			{
@@ -49,9 +47,10 @@ void StatusVisualiser::show() {
 		if (_currentPattern == PATTERN_CYLON)
 		{
 			uint8_t ledPos = beatsin8(_bpm, 0, NUM_LEDS - 1);
-			_leds[ledPos].setHSV(_cylonHue, 255, 64);
+			_leds[ledPos] = _animationColor;
+			_leds[ledPos] %= 64;
 			ledPos = beatsin8(_bpm, 0, NUM_LEDS - 1, 0, 20);
-			_leds[ledPos].setHSV(_cylonHue, 255, 255);
+			_leds[ledPos] = _animationColor;
 			FastLED.setBrightness(_maxBrightness);
 			FastLED.show();
 			fadeToBlackBy(_leds, NUM_LEDS, 255);
@@ -63,7 +62,7 @@ void StatusVisualiser::show() {
 			if (spread) {
 				uint8_t ledmin = startled - (spread - 1);
 				uint8_t lednum = spread * 2 - 1;
-				fill_solid(&(_leds[ledmin]), lednum, CHSV(_cylonHue, 255, 255));
+				fill_solid(&(_leds[ledmin]), lednum, _animationColor);
 				FastLED.setBrightness(_maxBrightness);
 			}
 			FastLED.show();
@@ -77,23 +76,29 @@ void StatusVisualiser::show() {
 			{
 				uint8_t ledmin = startled - (spread - 1);
 				uint8_t lednum = spread * 2 - 1;
-				fill_solid(&(_leds[ledmin]), lednum, CHSV(_cylonHue, 255, 255));
+				fill_solid(&(_leds[ledmin]), lednum, _animationColor);
 				FastLED.setBrightness(_maxBrightness);
 			}
 			FastLED.show();
 			fadeToBlackBy(_leds, NUM_LEDS, 255);
 		}
+		else if (_currentPattern == PATTERN_MOVINGRAINBOW)
+		{	
+			uint8_t phase = (((get_millisecond_timer() - _animationStart) % _animationPhase) / (_animationPhase / 255));
+			fill_rainbow(_leds, NUM_LEDS, phase, 17); // Use FastLED's fill_rainbow routine.
+			FastLED.show();
+		}
 		else if (_currentPattern == PATTERN_RAINBOWBEAT)
 		{	
 			uint8_t beatA = beatsin8(_bpm / 2, 0, 255); // Starting hue
-			fill_rainbow(_leds, NUM_LEDS, beatA, 8); // Use FastLED's fill_rainbow routine.
+			fill_rainbow(_leds, NUM_LEDS, beatA, 12); // Use FastLED's fill_rainbow routine.
 			FastLED.show();
 		}
 		else if (_currentPattern == PATTERN_BEATFADE)
 		{
 			if ((get_millisecond_timer() - _animationStart) > _animationPhase)
 			{
-				fill_solid(&(_leds[0]), NUM_LEDS, CHSV(_cylonHue, 255, 255));
+				fill_solid(&(_leds[0]), NUM_LEDS, _animationColor);
 				_animationStart += _animationPhase;
 			}
 			FastLED.show();
@@ -159,9 +164,9 @@ void StatusVisualiser::fillMeter(uint32_t fromT, uint32_t duration, int32_t colo
 	_animationPhase = duration;
 }
 
-void StatusVisualiser::cylon(uint32_t bondingCypher, uint8_t bpm)
+void StatusVisualiser::cylon(CRGB color, uint8_t bpm)
 {
-	_cylonHue = bondingCypher / 60;
+	_animationColor = color;
 	_bpm = bpm;
 	_currentState = STATE_ANIMATION;
 	_currentPattern = PATTERN_SPREAD;
@@ -170,11 +175,18 @@ void StatusVisualiser::cylon(uint32_t bondingCypher, uint8_t bpm)
 void StatusVisualiser::nextPattern()
 {
 	_currentPattern++;
-	if (_currentPattern == PATTERN_BEATFADE) {
+	if (_currentPattern > PATTERN_BEATFADE) {
+		_currentPattern = PATTERN_OFF;
+	}
+
+	if (_currentPattern == PATTERN_BEATFADE)
+	{
 		_animationStart = get_millisecond_timer();
 		_animationPhase = 60000 / _bpm;
 	}
-	if (_currentPattern > PATTERN_BEATFADE) {
-		_currentPattern = PATTERN_OFF;
+	else if (_currentPattern == PATTERN_MOVINGRAINBOW)
+	{
+		_animationStart = get_millisecond_timer();
+		_animationPhase = 4000;
 	}
 }
