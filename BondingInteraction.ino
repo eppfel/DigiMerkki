@@ -285,6 +285,10 @@ void buttonHandler(uint8_t keyCode)
       currentState = STATE_IDLE;
     }
     break;
+  case STATE_BOND:
+    if (keyCode == TAP_BOTH) {
+      currentState = STATE_IDLE;
+    }
   default: //idle
 
     if (keyCode == HOLD_BOTH)
@@ -320,7 +324,9 @@ void initiateBonding() {
 
   bondingState = BONDING_REQUESTED;
   candidateCompleted = false;
+  taskBondingPing.setIterations(TASK_FOREVER);
   taskBondingPing.enable();
+  visualiser.cylon(60);
 
 
   bondingCandidates.remove_if([](bondingRequest_t c) { return mesh.getNodeTime() - c.startt > BONDINGTIMEOUT * 1000; }); // clean out old requests
@@ -352,21 +358,19 @@ void initiateBondingSequence() {
 
 void abortBondingSequence() {
   bondingState = BONDING_IDLE;
-  taskBondingPing.disable();
-  visualiser.blink(300, 3, CRGB::Red);
+  visualiser.blink(300, 3, CRGB::Red); //this one is called 
 }
 
 void completeBondingSequence()
 {
-  candidateCompleted = false;
-
   currentState = STATE_BOND;
-  bondingState =BONDING_IDLE;
+  bondingState = BONDING_IDLE;
   
   //write into storage
 
   visualiser.blink(500, 3, CRGB::Green); // fill meter
   displayMessage("Bonding Complete!");
+  taskShowLogo.restartDelayed();
 }
 
 void userStartBonding()
@@ -402,6 +406,7 @@ void userFinishBonding()
   bondingState = BONDING_COMPLETE;
   Serial.printf("Bonding completed by user, sending to %u/n", bondingCandidate.node);
   taskBondingPing.enable();
+  taskBondingPing.setIterations(5); //remove magicx number
   if (candidateCompleted) {
     completeBondingSequence();
   }
@@ -422,11 +427,12 @@ void sendBondingPing() {
     mesh.sendSingle(bondingCandidate.node, "BRQS" + String(bondingStarttime)); // send bonding handshake
     break;
   case BONDING_COMPLETE:
-    if (taskBondingPing.getRunCounter() > 3)
+    if (taskBondingPing.isLastIteration())
     {
-      abortBondingSequence();
+      abortBondingSequence(); // reset to being availible for boding if boding goes on
+      initiateBonding();
     }
-    mesh.sendSingle(bondingCandidate.node, "BRQC");
+    else mesh.sendSingle(bondingCandidate.node, "BRQC");
     break;
 
   default:
