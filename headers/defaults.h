@@ -4,6 +4,7 @@
 #define BONDINGTIMEOUT 20000
 #define BONDINGPING 300
 #define HANDSHAKETIME 3000 // time to perform a usccessful handshake between people
+#define DEFAULT_BPM 60
 
 #define MESH_SSID "nopainnogain"
 #define MESH_PASSWORD "istanbul"

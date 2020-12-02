@@ -22,9 +22,17 @@ StatusVisualiser::StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness = 64)
 	_maxBrightness = maxBrightness;
 	getMeshNodeTime = t;
 	FastLED.setBrightness(maxBrightness);
+	tapTempo.setBPM(DEFAULT_BPM);
 }
 
 void StatusVisualiser::show() {
+	
+	_bpm = tapTempo.getBPM();
+
+	// EVERY_N_MILLIS(500)
+	// {
+	// 	Serial.print("BPM: ");Serial.println(_bpm);
+	// }
 
 	if (_currentState == STATE_BLINKING)
 	{
@@ -167,7 +175,6 @@ void StatusVisualiser::fillMeter(uint32_t fromT, uint32_t duration, int32_t colo
 void StatusVisualiser::cylon(CRGB color, uint8_t bpm)
 {
 	_animationColor = color;
-	_bpm = bpm;
 	_currentState = STATE_ANIMATION;
 	_currentPattern = PATTERN_SPREAD;
 }

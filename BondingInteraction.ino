@@ -238,6 +238,7 @@ void checkButtonPress()
   touchInput.tick();
   hwbutton1.read();
   hwbutton2.read();
+  visualiser.tapTempo.update(touchInput._button2.isPressed());
 }
 
 void uploadUserData()

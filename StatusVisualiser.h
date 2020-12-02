@@ -9,6 +9,7 @@
 
 #include "Arduino.h"
 #include <FastLED.h>
+#include <ArduinoTapTempo.h>
 
 #ifndef NEOPIXEL_PIN
 #define NEOPIXEL_PIN 12 // Pin for controlling NeoPixel
@@ -21,7 +22,7 @@ class StatusVisualiser {
     uint8_t _transitionState = _currentState;
     uint8_t _currentPattern = PATTERN_OFF;
     uint8_t _maxBrightness = 64;
-    uint8_t _bpm = 60;
+    float _bpm = 60;
     CRGB _animationColor = CRGB::White; 
 
     bool _blinkFlag;
@@ -44,6 +45,7 @@ class StatusVisualiser {
     static const uint8_t PATTERN_BEATFADE = 6;
 
     StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness);
+    ArduinoTapTempo tapTempo;
 
     void show();
     void turnOff();
