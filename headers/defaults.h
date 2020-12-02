@@ -1,5 +1,6 @@
 #define DISPLAY_ORIENTATION 3 //Rotation of the display in 90° steps form 0 to 3
 
+#define BTNHOLDDELAY 700
 #define BONDINGTIMEOUT 20000
 #define BONDINGPING 300
 #define HANDSHAKETIME 3000 // time to perform a usccessful handshake between people

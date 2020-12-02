@@ -24,20 +24,23 @@
 class CapacitiveKeyboard
 {
   public:
-    typedef void (*callback_int_t)(uint8_t);
+    using callback_int_t = void (*)(uint8_t);
 
     CapacitiveKeyboard(int pin1, int pin2, int threshold) : _button1(pin1, DEBOUNCE_TIME, threshold), _button2(pin2, DEBOUNCE_TIME, threshold)
     {
     }
+    EasyButtonTouch _button1;
+    EasyButtonTouch _button2;
     void begin();
     void tick();
     void pressed();
-    void onPressed(CapacitiveKeyboard::callback_int_t callback_int, EasyButtonBase::callback_t callback);
+    void pressedFor();
+    void setBtnHandlers(CapacitiveKeyboard::callback_int_t callback_int, EasyButtonBase::callback_t callback);
+    // void onPressedFor(CapacitiveKeyboard::callback_int_t callback_int, EasyButtonBase::callback_t callback);
+
   protected:
     uint8_t _buttonState;
     CapacitiveKeyboard::callback_int_t _multipressed_callback_int;
-    EasyButtonTouch _button1;
-    EasyButtonTouch _button2;
 };
 
 #endif

@@ -22,6 +22,7 @@
 // Prototypes
 void checkBatteryCharge();
 void goToSleep();
+void holdTest();
 void uploadUserData();
 void broadcastCapSense();
 void buttonHandler(uint8_t keyCode);
@@ -115,7 +116,9 @@ void setup() {
   taskCheckBattery.enableDelayed(BATTERY_CHARGE_CHECK_INTERVAL);
 
   touchInput.begin();
-  touchInput.onPressed(buttonHandler, onPressed);
+  touchInput.setBtnHandlers(buttonHandler, onPressed);
+
+  touchInput._button1.onPressedFor(1000, holdTest);
 
   userScheduler.addTask(taskCheckButtonPress);
   taskCheckButtonPress.enable();
@@ -126,7 +129,8 @@ void setup() {
   hwbutton1.begin();
   hwbutton2.begin();
   hwbutton1.onPressed(pressedShutdown);
-  hwbutton2.onPressed(showVoltage);
+  hwbutton2.onPressed(broadcastCapSense);
+  hwbutton2.onSequence(2, 1000, showVoltage);
 
   userScheduler.addTask(taskBondingPing);
 
@@ -194,6 +198,18 @@ void pressedShutdown()
 {
   displayMessage("Shutting down");
   goToSleep();
+}
+
+void holdTest()
+{
+  String bs = String(touchInput._button1.isPressed()) + " : " + 
+              String(touchInput._button1.isReleased()) + " : " + 
+              String(touchInput._button1.pressedFor(1000)) + " : " + 
+              String(touchInput._button1.wasPressed()) + " : " + 
+              String(touchInput._button1.wasReleased());
+  Serial.println("Held Button " + bs);
+  displayMessage("Held for 1 sec");
+  taskShowLogo.restartDelayed();
 }
 
 // trigger deep sleep mode and wake up on any input from the touch buttons
