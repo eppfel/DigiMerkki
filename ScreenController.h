@@ -10,6 +10,7 @@
 void updateNumNodes(uint8_t numnodes);
 void updateVoltage(float voltage);
 void initScreen();
+void setWallpapers(uint32_t nodeid);
 void displayMessage(String msg);
 void showHomescreen();
 void nextWallpaper();

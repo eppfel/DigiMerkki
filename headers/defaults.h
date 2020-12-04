@@ -1,4 +1,6 @@
 #define DISPLAY_ORIENTATION 3 //Rotation of the display in 90° steps form 0 to 3
+#define NUM_BADGES 16
+#define NUM_PICS 5
 
 #define BTNHOLDDELAY 700
 #define BONDINGTIMEOUT 20000

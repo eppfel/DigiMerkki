@@ -121,6 +121,8 @@ void setup()
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
   mesh.onNodeDelayReceived(&delayReceivedCallback);
 
+  setWallpapers(mesh.getNodeId());
+
   userScheduler.addTask(taskShowLogo);
   userScheduler.addTask(taskCheckBattery);
   taskCheckBattery.enableDelayed(BATTERY_CHARGE_CHECK_INTERVAL);

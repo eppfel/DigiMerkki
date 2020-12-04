@@ -1,8 +1,20 @@
 #include "ScreenController.h"
 
-const static uint8_t NUM_WALLPAPERS = 5;
-char const *imgfiles[] = {"Baboon", "bmo", "nude", "aalto", "octopus", "digital-haalarit"};
-RTC_DATA_ATTR int8_t wallpaper = 1;
+struct badges_t
+{
+    uint32_t node;
+    uint8_t group;
+    uint8_t Pics[NUM_PICS];
+};
+
+badges_t badges[NUM_BADGES] = {
+    {2884960141, 0, {0, 2, 3, 4, 6}},
+    {3519576873, 1, {1, 2, 3, 4, 5}}};
+
+char const *imgfiles[] = {"Baboon", "bmo", "nude", "aalto", "octopus", "digital-haalarit", "amongus"};
+RTC_DATA_ATTR uint8_t numWallpapers = 0;
+RTC_DATA_ATTR uint8_t wallpapers[NUM_BADGES] = {0};
+RTC_DATA_ATTR int8_t wallpaper = 0;
 
 TFT_eSPI tft(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
 
@@ -60,9 +72,22 @@ void displayMessage(String msg)
     tft.drawString(msg, tft.width() / 2, tft.height() / 2);
 }
 
-void nextWallpaper() {
+void setWallpapers(uint32_t nodeid) {
+    for (int8_t i = 0; i < NUM_BADGES; i++)
+    {
+        if (badges[i].node == nodeid)
+        {
+            memcpy(wallpapers, badges[i].Pics, sizeof(badges[i].Pics));
+            numWallpapers = NUM_PICS;
+            break;
+        }
+    }
+}
+
+void nextWallpaper()
+{
     wallpaper++;
-    if (wallpaper >= NUM_WALLPAPERS)
+    if (wallpaper >= numWallpapers)
     {
         wallpaper = 0;
     }
@@ -75,7 +100,7 @@ void showHomescreen()
     // uint32_t t = millis();
 
     char picturefilename[24];
-    sprintf(picturefilename, "/%s.jpg", imgfiles[wallpaper]);
+    sprintf(picturefilename, "/%s.jpg", imgfiles[wallpapers[wallpaper]]);
     TJpgDec.drawFsJpg(0, 0, picturefilename);
     yield();
 
