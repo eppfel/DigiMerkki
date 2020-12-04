@@ -39,6 +39,7 @@ void delayReceivedCallback(uint32_t from, int32_t delay);
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
 CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, TTHRESHOLD);
+RTC_DATA_ATTR boolean freshStart = true;
 
 Scheduler userScheduler; // to control your personal task
 painlessMesh mesh;
@@ -85,7 +86,8 @@ struct bondingRequest_t {
 SimpleList<bondingRequest_t> bondingCandidates;
 bondingRequest_t bondingCandidate;
 
-void setup() {
+void setup()
+{  
   Serial.begin(115200);
   delay(25);
 
@@ -102,6 +104,14 @@ void setup() {
   }
   Serial.print("SPIFFS initialised.\r\n");
 
+  if (freshStart)
+  {
+    //calibrarte button threshold
+    //load configuration from and state from persistent storage
+    freshStart = false;
+  }
+
+  // Start up mesh connection
   mesh.setDebugMsgTypes(ERROR | DEBUG); // set before init() so that you can see error messages
 
   mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler);
