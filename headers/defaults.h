@@ -7,6 +7,7 @@
 #define BONDINGPING 300
 #define HANDSHAKETIME 3000 // time to perform a usccessful handshake between people
 #define DEFAULT_BPM 60
+#define TAPTIME 10000
 
 #define MESH_SSID "nopainnogain"
 #define MESH_PASSWORD "istanbul"
@@ -16,3 +17,7 @@
 #define LOGO_DELAY 3000
 #define BATTERY_CHARGE_CHECK_INTERVAL 30000
 #define FS_NO_GLOBALS
+
+//Protocol
+#define BP_NEWBPM "BPM"
+

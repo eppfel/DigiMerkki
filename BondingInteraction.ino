@@ -22,7 +22,7 @@
 // Prototypes
 void checkBatteryCharge();
 void goToSleep();
-void holdTest();
+void setTempo();
 void uploadUserData();
 void broadcastCapSense();
 void buttonHandler(uint8_t keyCode);
@@ -40,6 +40,7 @@ EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
 CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, TTHRESHOLD);
 RTC_DATA_ATTR boolean freshStart = true;
+bool trackTaps = false;
 
 Scheduler userScheduler; // to control your personal task
 painlessMesh mesh;
@@ -60,6 +61,7 @@ Task taskCheckButtonPress(TASK_CHECK_BUTTON_PRESS_INTERVAL, TASK_FOREVER, &check
 Task taskVisualiser(VISUALISATION_UPDATE_INTERVAL, TASK_FOREVER, &showVisualisations);
 Task taskShowLogo(LOGO_DELAY, TASK_ONCE, &showHomescreen);
 Task taskBondingPing(BONDINGPING, TASK_FOREVER, &sendBondingPing);
+Task taskSendBPM(TAPTIME,TASK_ONCE);
 
 #define STATE_IDLE 0
 #define STATE_BONDING 1
@@ -130,10 +132,11 @@ void setup()
   touchInput.begin();
   touchInput.setBtnHandlers(buttonHandler, onPressed);
 
-  touchInput._button1.onPressedFor(1000, holdTest);
+  touchInput._button1.onPressedFor(3000, setTempo);
 
   userScheduler.addTask(taskCheckButtonPress);
   taskCheckButtonPress.enable();
+  userScheduler.addTask(taskSendBPM);
 
   userScheduler.addTask(taskVisualiser);
   taskVisualiser.enable();
@@ -212,6 +215,25 @@ void pressedShutdown()
   goToSleep();
 }
 
+void setTempo() {
+  //Tell that taps are registered
+  displayMessage("<-- Tap Tempo!");
+
+  //turn of other button functions
+  trackTaps = true;
+
+  //TODO: give feddback for each tap
+
+  //sendBPM after
+  taskSendBPM.setCallback( []() {
+      mesh.sendBroadcast("BPM" + String(visualiser.tapTempo.getBPM()));
+      // Serial.println("Sending BPM" + String(visualiser.tapTempo.getBPM()));
+      trackTaps = false;
+      showHomescreen();
+    });
+  taskSendBPM.restartDelayed();
+}
+
 void holdTest()
 {
   String bs = String(touchInput._button1.isPressed()) + " : " + 
@@ -242,7 +264,9 @@ void goToSleep()
 
 void onPressed()
 {
-  touchInput.pressed();
+  if (!trackTaps) {
+    touchInput.pressed();
+  }
 }
 
 void checkButtonPress()
@@ -250,7 +274,9 @@ void checkButtonPress()
   touchInput.tick();
   hwbutton1.read();
   hwbutton2.read();
-  visualiser.tapTempo.update(touchInput._button2.isPressed());
+  if (trackTaps) {
+    visualiser.tapTempo.update(touchInput._button1.isPressed());
+  }
 }
 
 void uploadUserData()
@@ -572,6 +598,12 @@ void receivedCallback(uint32_t from, String &msg)
   if (protocol == "BRQA" || protocol == "BRAB" || protocol == "BRQS" || protocol  == "BRQC")
   {
     handleBondingRequests(from, msg);
+  }
+  else if (msg.startsWith(BP_NEWBPM))
+  {
+    float bpm = msg.substring(3).toFloat();
+    // Serial.println("Recevied BPM: " + String(bpm));
+    visualiser.tapTempo.setBPM(bpm);
   }
   else if (msg.startsWith("Anythgin else"))
   {
