@@ -20,4 +20,8 @@
 
 //Protocol
 #define BP_NEWBPM "BPM"
+#define BP_BONDING_REQUEST_ALL "BRQA"
+#define BP_BONDING_REQUEST_ONE "BRAB"
+#define BP_BONDING_START "BRQS"
+#define BP_BONDING_COMPLETE "BRQC"
 

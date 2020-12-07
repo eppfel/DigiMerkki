@@ -428,7 +428,7 @@ void userStartBonding()
 
 void userAbortBonding()
 {
-  sendMessage("BRAB");
+  sendMessage(BP_BONDING_REQUEST_ONE);
   taskBondingPing.disable();
   candidateCompleted = false;
   if (bondingState == BONDING_INPROGRESS || bondingState == BONDING_COMPLETE)
@@ -455,14 +455,14 @@ void sendBondingPing() {
   switch (bondingState)
   {
   case BONDING_REQUESTED:
-    sendMessage("BRQA");
+    sendMessage(BP_BONDING_REQUEST_ALL);
     break;
   case BONDING_INPROGRESS:
     if (taskBondingPing.getRunCounter() > HANDSHAKETIME / BONDINGPING) {
       userFinishBonding();
     }
   case BONDING_STARTED:
-    mesh.sendSingle(bondingCandidate.node, "BRQS" + String(bondingStarttime)); // send bonding handshake
+    mesh.sendSingle(bondingCandidate.node, BP_BONDING_START + String(bondingStarttime)); // send bonding handshake
     break;
   case BONDING_COMPLETE:
     if (taskBondingPing.isLastIteration())
@@ -470,7 +470,7 @@ void sendBondingPing() {
       abortBondingSequence(); // reset to being availible for boding if boding goes on
       initiateBonding();
     }
-    else mesh.sendSingle(bondingCandidate.node, "BRQC");
+    else mesh.sendSingle(bondingCandidate.node, BP_BONDING_COMPLETE);
     break;
 
   default:
@@ -481,7 +481,7 @@ void sendBondingPing() {
 
 void handleBondingRequests(uint32_t from, String &msg)
 {
-  if (msg.startsWith("BRQA")) {
+  if (msg.startsWith(BP_BONDING_REQUEST_ALL)) {
     bondingCandidates.remove_if([](bondingRequest_t c) { return mesh.getNodeTime() - c.startt > BONDINGTIMEOUT * 1000; });
     // Add new request to the cue
     bondingRequest_t newCandidate;
@@ -502,7 +502,7 @@ void handleBondingRequests(uint32_t from, String &msg)
         Serial.println("Bonding already started/In Progress.");
     }
   }
-  else if (msg.startsWith("BRAB")) { // Abort ercevied
+  else if (msg.startsWith(BP_BONDING_REQUEST_ONE)) { // Abort ercevied
     if ((bondingState == BONDING_STARTED || bondingState == BONDING_INPROGRESS || bondingState == BONDING_COMPLETE) && bondingCandidate.node == from)
     { // abort current bonding procedure
       Serial.println("Bonding aborted by peer");
@@ -511,7 +511,7 @@ void handleBondingRequests(uint32_t from, String &msg)
     }
     bondingCandidates.remove_if([&from](bondingRequest_t c) { return c.node == from; });
   }
-  else if (msg.startsWith("BRQS"))
+  else if (msg.startsWith(BP_BONDING_START))
   {
     uint32_t candidateTime = msg.substring(4).toInt();
     if (bondingState == BONDING_STARTED && bondingCandidate.node == from) // we started first and now
@@ -536,7 +536,7 @@ void handleBondingRequests(uint32_t from, String &msg)
       Serial.println("User hasn't started bonding or is in progress with other peer, so we do not react");
     }
   }
-  else if (msg.startsWith("BRQC"))
+  else if (msg.startsWith(BP_BONDING_COMPLETE))
   {
     if (from == bondingCandidate.node) {
       Serial.println("Bonding completed by peer");
@@ -595,7 +595,7 @@ void receivedCallback(uint32_t from, String &msg)
   Serial.println("");
 
   String protocol = msg.substring(0,4);
-  if (protocol == "BRQA" || protocol == "BRAB" || protocol == "BRQS" || protocol  == "BRQC")
+  if (protocol == BP_BONDING_REQUEST_ALL || protocol == BP_BONDING_REQUEST_ONE || protocol == BP_BONDING_START || protocol == BP_BONDING_COMPLETE)
   {
     handleBondingRequests(from, msg);
   }
