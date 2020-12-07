@@ -23,8 +23,7 @@
 void checkBatteryCharge();
 void goToSleep();
 void setTempo();
-void uploadUserData();
-void broadcastCapSense();
+void checkDeviceStatus();
 void buttonHandler(uint8_t keyCode);
 void onPressed();
 void userStartBonding();
@@ -145,8 +144,7 @@ void setup()
   hwbutton1.begin();
   hwbutton2.begin();
   hwbutton1.onPressed(pressedShutdown);
-  hwbutton2.onPressed(broadcastCapSense);
-  hwbutton2.onSequence(2, 1000, showVoltage);
+  hwbutton2.onPressed(checkDeviceStatus);
 
   userScheduler.addTask(taskBondingPing);
 
@@ -276,10 +274,23 @@ void uploadUserData()
 
 }
 
-void broadcastCapSense()
+void checkDeviceStatus()
 {
+  displayMessage("Status check");
+
+  // Send the current touch values over the mesh to remotely debug
   String msg = String(touchRead(TOUCHPIN_LEFT)) + " : " + String(touchRead(TOUCHPIN_RIGHT));
   mesh.sendBroadcast(msg);
+
+  // Check the different states of the buttons
+  String bs = String(touchInput._button1.isPressed()) + " : " +
+              String(touchInput._button1.isReleased()) + " : " +
+              String(touchInput._button1.pressedFor(500)) + " : " +
+              String(touchInput._button1.wasPressed()) + " : " +
+              String(touchInput._button1.wasReleased());
+  Serial.println("Button states: " + bs);
+
+  taskShowLogo.restartDelayed();
 }
 
 void setTempo()
@@ -302,17 +313,6 @@ void setTempo()
   taskSendBPM.restartDelayed();
 }
 
-void holdTest()
-{
-  String bs = String(touchInput._button1.isPressed()) + " : " +
-              String(touchInput._button1.isReleased()) + " : " +
-              String(touchInput._button1.pressedFor(1000)) + " : " +
-              String(touchInput._button1.wasPressed()) + " : " +
-              String(touchInput._button1.wasReleased());
-  Serial.println("Held Button " + bs);
-  displayMessage("Held for 1 sec");
-  taskShowLogo.restartDelayed();
-}
 
 void buttonHandler(uint8_t keyCode)
 {
