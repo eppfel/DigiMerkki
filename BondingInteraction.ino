@@ -40,7 +40,7 @@ EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
 CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, TTHRESHOLD);
 RTC_DATA_ATTR boolean freshStart = true;
-bool trackTaps = false;
+
 
 Scheduler userScheduler; // to control your personal task
 painlessMesh mesh;
@@ -69,6 +69,7 @@ Task taskSendBPM(TAPTIME,TASK_ONCE);
 #define STATE_SCORE 3
 #define STATE_PROXIMITY 4
 #define STATE_GROUP 5
+#define STATE_TAPTEMPO 6
 uint8_t currentState = STATE_IDLE;
 
 #define BONDING_IDLE 0
@@ -220,7 +221,7 @@ void setTempo() {
   displayMessage("<-- Tap Tempo!");
 
   //turn of other button functions
-  trackTaps = true;
+  currentState = STATE_TAPTEMPO;
 
   //TODO: give feddback for each tap
 
@@ -228,7 +229,7 @@ void setTempo() {
   taskSendBPM.setCallback( []() {
       mesh.sendBroadcast("BPM" + String(visualiser.tapTempo.getBPM()));
       // Serial.println("Sending BPM" + String(visualiser.tapTempo.getBPM()));
-      trackTaps = false;
+      currentState = STATE_IDLE;
       showHomescreen();
     });
   taskSendBPM.restartDelayed();
@@ -264,7 +265,7 @@ void goToSleep()
 
 void onPressed()
 {
-  if (!trackTaps) {
+  if (currentState != STATE_TAPTEMPO) {
     touchInput.pressed();
   }
 }
@@ -274,7 +275,7 @@ void checkButtonPress()
   touchInput.tick();
   hwbutton1.read();
   hwbutton2.read();
-  if (trackTaps) {
+  if (currentState == STATE_TAPTEMPO) {
     visualiser.tapTempo.update(touchInput._button1.isPressed());
   }
 }
