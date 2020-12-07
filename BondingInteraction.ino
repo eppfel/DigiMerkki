@@ -61,6 +61,7 @@ Task taskVisualiser(VISUALISATION_UPDATE_INTERVAL, TASK_FOREVER, &showVisualisat
 Task taskShowLogo(LOGO_DELAY, TASK_ONCE, &showHomescreen);
 Task taskBondingPing(BONDINGPING, TASK_FOREVER, &sendBondingPing);
 Task taskSendBPM(TAPTIME,TASK_ONCE);
+Task taskReconnectMesh(TAPTIME, TASK_ONCE);
 
 #define STATE_IDLE 0
 #define STATE_BONDING 1
@@ -215,6 +216,22 @@ void pressedShutdown()
   goToSleep();
 }
 
+void turnOffWifi() {
+  turnOffWifi(5000);
+}
+
+void turnOffWifi(uint32_t reconnectDelay)
+{
+  mesh.stop();
+  Serial.println("Disconnected from mesh! Wait for 5 seconds to reconnect.");
+  taskReconnectMesh.setCallback([]() {
+    Serial.println("Trying to reconnect to mesh!");
+    mesh.initStation();
+  });
+  userScheduler.addTask(taskReconnectMesh);
+  taskReconnectMesh.restartDelayed(reconnectDelay);
+}
+
 // trigger deep sleep mode and wake up on any input from the touch buttons
 void goToSleep()
 {
@@ -254,16 +271,9 @@ void uploadUserData()
   Serial.println("Button 2 was pressed!");
   if (isFirstCall)
   {
-    mesh.stop();
-    Serial.println("Disconnected from mesh! Wait for 5 seconds to reconnect.");
-    Task taskReconnectMesh(
-        5000, TASK_ONCE, []() {
-          Serial.println("Trying to reconnect to mesh!");
-          mesh.initStation();
-        },
-        &userScheduler);
     isFirstCall = false;
   }
+
 }
 
 void broadcastCapSense()
