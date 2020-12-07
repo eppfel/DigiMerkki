@@ -41,7 +41,6 @@ EasyButton hwbutton2(HW_BUTTON_PIN2);
 CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, TTHRESHOLD);
 RTC_DATA_ATTR boolean freshStart = true;
 
-
 Scheduler userScheduler; // to control your personal task
 painlessMesh mesh;
 
@@ -133,7 +132,7 @@ void setup()
   touchInput.begin();
   touchInput.setBtnHandlers(buttonHandler, onPressed);
 
-  touchInput._button1.onPressedFor(3000, setTempo);
+  touchInput._button1.onPressedFor(BTNHOLDDELAY, setTempo);
 
   userScheduler.addTask(taskCheckButtonPress);
   taskCheckButtonPress.enable();
