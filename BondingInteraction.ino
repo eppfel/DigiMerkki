@@ -215,37 +215,6 @@ void pressedShutdown()
   goToSleep();
 }
 
-void setTempo() {
-  //Tell that taps are registered
-  displayMessage("<-- Tap Tempo!");
-
-  //turn of other button functions
-  currentState = STATE_TAPTEMPO;
-
-  //TODO: give feddback for each tap
-
-  //sendBPM after
-  taskSendBPM.setCallback( []() {
-      mesh.sendBroadcast("BPM" + String(visualiser.tapTempo.getBPM()));
-      // Serial.println("Sending BPM" + String(visualiser.tapTempo.getBPM()));
-      currentState = STATE_IDLE;
-      showHomescreen();
-    });
-  taskSendBPM.restartDelayed();
-}
-
-void holdTest()
-{
-  String bs = String(touchInput._button1.isPressed()) + " : " + 
-              String(touchInput._button1.isReleased()) + " : " + 
-              String(touchInput._button1.pressedFor(1000)) + " : " + 
-              String(touchInput._button1.wasPressed()) + " : " + 
-              String(touchInput._button1.wasReleased());
-  Serial.println("Held Button " + bs);
-  displayMessage("Held for 1 sec");
-  taskShowLogo.restartDelayed();
-}
-
 // trigger deep sleep mode and wake up on any input from the touch buttons
 void goToSleep()
 {
@@ -301,6 +270,38 @@ void broadcastCapSense()
 {
   String msg = String(touchRead(TOUCHPIN_LEFT)) + " : " + String(touchRead(TOUCHPIN_RIGHT));
   mesh.sendBroadcast(msg);
+}
+
+void setTempo()
+{
+  //Tell that taps are registered
+  displayMessage("<-- Tap Tempo!");
+
+  //turn of other button functions
+  currentState = STATE_TAPTEMPO;
+
+  //TODO: give feddback for each tap
+
+  //sendBPM after
+  taskSendBPM.setCallback([]() {
+    mesh.sendBroadcast("BPM" + String(visualiser.tapTempo.getBPM()));
+    // Serial.println("Sending BPM" + String(visualiser.tapTempo.getBPM()));
+    currentState = STATE_IDLE;
+    showHomescreen();
+  });
+  taskSendBPM.restartDelayed();
+}
+
+void holdTest()
+{
+  String bs = String(touchInput._button1.isPressed()) + " : " +
+              String(touchInput._button1.isReleased()) + " : " +
+              String(touchInput._button1.pressedFor(1000)) + " : " +
+              String(touchInput._button1.wasPressed()) + " : " +
+              String(touchInput._button1.wasReleased());
+  Serial.println("Held Button " + bs);
+  displayMessage("Held for 1 sec");
+  taskShowLogo.restartDelayed();
 }
 
 void buttonHandler(uint8_t keyCode)
