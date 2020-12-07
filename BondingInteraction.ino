@@ -96,8 +96,10 @@ void setup()
   // Start Display for Feedback first
   initScreen();
 
+  //check for battery to not discharge too much
   checkBatteryCharge();
 
+  //check filesystem
   if (!SPIFFS.begin())
   {
     Serial.println("SPIFFS initialisation failed!");
@@ -106,14 +108,15 @@ void setup()
   }
   Serial.print("SPIFFS initialised.\r\n");
 
+  // Perform tasks necessary on a fresh start
   if (freshStart)
   {
-    //calibrarte button threshold
     //load configuration from and state from persistent storage
+    //calibrarte button threshold
     freshStart = false;
   }
 
-  // Start up mesh connection
+  // Start up mesh connection and callbacks
   mesh.setDebugMsgTypes(ERROR | DEBUG); // set before init() so that you can see error messages
 
   mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler);
@@ -123,12 +126,7 @@ void setup()
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
   mesh.onNodeDelayReceived(&delayReceivedCallback);
 
-  setWallpapers(mesh.getNodeId());
-
-  userScheduler.addTask(taskShowLogo);
-  userScheduler.addTask(taskCheckBattery);
-  taskCheckBattery.enableDelayed(BATTERY_CHARGE_CHECK_INTERVAL);
-
+  // Setup user input sensing
   touchInput.begin();
   touchInput.setBtnHandlers(buttonHandler, onPressed);
 
@@ -136,18 +134,25 @@ void setup()
 
   userScheduler.addTask(taskCheckButtonPress);
   taskCheckButtonPress.enable();
-  userScheduler.addTask(taskSendBPM);
-
-  userScheduler.addTask(taskVisualiser);
-  taskVisualiser.enable();
 
   hwbutton1.begin();
   hwbutton2.begin();
   hwbutton1.onPressed(pressedShutdown);
   hwbutton2.onPressed(checkDeviceStatus);
 
+  //add tasks for later use to scheduler
+  userScheduler.addTask(taskCheckBattery);
+  taskCheckBattery.enableDelayed(BATTERY_CHARGE_CHECK_INTERVAL);
+  userScheduler.addTask(taskSendBPM);
+  userScheduler.addTask(taskReconnectMesh);
   userScheduler.addTask(taskBondingPing);
 
+  //Output
+  userScheduler.addTask(taskVisualiser);
+  taskVisualiser.enable();
+
+  userScheduler.addTask(taskShowLogo);
+  setWallpapers(mesh.getNodeId());
   displayMessage("Here we go!");
   taskShowLogo.restartDelayed(2000);
 
@@ -248,7 +253,7 @@ void goToSleep()
 
 void onPressed()
 {
-  if (currentState != STATE_TAPTEMPO) {
+  if (currentState != STATE_TAPTEMPO) { //replace thsi with a propoer check in the state machine
     touchInput.pressed();
   }
 }
@@ -261,17 +266,6 @@ void checkButtonPress()
   if (currentState == STATE_TAPTEMPO) {
     visualiser.tapTempo.update(touchInput._button1.isPressed());
   }
-}
-
-void uploadUserData()
-{
-  static bool isFirstCall = true;
-  Serial.println("Button 2 was pressed!");
-  if (isFirstCall)
-  {
-    isFirstCall = false;
-  }
-
 }
 
 void checkDeviceStatus()
@@ -626,7 +620,7 @@ void newConnectionCallback(uint32_t nodeId)
 {
   // Display change on tft
 
-  Serial.printf("New Connection, nodeId = %u", nodeId);
+  Serial.printf("New Connection, nodeId = %u\r\n", nodeId);
   // Serial.printf("--> startHere: New Connection, %s\r\n", mesh.subConnectionJson(true).c_str());
   // Serial.println("");
   updateNumNodes(nodes.size());
