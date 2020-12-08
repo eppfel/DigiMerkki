@@ -14,5 +14,7 @@ void setWallpapers(uint32_t nodeid);
 void displayMessage(String msg);
 void showHomescreen();
 void nextWallpaper();
+uint8_t getCurrentWallpaperIndex();
+void addWallpaperIndex(uint8_t wallpaperIndex);
 
 extern TFT_eSPI tft; // Invoke custom TFT library

@@ -133,3 +133,14 @@ void showHomescreen()
     // Serial.print(t);
     // Serial.println(" ms");
 }
+
+uint8_t getCurrentWallpaperIndex()
+{
+    return wallpapers[wallpaper];
+}
+
+void addWallpaperIndex(uint8_t wallpaperIndex)
+{
+    wallpapers[numWallpapers] = wallpaperIndex;
+    numWallpapers++;
+}

@@ -78,7 +78,7 @@ uint8_t currentState = STATE_IDLE;
 #define BONDING_COMPLETE 4
 uint8_t bondingState = BONDING_IDLE;
 uint32_t bondingStarttime = 0;
-bool candidateCompleted = false;
+int8_t candidateCompleted = -1;
 
 struct bondingRequest_t {
   uint32_t node;
@@ -343,7 +343,7 @@ void buttonHandler(uint8_t keyCode)
 void initiateBonding() {
   currentState = STATE_BONDING;
   bondingState = BONDING_REQUESTED;
-  candidateCompleted = false;
+  candidateCompleted = -1;
 
   //visuliser blink one LED
   displayMessage("Searching Peer ...");
@@ -386,10 +386,11 @@ void abortBondingSequence() {
 
 void completeBondingSequence()
 {
-  currentState = STATE_BOND;
+  currentState = STATE_IDLE;
   bondingState = BONDING_IDLE;
   
   //write into storage
+  addWallpaperIndex(candidateCompleted);
 
   visualiser.blink(500, 3, CRGB::Green); // fill meter
   displayMessage("Bonding Complete!");
@@ -416,7 +417,7 @@ void userAbortBonding()
   currentState = STATE_IDLE;
   sendMessage(BP_BONDING_REQUEST_ONE);
   taskBondingPing.disable();
-  candidateCompleted = false;
+  candidateCompleted = -1;
   if (bondingState == BONDING_INPROGRESS || bondingState == BONDING_COMPLETE)
     bondingCandidates.remove_if([](bondingRequest_t c) { return c.node == bondingCandidate.node; });
   abortBondingSequence();
@@ -430,8 +431,8 @@ void userFinishBonding()
   bondingState = BONDING_COMPLETE;
   Serial.printf("Bonding completed by user, sending to %u/n", bondingCandidate.node);
   taskBondingPing.enable();
-  taskBondingPing.setIterations(5); //remove magicx number
-  if (candidateCompleted) {
+  taskBondingPing.setIterations(5); //remove magic number
+  if (candidateCompleted > -1) {
     completeBondingSequence();
   }
 }
@@ -456,7 +457,7 @@ void sendBondingPing() {
       abortBondingSequence(); // reset to being availible for boding if boding goes on
       initiateBonding();
     }
-    else mesh.sendSingle(bondingCandidate.node, BP_BONDING_COMPLETE);
+    else mesh.sendSingle(bondingCandidate.node, BP_BONDING_COMPLETE + String(getCurrentWallpaperIndex()));
     break;
 
   default:
@@ -525,11 +526,10 @@ void handleBondingRequests(uint32_t from, String &msg)
   else if (msg.startsWith(BP_BONDING_COMPLETE))
   {
     if (from == bondingCandidate.node) {
-      Serial.println("Bonding completed by peer");
+      candidateCompleted = msg.substring(4).toInt();
+      Serial.println("Bonding completed by peer. Received picture: " + String(candidateCompleted));
       if (bondingState == BONDING_COMPLETE) {
         completeBondingSequence();
-      } else {
-        candidateCompleted = true;
       }
     }
     else {
