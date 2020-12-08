@@ -177,12 +177,16 @@ void wakeup_callback()
 // Check if on Battery and empty, if so go to sleep to protect boot loop on low voltage
 void checkBatteryCharge()
 {
-  if (getInputVoltage() < 3.0)
+  float voltage = getInputVoltage();
+  if (voltage < 3.0)
   {
     tft.fillScreen(TFT_BLACK);
     tft.setTextDatum(MC_DATUM);
     tft.drawString("Got no juice :(", tft.width() / 2, tft.height() / 2);
     goToSleep();
+  } else if (voltage > 4.5)
+  {
+    Serial.println("Charging");
   }
 }
 
@@ -275,7 +279,8 @@ void checkButtonPress()
 
 void checkDeviceStatus()
 {
-  displayMessage("Status check");
+  // displayMessage("Status check");
+  showVoltage();
 
   // Send the current touch values over the mesh to remotely debug
   String msg = String(touchRead(TOUCHPIN_LEFT)) + " : " + String(touchRead(TOUCHPIN_RIGHT));
