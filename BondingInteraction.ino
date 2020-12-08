@@ -130,7 +130,8 @@ void setup()
   touchInput.begin();
   touchInput.setBtnHandlers(buttonHandler, onPressed);
 
-  touchInput._button1.onPressedFor(BTNHOLDDELAY, setTempo);
+  touchInput._buttonLeft.onPressedFor(BTNHOLDDELAY, setTempo);
+  touchInput._buttonRight.onPressedFor(BTNHOLDDELAY, userStartBonding);
 
   userScheduler.addTask(taskCheckButtonPress);
   taskCheckButtonPress.enable();
@@ -264,7 +265,11 @@ void checkButtonPress()
   hwbutton1.read();
   hwbutton2.read();
   if (currentState == STATE_TAPTEMPO) {
-    visualiser.tapTempo.update(touchInput._button1.isPressed());
+    visualiser.tapTempo.update(touchInput._buttonLeft.isPressed());
+  }
+  else if (currentState == STATE_BONDING && touchInput._buttonRight.isReleased())
+  {
+    userAbortBonding();
   }
 }
 
@@ -277,11 +282,11 @@ void checkDeviceStatus()
   mesh.sendBroadcast(msg);
 
   // Check the different states of the buttons
-  String bs = String(touchInput._button1.isPressed()) + " : " +
-              String(touchInput._button1.isReleased()) + " : " +
-              String(touchInput._button1.pressedFor(500)) + " : " +
-              String(touchInput._button1.wasPressed()) + " : " +
-              String(touchInput._button1.wasReleased());
+  String bs = String(touchInput._buttonLeft.isPressed()) + " : " +
+              String(touchInput._buttonLeft.isReleased()) + " : " +
+              String(touchInput._buttonLeft.pressedFor(500)) + " : " +
+              String(touchInput._buttonLeft.wasPressed()) + " : " +
+              String(touchInput._buttonLeft.wasReleased());
   Serial.println("Button states: " + bs);
 
   taskShowLogo.restartDelayed();
@@ -318,42 +323,16 @@ void buttonHandler(uint8_t keyCode)
     return;
   }
 
-  switch (currentState)
+  if (currentState == STATE_IDLE)
   {
-  case STATE_BONDING:
-    // fill meter based on time
-    if (keyCode == TAP_BOTH)
-    {
-      userAbortBonding();
-      currentState = STATE_IDLE;
-    }
-    break;
-  case STATE_BOND:
-    if (keyCode == TAP_BOTH) {
-      currentState = STATE_IDLE;
-    }
-  default: //idle
-
-    if (keyCode == HOLD_BOTH)
-    {
-      // currentState = STATE_CYPHER;
-      Serial.println("Switch from idle to cypher-input");
-      taskShowLogo.disable();
-      displayMessage("Wating for partner...");
-      visualiser.blink(300, 99, CRGB::White, StatusVisualiser::STATE_ANIMATION);
-    }
-    else if (keyCode == TAP_LEFT)
+    if (keyCode == TAP_LEFT)
     {
       visualiser.nextPattern();
     }
     else if (keyCode == TAP_RIGHT)
     {
       nextWallpaper();
-    } else if (keyCode == TAP_BOTH) {
-      currentState = STATE_BONDING;
-      userStartBonding();
     }
-    break;
   }
 }
 
@@ -362,15 +341,16 @@ void buttonHandler(uint8_t keyCode)
 */
 
 void initiateBonding() {
+  currentState = STATE_BONDING;
+  bondingState = BONDING_REQUESTED;
+  candidateCompleted = false;
+
+  //visuliser blink one LED
   displayMessage("Searching Peer ...");
   taskShowLogo.disable();
 
-  bondingState = BONDING_REQUESTED;
-  candidateCompleted = false;
   taskBondingPing.setIterations(TASK_FOREVER);
   taskBondingPing.enable();
-  visualiser.cylon(60);
-
 
   bondingCandidates.remove_if([](bondingRequest_t c) { return mesh.getNodeTime() - c.startt > BONDINGTIMEOUT * 1000; }); // clean out old requests
   if (bondingCandidates.empty())
@@ -433,6 +413,7 @@ void userStartBonding()
 
 void userAbortBonding()
 {
+  currentState = STATE_IDLE;
   sendMessage(BP_BONDING_REQUEST_ONE);
   taskBondingPing.disable();
   candidateCompleted = false;
@@ -441,7 +422,7 @@ void userAbortBonding()
   abortBondingSequence();
   displayMessage("Abort");
   taskShowLogo.restartDelayed();
-  Serial.println("Bonding aborted by user");
+  Serial.println("Bonding aborted by user" + String(currentState));
 }
 
 void userFinishBonding()

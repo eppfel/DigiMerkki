@@ -26,11 +26,11 @@ class CapacitiveKeyboard
   public:
     using callback_int_t = void (*)(uint8_t);
 
-    CapacitiveKeyboard(int pin1, int pin2, int threshold) : _button1(pin1, DEBOUNCE_TIME, threshold), _button2(pin2, DEBOUNCE_TIME, threshold)
+    CapacitiveKeyboard(int pin1, int pin2, int threshold) : _buttonLeft(pin1, DEBOUNCE_TIME, threshold), _buttonRight(pin2, DEBOUNCE_TIME, threshold)
     {
     }
-    EasyButtonTouch _button1;
-    EasyButtonTouch _button2;
+    EasyButtonTouch _buttonLeft;
+    EasyButtonTouch _buttonRight;
     void begin();
     void tick();
     void pressed();
