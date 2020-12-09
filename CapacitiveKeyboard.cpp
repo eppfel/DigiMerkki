@@ -7,6 +7,22 @@
 #include "Arduino.h"
 #include "CapacitiveKeyboard.h"
 
+//calibrarte button threshold
+void CapacitiveKeyboard::calibrate()
+{
+  uint32_t leftTouch = 0, rightTouch = 0;
+  for (size_t i = 0; i < CALIBRATION_SAMPLES; i++)
+  {
+    leftTouch += touchRead(TOUCHPIN_LEFT);
+    rightTouch += touchRead(TOUCHPIN_RIGHT);
+    delay(700 / CALIBRATION_SAMPLES);
+  }
+  leftTouch /= CALIBRATION_SAMPLES;
+  rightTouch /= CALIBRATION_SAMPLES;
+  _buttonLeft.setThreshold(leftTouch - SENSITIVITY_RANGE);
+  _buttonRight.setThreshold(rightTouch - SENSITIVITY_RANGE);
+}
+
 void CapacitiveKeyboard::begin()
 {
   _buttonState = 0;

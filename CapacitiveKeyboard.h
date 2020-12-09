@@ -31,6 +31,7 @@ class CapacitiveKeyboard
     }
     EasyButtonTouch _buttonLeft;
     EasyButtonTouch _buttonRight;
+    void calibrate();
     void begin();
     void tick();
     void pressed();

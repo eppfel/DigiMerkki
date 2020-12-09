@@ -113,6 +113,8 @@ void setup()
   {
     //load configuration from and state from persistent storage
     //calibrarte button threshold
+    touchInput.calibrate();
+
     freshStart = false;
   }
 
