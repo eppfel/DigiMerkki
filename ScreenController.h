@@ -15,6 +15,7 @@ void displayMessage(String msg);
 void showHomescreen();
 void nextPicture();
 size_t getCurrentPicture();
+void setCurrentPicture(size_t picId);
 
 extern TFT_eSPI tft; // Invoke custom TFT library
 extern BadgeConfig configuration;

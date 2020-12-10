@@ -111,3 +111,8 @@ size_t getCurrentPicture()
 {
     return currentPicture;
 }
+
+void setCurrentPicture(size_t picId) {
+    currentPicture = picId;
+    showHomescreen();
+}

@@ -421,11 +421,11 @@ void completeBondingSequence()
   bondingState = BONDING_IDLE;
   
   //write into configuration and storage
-  configuration.pics[configuration.numPics] = candidateCompleted;
+  configuration.pics[configuration.numPics] = candidateCompleted; //fitler for duplicates before storing
+  setCurrentPicture(configuration.numPics);
   configuration.numPics++;
   fileStorage.saveConfiguration(configuration);
   fileStorage.printFile(CONFIG_FILE);
-  //screen controller set new picture
 
   visualiser.blink(500, 3, CRGB::Green); // fill meter
   displayMessage("Bonding Complete!");
