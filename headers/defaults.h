@@ -1,6 +1,6 @@
 #define DISPLAY_ORIENTATION 3 //Rotation of the display in 90° steps form 0 to 3
-#define NUM_BADGES 16
-#define NUM_PICS 5
+#define NUM_BADGES 2
+#define NUM_PICS 3
 
 #define BTNHOLDDELAY 700
 #define BONDINGTIMEOUT 20000
@@ -19,6 +19,8 @@
 #define FS_NO_GLOBALS
 #define CALIBRATION_SAMPLES 5
 #define SENSITIVITY_RANGE 10
+#define CONFIG_FILE "/config.json"
+#define LOG_FILE "/interactionslog.json"
 
 //Protocol
 #define BP_NEWBPM "BPM"

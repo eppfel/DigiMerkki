@@ -34,7 +34,10 @@ void newConnectionCallback(uint32_t nodeId);
 void changedConnectionCallback();
 void nodeTimeAdjustedCallback(int32_t offset);
 void delayReceivedCallback(uint32_t from, int32_t delay);
- 
+
+FileStorage fileStorage{};
+RTC_DATA_ATTR BadgeConfig configuration = {NUM_PICS, {0, 1, 2}};
+
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
 CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, TTHRESHOLD);
@@ -52,6 +55,7 @@ uint32_t get_millisecond_timer_hook()
   return mesh.getNodeTime() / 1000;
 }
 StatusVisualiser visualiser(get_millisecond_timer_hook, 64);
+TFT_eSPI tft(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
 
 // Task variables
 Task taskCheckBattery(BATTERY_CHARGE_CHECK_INTERVAL, TASK_FOREVER, &checkBatteryCharge);
@@ -108,16 +112,6 @@ void setup()
   }
   Serial.print("SPIFFS initialised.\r\n");
 
-  // Perform tasks necessary on a fresh start
-  if (freshStart)
-  {
-    //load configuration from and state from persistent storage
-    //calibrarte button threshold
-    touchInput.calibrate();
-
-    freshStart = false;
-  }
-
   // Start up mesh connection and callbacks
   mesh.setDebugMsgTypes(ERROR | DEBUG); // set before init() so that you can see error messages
 
@@ -127,6 +121,37 @@ void setup()
   mesh.onChangedConnections(&changedConnectionCallback);
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
   mesh.onNodeDelayReceived(&delayReceivedCallback);
+
+  // Perform tasks necessary on a fresh start
+  if (freshStart)
+  {
+    // load configuration from and state from persistent storage
+    if (!fileStorage.loadConfiguration(configuration)) 
+    {
+      badges_t badges[NUM_BADGES] = {
+          {2884960141, 0, {3, 4, 5}},
+          {3519576873, 1, {0, 1, 2}}};
+      uint32_t nodeid = mesh.getNodeId();
+      for (size_t i = 0; i < NUM_BADGES; i++)
+      {
+        if (badges[i].node == nodeid)
+        {
+          memcpy(configuration.pics, badges[i].Pics, sizeof(badges[i].Pics));
+          configuration.numPics = NUM_PICS;
+          break;
+        }
+      }
+      
+      fileStorage.saveConfiguration(configuration);
+
+      // fileStorage.printFile(CONFIG_FILE);
+    }
+
+    //calibrarte button threshold
+    touchInput.calibrate();
+
+    freshStart = false;
+  }
 
   // Setup user input sensing
   touchInput.begin();
@@ -155,7 +180,6 @@ void setup()
   taskVisualiser.enable();
 
   userScheduler.addTask(taskShowLogo);
-  setWallpapers(mesh.getNodeId());
   displayMessage("Here we go!");
   taskShowLogo.restartDelayed(2000);
 
@@ -338,7 +362,7 @@ void buttonHandler(uint8_t keyCode)
     }
     else if (keyCode == TAP_RIGHT)
     {
-      nextWallpaper();
+      nextPicture();
     }
   }
 }
@@ -396,8 +420,12 @@ void completeBondingSequence()
   currentState = STATE_IDLE;
   bondingState = BONDING_IDLE;
   
-  //write into storage
-  addWallpaperIndex(candidateCompleted);
+  //write into configuration and storage
+  configuration.pics[configuration.numPics] = candidateCompleted;
+  configuration.numPics++;
+  fileStorage.saveConfiguration(configuration);
+  fileStorage.printFile(CONFIG_FILE);
+  //screen controller set new picture
 
   visualiser.blink(500, 3, CRGB::Green); // fill meter
   displayMessage("Bonding Complete!");
@@ -464,7 +492,7 @@ void sendBondingPing() {
       abortBondingSequence(); // reset to being availible for boding if boding goes on
       initiateBonding();
     }
-    else mesh.sendSingle(bondingCandidate.node, BP_BONDING_COMPLETE + String(getCurrentWallpaperIndex()));
+    else mesh.sendSingle(bondingCandidate.node, BP_BONDING_COMPLETE + String(configuration.pics[getCurrentPicture()]));
     break;
 
   default:

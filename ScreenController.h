@@ -6,15 +6,15 @@
 #include <SPI.h>
 #include <TJpg_Decoder.h>
 #include <TFT_eSPI.h>
+#include "FileStorage.h"
 
 void updateNumNodes(uint8_t numnodes);
 void updateVoltage(float voltage);
 void initScreen();
-void setWallpapers(uint32_t nodeid);
 void displayMessage(String msg);
 void showHomescreen();
-void nextWallpaper();
-uint8_t getCurrentWallpaperIndex();
-void addWallpaperIndex(uint8_t wallpaperIndex);
+void nextPicture();
+size_t getCurrentPicture();
 
 extern TFT_eSPI tft; // Invoke custom TFT library
+extern BadgeConfig configuration;

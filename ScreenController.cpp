@@ -1,22 +1,7 @@
 #include "ScreenController.h"
 
-struct badges_t
-{
-    uint32_t node;
-    uint8_t group;
-    uint8_t Pics[NUM_PICS];
-};
-
-badges_t badges[NUM_BADGES] = {
-    {2884960141, 0, {0, 2, 3, 4, 6}},
-    {3519576873, 1, {1, 2, 3, 4, 5}}};
-
-char const *imgfiles[] = {"Baboon", "bmo", "nude", "aalto", "octopus", "digital-haalarit", "amongus"};
-RTC_DATA_ATTR uint8_t numWallpapers = 0;
-RTC_DATA_ATTR uint8_t wallpapers[NUM_BADGES] = {0};
-RTC_DATA_ATTR int8_t wallpaper = 0;
-
-TFT_eSPI tft(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
+char const *imgfiles[] = {"Baboon", "bmo", "nude", "aalto", "octopus", "amongus"};
+RTC_DATA_ATTR size_t currentPicture = 0;
 
 uint8_t _numnodes = 0;
 float _voltage = 0;
@@ -72,24 +57,12 @@ void displayMessage(String msg)
     tft.drawString(msg, tft.width() / 2, tft.height() / 2);
 }
 
-void setWallpapers(uint32_t nodeid) {
-    for (int8_t i = 0; i < NUM_BADGES; i++)
-    {
-        if (badges[i].node == nodeid)
-        {
-            memcpy(wallpapers, badges[i].Pics, sizeof(badges[i].Pics));
-            numWallpapers = NUM_PICS;
-            break;
-        }
-    }
-}
-
-void nextWallpaper()
+void nextPicture()
 {
-    wallpaper++;
-    if (wallpaper >= numWallpapers)
+    currentPicture++;
+    if (currentPicture >= configuration.numPics)
     {
-        wallpaper = 0;
+        currentPicture = 0;
     }
     showHomescreen();
 }
@@ -100,7 +73,7 @@ void showHomescreen()
     // uint32_t t = millis();
 
     char picturefilename[24];
-    sprintf(picturefilename, "/%s.jpg", imgfiles[wallpapers[wallpaper]]);
+    sprintf(picturefilename, "/%s.jpg", imgfiles[configuration.pics[currentPicture]]);
     TJpgDec.drawFsJpg(0, 0, picturefilename);
     yield();
 
@@ -134,13 +107,7 @@ void showHomescreen()
     // Serial.println(" ms");
 }
 
-uint8_t getCurrentWallpaperIndex()
+size_t getCurrentPicture()
 {
-    return wallpapers[wallpaper];
-}
-
-void addWallpaperIndex(uint8_t wallpaperIndex)
-{
-    wallpapers[numWallpapers] = wallpaperIndex;
-    numWallpapers++;
+    return currentPicture;
 }
