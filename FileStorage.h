@@ -37,7 +37,7 @@ public:
     
     void initialise();
     void printFile(const char *filename);
-    boolean loadConfiguration(BadgeConfig &config);
+    bool loadConfiguration(BadgeConfig &config);
     void saveConfiguration(const BadgeConfig &config);
     void logEvent(BadgeEvent evt);
 private:

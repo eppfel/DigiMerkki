@@ -37,7 +37,7 @@ void FileStorage::initialise()
     // printFile(CONFIG_FILE);
 }
 
-boolean FileStorage::loadConfiguration(BadgeConfig &config)
+bool FileStorage::loadConfiguration(BadgeConfig &config)
 {
     // Open file for reading
     fs::File file = SPIFFS.open(CONFIG_FILE);
