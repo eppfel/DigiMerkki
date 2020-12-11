@@ -36,12 +36,13 @@ void nodeTimeAdjustedCallback(int32_t offset);
 void delayReceivedCallback(uint32_t from, int32_t delay);
 
 FileStorage fileStorage{};
-RTC_DATA_ATTR BadgeConfig configuration = {NUM_PICS, {0, 1, 2}};
+RTC_DATA_ATTR BadgeConfig configuration = {NUM_PICS, {0, 1, 2}}; // keep configuration in deep sleep
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
-CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, TTHRESHOLD);
-RTC_DATA_ATTR boolean freshStart = true;
+RTC_DATA_ATTR uint16_t thresholdLeft = TTHRESHOLD, thresholdRight = TTHRESHOLD; //keep touch calibration value after deep sleep
+CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, thresholdLeft, thresholdRight, DEBOUNCE_TIME);
+RTC_DATA_ATTR bool freshStart = true;
 
 Scheduler userScheduler; // to control your personal task
 painlessMesh mesh;
@@ -148,7 +149,7 @@ void setup()
     }
 
     //calibrarte button threshold
-    touchInput.calibrate();
+    touchInput.calibrate(thresholdLeft, thresholdRight);
 
     freshStart = false;
   }

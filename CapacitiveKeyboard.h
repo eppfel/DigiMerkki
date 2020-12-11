@@ -19,19 +19,17 @@
 #define RELEASE_RIGHT 8
 #define RELEASE_BOTH 9
 
-#define DEBOUNCE_TIME 35
-
 class CapacitiveKeyboard
 {
   public:
     using callback_int_t = void (*)(uint8_t);
 
-    CapacitiveKeyboard(int pin1, int pin2, int threshold) : _buttonLeft(pin1, DEBOUNCE_TIME, threshold), _buttonRight(pin2, DEBOUNCE_TIME, threshold)
+    CapacitiveKeyboard(int pin1, int pin2, int thresholdLeft, int thresholdRight, uint32_t debounce_time = 35) : _buttonLeft(pin1, debounce_time, thresholdLeft), _buttonRight(pin2, debounce_time, thresholdRight)
     {
     }
     EasyButtonTouch _buttonLeft;
     EasyButtonTouch _buttonRight;
-    void calibrate();
+    void calibrate(uint16_t &thresholdLeft, uint16_t &thresholdRight);
     void begin();
     void tick();
     void pressed();
