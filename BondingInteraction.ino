@@ -15,6 +15,7 @@
 // #include "headers/tdisplay.h"
 
 #include <painlessMesh.h>
+#include "customProtocol.hpp"
 #include "CapacitiveKeyboard.h"
 #include "StatusVisualiser.h"
 #include "ScreenController.h"
@@ -34,6 +35,9 @@ void newConnectionCallback(uint32_t nodeId);
 void changedConnectionCallback();
 void nodeTimeAdjustedCallback(int32_t offset);
 void delayReceivedCallback(uint32_t from, int32_t delay);
+bool receivedInvitationCallback(protocol::Variant variant);
+bool receivedExchangeCallback(protocol::Variant variant);
+bool receivedAbortCallback(protocol::Variant variant);
 
 FileStorage fileStorage{};
 RTC_DATA_ATTR BadgeConfig configuration = {NUM_PICS, {0, 1, 2}}; // keep configuration in deep sleep
@@ -122,6 +126,9 @@ void setup()
   mesh.onChangedConnections(&changedConnectionCallback);
   mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
   mesh.onNodeDelayReceived(&delayReceivedCallback);
+  mesh.onPackage(INVITATION_PKG, &receivedInvitationCallback);
+  mesh.onPackage(EXCHANGE_PKG, &receivedExchangeCallback);
+  mesh.onPackage(ABORT_PKG, &receivedAbortCallback);
 
   // Perform tasks necessary on a fresh start
   if (freshStart)
@@ -451,7 +458,10 @@ void userStartBonding()
 void userAbortBonding()
 {
   currentState = STATE_IDLE;
-  sendMessage(BP_BONDING_REQUEST_ONE);
+  if (bondingState > BONDING_REQUESTED) {
+    auto pkg = AbortPackage(mesh.getNodeId(), bondingCandidate.node);
+    mesh.sendPackage(&pkg);
+  }
   taskBondingPing.disable();
   candidateCompleted = -1;
   if (bondingState == BONDING_INPROGRESS || bondingState == BONDING_COMPLETE)
@@ -459,13 +469,13 @@ void userAbortBonding()
   abortBondingSequence();
   displayMessage("Abort");
   taskShowLogo.restartDelayed();
-  Serial.println("Bonding aborted by user" + String(currentState));
+  Serial.println("Bonding aborted by user : state " + String(currentState));
 }
 
 void userFinishBonding()
 {
   bondingState = BONDING_COMPLETE;
-  Serial.printf("Bonding completed by user, sending to %u/n", bondingCandidate.node);
+  Serial.printf("Bonding completed by user, sending to %u \r\n", bondingCandidate.node);
   taskBondingPing.enable();
   taskBondingPing.setIterations(5); //remove magic number
   if (candidateCompleted > -1) {
@@ -475,103 +485,135 @@ void userFinishBonding()
 
 void sendBondingPing() {
   Serial.printf("Ping:BondingState:%u:%u\r\n", bondingState, taskBondingPing.getRunCounter());
-  switch (bondingState)
-  {
-  case BONDING_REQUESTED:
-    sendMessage(BP_BONDING_REQUEST_ALL);
-    break;
-  case BONDING_INPROGRESS:
-    if (taskBondingPing.getRunCounter() > HANDSHAKETIME / BONDINGPING) {
-      userFinishBonding();
-    }
-  case BONDING_STARTED:
-    mesh.sendSingle(bondingCandidate.node, BP_BONDING_START + String(bondingStarttime)); // send bonding handshake
-    break;
-  case BONDING_COMPLETE:
-    if (taskBondingPing.isLastIteration())
-    {
-      abortBondingSequence(); // reset to being availible for boding if boding goes on
-      initiateBonding();
-    }
-    else mesh.sendSingle(bondingCandidate.node, BP_BONDING_COMPLETE + String(configuration.pics[getCurrentPicture()]));
-    break;
 
-  default:
-    //IDLE do nothing
-    break;
+  if (bondingState == BONDING_REQUESTED) {
+    auto pkg = InvitationPackage(mesh.getNodeId());
+    mesh.sendPackage(&pkg);
+  } else { // BONDING IN PROGRESS
+    auto pkg = ExchangePackage(mesh.getNodeId(), bondingCandidate.node, getCurrentPicture());
+    switch (bondingState)
+    {
+    case BONDING_INPROGRESS:
+      if (taskBondingPing.getRunCounter() > HANDSHAKETIME / BONDINGPING) {
+        userFinishBonding();
+      }
+    case BONDING_STARTED:
+      pkg.starttime = bondingStarttime;
+      pkg.progress = ExchangePackage::PROGRESS_START;
+      mesh.sendPackage(&pkg);
+      
+      break;
+    case BONDING_COMPLETE:
+      if (taskBondingPing.isLastIteration())
+      {
+        abortBondingSequence(); // reset to being availible for bonding if bonding goes on
+        initiateBonding();
+      }
+      else {
+        pkg.progress = ExchangePackage::PROGRESS_COMPLETE;
+        mesh.sendPackage(&pkg);
+      }
+      break;
+
+    default:
+      //IDLE do nothing
+      break;
+    }
+
   }
 }
 
-void handleBondingRequests(uint32_t from, String &msg)
+bool receivedInvitationCallback(protocol::Variant variant)
 {
-  if (msg.startsWith(BP_BONDING_REQUEST_ALL)) {
-    bondingCandidates.remove_if([](bondingRequest_t c) { return mesh.getNodeTime() - c.startt > BONDINGTIMEOUT * 1000; });
-    // Add new request to the cue
-    bondingRequest_t newCandidate;
-    newCandidate.node = from;
-    newCandidate.startt = mesh.getNodeTime();
+  auto pkg = variant.to<InvitationPackage>();
 
-    if (bondingState == BONDING_REQUESTED) { //user had requested before, so start bonding
-      bondingCandidate = newCandidate;
-      bondingCandidates.push_front(newCandidate);
-      initiateBondingHandShake();
-    }
-    else //save for later
-    {
-      bondingCandidates.push_back(newCandidate);
-      if (bondingState == BONDING_IDLE)
-        Serial.println("User has not initiated Bonding yet!");
-      else
-        Serial.println("Bonding already started/In Progress.");
-    }
+  Serial.printf("Received InvitationPackage from %u\r\n", pkg.from);
+
+  bondingCandidates.remove_if([](bondingRequest_t c) { return mesh.getNodeTime() - c.startt > BONDINGTIMEOUT * 1000; });
+  // Add new request to the cue
+  bondingRequest_t newCandidate;
+  newCandidate.node = pkg.from;
+  newCandidate.startt = mesh.getNodeTime();
+
+  if (bondingState == BONDING_REQUESTED)
+  { //user had requested before, so start bonding
+    bondingCandidate = newCandidate;
+    bondingCandidates.push_front(newCandidate);
+    initiateBondingHandShake();
   }
-  else if (msg.startsWith(BP_BONDING_REQUEST_ONE)) { // Abort ercevied
-    if ((bondingState == BONDING_STARTED || bondingState == BONDING_INPROGRESS || bondingState == BONDING_COMPLETE) && bondingCandidate.node == from)
-    { // abort current bonding procedure
-      Serial.println("Bonding aborted by peer");
-      abortBondingSequence();
-      initiateBonding();
-    }
-    bondingCandidates.remove_if([&from](bondingRequest_t c) { return c.node == from; });
-  }
-  else if (msg.startsWith(BP_BONDING_START))
+  else //save for later
   {
-    uint32_t candidateTime = msg.substring(4).toInt();
-    if (bondingState == BONDING_STARTED && bondingCandidate.node == from) // we started first and now
+    bondingCandidates.push_back(newCandidate);
+    if (bondingState == BONDING_IDLE)
+      Serial.println("User has not initiated Bonding yet!");
+    else
+      Serial.println("Bonding already started/In Progress.");
+  }
+  return true;
+}
+
+bool receivedExchangeCallback(protocol::Variant variant)
+{
+  auto pkg = variant.to<ExchangePackage>();
+
+  Serial.printf("Received ExchangePackage %u from %u\r\n", pkg.progress, pkg.from);
+
+  if (pkg.progress == ExchangePackage::PROGRESS_START)
+  {
+    if (bondingState == BONDING_STARTED && bondingCandidate.node == pkg.from) // we started first and now
     {
-      bondingCandidate.startt = candidateTime;
+      bondingCandidate.startt = pkg.starttime;
       initiateBondingSequence();
     }
     else if (bondingState == BONDING_REQUESTED) // if bonding hasnt strted but was requested, skip start and bond immediatly
     {
-      bondingCandidate.node = from;
-      bondingCandidate.startt = candidateTime;
+      bondingCandidate.node = pkg.from;
+      bondingCandidate.startt = pkg.starttime;
       bondingCandidates.push_front(bondingCandidate);
       initiateBondingHandShake();
       initiateBondingSequence();
     }
     else if (bondingState == BONDING_IDLE) // this is faulty / unecessary
     {
-      bondingCandidate.node = from;
-      bondingCandidate.startt = candidateTime;
+      bondingCandidate.node = pkg.from;
+      bondingCandidate.startt = pkg.starttime;
       bondingCandidates.push_front(bondingCandidate);
-      // user did mno start it, so discard this? Or shouled we store it? 
+      // user did mno start it, so discard this? Or shouled we store it?
       Serial.println("User hasn't started bonding or is in progress with other peer, so we do not react");
     }
   }
-  else if (msg.startsWith(BP_BONDING_COMPLETE))
+  else if (pkg.progress == ExchangePackage::PROGRESS_COMPLETE)
   {
-    if (from == bondingCandidate.node) {
-      candidateCompleted = msg.substring(4).toInt();
+    if (pkg.from == bondingCandidate.node)
+    {
+      candidateCompleted = pkg.picture;
       Serial.println("Bonding completed by peer. Received picture: " + String(candidateCompleted));
-      if (bondingState == BONDING_COMPLETE) {
+      if (bondingState == BONDING_COMPLETE)
+      {
         completeBondingSequence();
       }
     }
-    else {
+    else
+    {
       Serial.println("Bonding completed by non-peer");
     }
   }
+  return true;
+}
+
+bool receivedAbortCallback(protocol::Variant variant) { // Abort ercevied
+  auto pkg = variant.to<AbortPackage>();
+
+  Serial.printf("Received AbortPackage from %u\r\n", pkg.from);
+
+  if ((bondingState == BONDING_STARTED || bondingState == BONDING_INPROGRESS || bondingState == BONDING_COMPLETE) && bondingCandidate.node == pkg.from)
+  { // abort current bonding procedure
+    Serial.println("Bonding aborted by peer");
+    abortBondingSequence();
+    initiateBonding();
+  }
+  bondingCandidates.remove_if([&pkg](bondingRequest_t c) { return c.node == pkg.from; });
+  return true;
 }
 
 /*
@@ -590,10 +632,6 @@ void showVisualisations()
 /* Broadcast a message to all nodes*/
 void sendMessage(String msg)
 {
-  // String msg = "Touch from node ";
-  // msg += mesh.getNodeId();
-  // msg += " myNodeTime: " + String(mesh.getNodeTime());
-
   Serial.printf("Sending message: %s\r\n", msg.c_str());
 
   mesh.sendBroadcast(msg);
@@ -614,14 +652,8 @@ void sendMessage(String msg)
 void receivedCallback(uint32_t from, String &msg)
 {
   Serial.printf("Received from %u msg=%s\r\n", from, msg.c_str());
-  Serial.println("");
 
-  String protocol = msg.substring(0,4);
-  if (protocol == BP_BONDING_REQUEST_ALL || protocol == BP_BONDING_REQUEST_ONE || protocol == BP_BONDING_START || protocol == BP_BONDING_COMPLETE)
-  {
-    handleBondingRequests(from, msg);
-  }
-  else if (msg.startsWith(BP_NEWBPM))
+  if (msg.startsWith(BP_NEWBPM))
   {
     float bpm = msg.substring(3).toFloat();
     // Serial.println("Recevied BPM: " + String(bpm));
