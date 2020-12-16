@@ -37,9 +37,7 @@ void initScreen()
     TJpgDec.setJpgScale(1);
     TJpgDec.setCallback(tft_output);
 
-    tft.fillScreen(TFT_BLACK);
-    tft.setTextDatum(MC_DATUM);
-    tft.drawString("Just a sec...", tft.width() / 2, tft.height() / 2);
+    displayMessage("Just a sec...");
 }
 
 void updateNumNodes(uint8_t numnodes) {

@@ -44,8 +44,7 @@ RTC_DATA_ATTR BadgeConfig configuration = {NUM_PICS, {0, 1, 2}}; // keep configu
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
-RTC_DATA_ATTR uint16_t thresholdLeft = TTHRESHOLD, thresholdRight = TTHRESHOLD; //keep touch calibration value after deep sleep
-CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, thresholdLeft, thresholdRight, DEBOUNCE_TIME);
+CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, TTHRESHOLD, TTHRESHOLD, DEBOUNCE_TIME);
 RTC_DATA_ATTR bool freshStart = true;
 
 Scheduler userScheduler; // to control your personal task
@@ -155,13 +154,11 @@ void setup()
       // fileStorage.printFile(CONFIG_FILE);
     }
 
-    //calibrarte button threshold
-    touchInput.calibrate(thresholdLeft, thresholdRight);
-
     freshStart = false;
   }
 
   // Setup user input sensing
+  touchInput.calibrate();
   touchInput.begin();
   touchInput.setBtnHandlers(buttonHandler, onPressed);
 
@@ -211,6 +208,7 @@ void wakeup_callback()
 // Check if on Battery and empty, if so go to sleep to protect boot loop on low voltage
 void checkBatteryCharge()
 {
+  static bool charging = false;
   float voltage = getInputVoltage();
   if (voltage < 3.0)
   {
@@ -218,9 +216,17 @@ void checkBatteryCharge()
     tft.setTextDatum(MC_DATUM);
     tft.drawString("Got no juice :(", tft.width() / 2, tft.height() / 2);
     goToSleep();
-  } else if (voltage > 4.5)
+  }
+  if ((!charging && voltage >= 4.5) || (charging && voltage < 4.5))
   {
-    Serial.println("Charging");
+    if (charging)
+      Serial.println("Stopped Charging");
+    else
+      Serial.println("Started Charging");
+    displayMessage("Just a sec...");
+    touchInput.calibrate();
+    charging = !charging;
+    showHomescreen();
   }
 }
 

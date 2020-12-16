@@ -8,21 +8,21 @@
 #include "CapacitiveKeyboard.h"
 
 //calibrarte button threshold
-void CapacitiveKeyboard::calibrate(uint16_t &thresholdLeft, uint16_t &thresholdRight)
+void CapacitiveKeyboard::calibrate()
 {
   uint32_t leftTouch = 0, rightTouch = 0;
   for (size_t i = 0; i < CALIBRATION_SAMPLES; i++)
   {
     leftTouch += touchRead(TOUCHPIN_LEFT);
     rightTouch += touchRead(TOUCHPIN_RIGHT);
-    delay(700 / CALIBRATION_SAMPLES);
+    delay(CALIBRATION_TIME / CALIBRATION_SAMPLES);
   }
   leftTouch /= CALIBRATION_SAMPLES;
   rightTouch /= CALIBRATION_SAMPLES;
-  thresholdLeft = leftTouch - SENSITIVITY_RANGE;
-  thresholdRight = rightTouch - SENSITIVITY_RANGE;
-  _buttonLeft.setThreshold(thresholdLeft);
-  _buttonRight.setThreshold(thresholdRight);
+  leftTouch = leftTouch - SENSITIVITY_RANGE;
+  rightTouch = rightTouch - SENSITIVITY_RANGE;
+  _buttonLeft.setThreshold(leftTouch);
+  _buttonRight.setThreshold(rightTouch);
 }
 
 void CapacitiveKeyboard::begin()

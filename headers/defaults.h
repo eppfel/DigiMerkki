@@ -15,10 +15,11 @@
 #define TASK_CHECK_BUTTON_PRESS_INTERVAL 10 // in milliseconds
 #define VISUALISATION_UPDATE_INTERVAL 5    // default scheduling time for currentPatternSELECT, in milliseconds
 #define LOGO_DELAY 3000
-#define BATTERY_CHARGE_CHECK_INTERVAL 30000
+#define BATTERY_CHARGE_CHECK_INTERVAL 5000
 #define FS_NO_GLOBALS
+#define CALIBRATION_TIME 700
 #define CALIBRATION_SAMPLES 5
-#define SENSITIVITY_RANGE 10
+#define SENSITIVITY_RANGE 12
 #define CONFIG_FILE "/config.json"
 #define LOG_FILE "/interactionslog.json"
 
