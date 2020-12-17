@@ -72,9 +72,9 @@ public:
 class ExchangePackage : public plugin::SinglePackage
 {
 public:
-    static const uint8_t PROGRESS_START = 0;
-    static const uint8_t PROGRESS_COMPLETE = 1;
-    int progress;
+    static const size_t PROGRESS_START = 0;
+    static const size_t PROGRESS_COMPLETE = 1;
+    size_t progress;
     size_t picture;
     uint32_t starttime;
 
@@ -83,7 +83,7 @@ public:
     // this package
     ExchangePackage() : plugin::SinglePackage(EXCHANGE_PKG) {}
 
-    ExchangePackage(uint32_t fromID, uint32_t destID, int pictureID) : plugin::SinglePackage(EXCHANGE_PKG)
+    ExchangePackage(uint32_t fromID, uint32_t destID, size_t pictureID) : plugin::SinglePackage(EXCHANGE_PKG)
     {
         from = fromID;
         dest = destID;
@@ -93,8 +93,8 @@ public:
     // Convert json object into a ExchangePackage
     ExchangePackage(JsonObject jsonObj) : plugin::SinglePackage(jsonObj)
     {
-        picture = jsonObj["picture"];
-        progress = jsonObj["progress"];
+        picture = jsonObj["picture"].as<size_t>();
+        progress = jsonObj["progress"].as<size_t>();
         starttime = jsonObj["starttime"].as<uint32_t>();
     }
 
