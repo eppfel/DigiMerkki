@@ -70,21 +70,26 @@ Task taskBondingPing(BONDINGPING, TASK_FOREVER, &sendBondingPing);
 Task taskSendBPM(TAPTIME,TASK_ONCE);
 Task taskReconnectMesh(TAPTIME, TASK_ONCE);
 
-#define STATE_IDLE 0
-#define STATE_BONDING 1
-#define STATE_BOND 2
-#define STATE_SCORE 3
-#define STATE_PROXIMITY 4
-#define STATE_GROUP 5
-#define STATE_TAPTEMPO 6
-uint8_t currentState = STATE_IDLE;
+enum appState_t
+{
+  STATE_IDLE,
+  STATE_BONDING,
+  STATE_SCORE,
+  STATE_PROXIMITY,
+  STATE_GROUP,
+  STATE_TAPTEMPO
+};
+appState_t currentState = STATE_IDLE;
 
-#define BONDING_IDLE 0
-#define BONDING_REQUESTED 1
-#define BONDING_STARTED 2
-#define BONDING_INPROGRESS 3
-#define BONDING_COMPLETE 4
-uint8_t bondingState = BONDING_IDLE;
+enum exchangeState_t
+{
+  BONDING_IDLE,
+  BONDING_REQUESTED,
+  BONDING_STARTED,
+  BONDING_INPROGRESS,
+  BONDING_COMPLETE
+};
+exchangeState_t bondingState = BONDING_REQUESTED;
 uint32_t bondingStarttime = 0;
 int8_t candidateCompleted = -1;
 
