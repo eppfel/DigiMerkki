@@ -216,8 +216,7 @@ void checkBatteryCharge()
     tft.setTextDatum(MC_DATUM);
     tft.drawString("Got no juice :(", tft.width() / 2, tft.height() / 2);
     goToSleep();
-  }
-  if ((!charging && voltage >= 4.5) || (charging && voltage < 4.5))
+  } else if ((!charging && voltage >= 4.5) || (charging && voltage < 4.5))
   {
     if (charging)
       Serial.println("Stopped Charging");
