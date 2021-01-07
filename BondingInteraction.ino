@@ -377,6 +377,8 @@ void buttonHandler(uint8_t keyCode)
     if (keyCode == TAP_LEFT)
     {
       visualiser.nextPattern();
+      //Should become change the visualiser state -> Off / Score / Prox / Group
+      //But how to sweitch animation styles?
     }
     else if (keyCode == TAP_RIGHT)
     {
@@ -708,6 +710,14 @@ void changedConnectionCallback()
   calc_delay = true;
 
   updateNumNodes(nodes.size());
+  if(nodes.size() > 0)
+  {
+    //check nodes for group adn set accordingly
+    visualiser.setProximityStatus(PROXIMITY_NEARBY);
+  } else
+  {
+    visualiser.setProximityStatus(PROXIMITY_ALONE);
+  }
   showHomescreen();
 }
 

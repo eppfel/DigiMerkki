@@ -76,20 +76,6 @@ void StatusVisualiser::show() {
 			FastLED.show();
 			fadeToBlackBy(_leds, NUM_LEDS, 255);
 		}
-		else if (_currentPattern == PATTERN_SUCK)
-		{
-			static const uint8_t startled = NUM_LEDS / 2;
-			uint8_t spread = beatsin8(_bpm, 0, startled + 1);
-			if (spread)
-			{
-				uint8_t ledmin = startled - (spread - 1);
-				uint8_t lednum = spread * 2 - 1;
-				fill_solid(&(_leds[ledmin]), lednum, _animationColor);
-				FastLED.setBrightness(_maxBrightness);
-			}
-			FastLED.show();
-			fadeToBlackBy(_leds, NUM_LEDS, 255);
-		}
 		else if (_currentPattern == PATTERN_MOVINGRAINBOW)
 		{	
 			uint8_t phase = (((get_millisecond_timer() - _animationStart) % _animationPhase) / (_animationPhase / 255));
@@ -182,9 +168,15 @@ void StatusVisualiser::cylon(CRGB color, uint8_t bpm)
 void StatusVisualiser::nextPattern()
 {
 	_currentPattern++;
-	if (_currentPattern > PATTERN_BEATFADE) {
+	if (_currentPattern > _maxPattern)
+	{
 		_currentPattern = PATTERN_OFF;
 	}
+	startPattern(_currentPattern);
+}
+
+void StatusVisualiser::startPattern(uint8_t pattern) {
+	_currentPattern = pattern;
 
 	if (_currentPattern == PATTERN_BEATFADE)
 	{
@@ -196,4 +188,28 @@ void StatusVisualiser::nextPattern()
 		_animationStart = get_millisecond_timer();
 		_animationPhase = 4000;
 	}
+}
+
+void StatusVisualiser::setProximityStatus(proximityStatus_t proxStat)
+{
+	if (proxStat == _proximity) return;
+
+	switch (proxStat)
+	{
+	case PROXIMITY_GROUP:
+		//change to group animation(s?)
+		_maxPattern = PATTERN_MOVINGRAINBOW;
+		break;
+	case PROXIMITY_NEARBY:
+		//change to nearby animation
+		_maxPattern = PATTERN_BEATFADE;
+		break;
+	default:
+		//change to last? alone animation
+		_maxPattern = PATTERN_SPREAD;
+		break;
+	}
+
+	startPattern(_maxPattern);
+	_proximity = proxStat;
 }
