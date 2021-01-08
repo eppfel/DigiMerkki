@@ -38,6 +38,7 @@ void delayReceivedCallback(uint32_t from, int32_t delay);
 bool receivedInvitationCallback(protocol::Variant variant);
 bool receivedExchangeCallback(protocol::Variant variant);
 bool receivedAbortCallback(protocol::Variant variant);
+bool receivedBeatCallback(protocol::Variant variant);
 
 FileStorage fileStorage{};
 RTC_DATA_ATTR BadgeConfig configuration = {NUM_PICS, {0, 1, 2}}; // keep configuration in deep sleep
@@ -132,6 +133,7 @@ void setup()
   mesh.onPackage(INVITATION_PKG, &receivedInvitationCallback);
   mesh.onPackage(EXCHANGE_PKG, &receivedExchangeCallback);
   mesh.onPackage(ABORT_PKG, &receivedAbortCallback);
+  mesh.onPackage(BEAT_PKG, &receivedBeatCallback);
 
   // Perform tasks necessary on a fresh start
   if (freshStart)
@@ -352,8 +354,8 @@ void setTempo()
 
   //sendBPM after
   taskSendBPM.setCallback([]() {
-    mesh.sendBroadcast("BPM" + String(visualiser.tapTempo.getBPM()));
-    // Serial.println("Sending BPM" + String(visualiser.tapTempo.getBPM()));
+    auto pkg = BeatPackage(mesh.getNodeId(), visualiser.tapTempo.getBPM());
+    mesh.sendPackage(&pkg);
     currentState = STATE_IDLE;
     showHomescreen();
   });
@@ -645,6 +647,16 @@ void showVisualisations()
 * NETWORKING
 */
 
+bool receivedBeatCallback(protocol::Variant variant)
+{
+  auto pkg = variant.to<BeatPackage>();
+
+  Serial.printf("Received BPM %f from %u\r\n", pkg.bpm, pkg.from);
+  visualiser.tapTempo.setBPM(pkg.bpm);
+  return true;
+}
+
+
 /* Broadcast a message to all nodes*/
 void sendMessage(String msg)
 {
@@ -668,17 +680,6 @@ void sendMessage(String msg)
 void receivedCallback(uint32_t from, String &msg)
 {
   Serial.printf("Received from %u msg=%s\r\n", from, msg.c_str());
-
-  if (msg.startsWith(BP_NEWBPM))
-  {
-    float bpm = msg.substring(3).toFloat();
-    // Serial.println("Recevied BPM: " + String(bpm));
-    visualiser.tapTempo.setBPM(bpm);
-  }
-  else if (msg.startsWith("Anythgin else"))
-  {
-    //do anything else based on network
-  }
 }
 
 void newConnectionCallback(uint32_t nodeId)

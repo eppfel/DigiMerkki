@@ -3,6 +3,7 @@
 #define INVITATION_PKG 31
 #define EXCHANGE_PKG 32
 #define ABORT_PKG 33
+#define BEAT_PKG 40
 
 using namespace painlessmesh;
 
@@ -10,9 +11,6 @@ using namespace painlessmesh;
 class InvitationPackage : public plugin::BroadcastPackage
 {
 public:
-    // Each package has to be identified by a unique ID
-    // Values <30 are reserved for painlessMesh default messages, so using 31 for
-    // this package
     InvitationPackage() : plugin::BroadcastPackage(INVITATION_PKG) {}
 
     InvitationPackage(uint32_t fromID) : plugin::BroadcastPackage(INVITATION_PKG) {
@@ -40,9 +38,6 @@ public:
 class AbortPackage : public plugin::SinglePackage
 {
 public:
-    // Each package has to be identified by a unique ID
-    // Values <30 are reserved for painlessMesh default messages, so using 32 for
-    // this package
     AbortPackage() : plugin::SinglePackage(ABORT_PKG) {}
 
     AbortPackage(uint32_t fromID, uint32_t destID) : plugin::SinglePackage(ABORT_PKG)
@@ -78,9 +73,6 @@ public:
     size_t picture;
     uint32_t starttime;
 
-    // Each package has to be identified by a unique ID
-    // Values <30 are reserved for painlessMesh default messages, so using 32 for
-    // this package
     ExchangePackage() : plugin::SinglePackage(EXCHANGE_PKG) {}
 
     ExchangePackage(uint32_t fromID, uint32_t destID, size_t pictureID) : plugin::SinglePackage(EXCHANGE_PKG)
@@ -112,5 +104,39 @@ public:
     size_t jsonObjectSize() const
     {
         return JSON_OBJECT_SIZE(noJsonFields + 3);
+    }
+};
+
+/* Package to synchronise the tempo of animations */
+class BeatPackage : public plugin::BroadcastPackage
+{
+public:
+    float bpm;
+
+    BeatPackage() : plugin::BroadcastPackage(BEAT_PKG) {}
+
+    BeatPackage(uint32_t fromID, float bpmIn) : plugin::BroadcastPackage(BEAT_PKG)
+    {
+        from = fromID;
+        bpm = bpmIn;
+    }
+
+    // Convert json object into a BeatPackage
+    BeatPackage(JsonObject jsonObj) : plugin::BroadcastPackage(jsonObj) {
+        bpm = jsonObj["bpm"].as<float>();
+    }
+
+    // Convert BeatPackage to json object
+    JsonObject addTo(JsonObject &&jsonObj) const
+    {
+        jsonObj = plugin::BroadcastPackage::addTo(std::move(jsonObj));
+        jsonObj["bpm"] = bpm;
+        return jsonObj;
+    }
+
+    // Memory to reserve for converting this object to json
+    size_t jsonObjectSize() const
+    {
+        return JSON_OBJECT_SIZE(noJsonFields + 1);
     }
 };
