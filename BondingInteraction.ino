@@ -439,17 +439,29 @@ void abortBondingSequence() {
 
 void completeBondingSequence()
 {
-
-  Serial.println("Started complete bodning seq");
+  if (candidateCompleted == -1)
+  {
+    Serial.println("No candidated picture but bonding completion was called!");
+    return;
+  }
+  Serial.println("Started complete bonding seq");
   currentState = STATE_IDLE;
 
   //write into configuration and storage
-  configuration.pics[configuration.numPics] = candidateCompleted; //fitler for duplicates before storing
-  setCurrentPicture(configuration.numPics);
-  configuration.numPics++;
+  uint8_t *end = configuration.pics + configuration.numPics;
+  uint8_t *currentPic = std::find(std::begin(configuration.pics), end, candidateCompleted);
+  if (currentPic == end)
+  {
+    Serial.println("it is a new pic, so we add it and store the config");
+    configuration.pics[configuration.numPics] = candidateCompleted; //fitler for duplicates before storing
+    configuration.numPics++;
+    fileStorage.saveConfiguration(configuration);
+    fileStorage.printFile(CONFIG_FILE);
+  }
+
   Serial.println("Set current picture");
-  fileStorage.saveConfiguration(configuration);
-  fileStorage.printFile(CONFIG_FILE);
+  Serial.println(std::distance(configuration.pics, currentPic));
+  setCurrentPicture(std::distance(configuration.pics, currentPic));
 
   visualiser.blink(500, 3, CRGB::Green); // fill meter
   displayMessage("Bonding Complete!");
