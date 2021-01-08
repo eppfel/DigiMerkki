@@ -83,7 +83,6 @@ appState_t currentState = STATE_IDLE;
 
 enum exchangeState_t
 {
-  BONDING_IDLE,
   BONDING_REQUESTED,
   BONDING_STARTED,
   BONDING_INPROGRESS,
@@ -391,7 +390,9 @@ void buttonHandler(uint8_t keyCode)
 * HANDLE BONDING (check when the pin is active and when not / end seems sus)
 */
 
-void initiateBonding() {
+void initiateBonding()
+{
+  Serial.println("Started initiateBonding");
   currentState = STATE_BONDING;
   bondingState = BONDING_REQUESTED;
   candidateCompleted = -1;
@@ -415,35 +416,38 @@ void initiateBonding() {
   }
 }
 
-void initiateBondingHandShake() {
+void initiateBondingHandShake()
+{
   bondingState = BONDING_STARTED;
   bondingStarttime = mesh.getNodeTime();
   taskBondingPing.enable();
-  Serial.printf("Bonding requested to %u\r\n", bondingCandidate.node);
+  Serial.printf("initiateBondingHandshake to %u\r\n", bondingCandidate.node);
 }
 
-void initiateBondingSequence() {
+void initiateBondingSequence()
+{
+  Serial.printf("initiateBondingSequence with %u\r\n", bondingCandidate.node);
   bondingState = BONDING_INPROGRESS;
   taskBondingPing.enable();
   displayMessage("Bonding...");
   visualiser.fillMeter((bondingCandidate.startt+bondingStarttime) / 2000, HANDSHAKETIME, CRGB::Blue); // fill meter
-  Serial.printf("Bonding now with %u\r\n", bondingCandidate.node);
 }
 
 void abortBondingSequence() {
-  bondingState = BONDING_IDLE;
   visualiser.blink(300, 3, CRGB::Red); //this one is called 
 }
 
 void completeBondingSequence()
 {
+
+  Serial.println("Started complete bodning seq");
   currentState = STATE_IDLE;
-  bondingState = BONDING_IDLE;
-  
+
   //write into configuration and storage
   configuration.pics[configuration.numPics] = candidateCompleted; //fitler for duplicates before storing
   setCurrentPicture(configuration.numPics);
   configuration.numPics++;
+  Serial.println("Set current picture");
   fileStorage.saveConfiguration(configuration);
   fileStorage.printFile(CONFIG_FILE);
 
@@ -547,19 +551,17 @@ bool receivedInvitationCallback(protocol::Variant variant)
   newCandidate.node = pkg.from;
   newCandidate.startt = mesh.getNodeTime();
 
-  if (bondingState == BONDING_REQUESTED)
+  if (currentState != STATE_BONDING) {
+      Serial.println("User has not initiated Bonding yet!");
+  } else if (bondingState == BONDING_REQUESTED)
   { //user had requested before, so start bonding
     bondingCandidate = newCandidate;
     bondingCandidates.push_front(newCandidate);
     initiateBondingHandShake();
-  }
-  else //save for later
+  } else //save for later
   {
     bondingCandidates.push_back(newCandidate);
-    if (bondingState == BONDING_IDLE)
-      Serial.println("User has not initiated Bonding yet!");
-    else
-      Serial.println("Bonding already started/In Progress.");
+    Serial.println("Bonding already started/In Progress.");
   }
   return true;
 }
@@ -584,14 +586,6 @@ bool receivedExchangeCallback(protocol::Variant variant)
       bondingCandidates.push_front(bondingCandidate);
       initiateBondingHandShake();
       initiateBondingSequence();
-    }
-    else if (bondingState == BONDING_IDLE) // this is faulty / unecessary
-    {
-      bondingCandidate.node = pkg.from;
-      bondingCandidate.startt = pkg.starttime;
-      bondingCandidates.push_front(bondingCandidate);
-      // user did mno start it, so discard this? Or shouled we store it?
-      Serial.println("User hasn't started bonding or is in progress with other peer, so we do not react");
     }
   }
   else if (pkg.progress == ExchangePackage::PROGRESS_COMPLETE)
