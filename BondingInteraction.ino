@@ -439,13 +439,13 @@ void abortBondingSequence() {
 
 void completeBondingSequence()
 {
+  currentState = STATE_IDLE;
   if (candidateCompleted == -1)
   {
     Serial.println("No candidated picture but bonding completion was called!");
     return;
   }
   Serial.println("Started complete bonding seq");
-  currentState = STATE_IDLE;
 
   //write into configuration and storage
   uint8_t *end = configuration.pics + configuration.numPics;
@@ -504,8 +504,8 @@ void userFinishBonding()
 {
   bondingState = BONDING_COMPLETE;
   Serial.printf("Bonding completed by user, sending to %u \r\n", bondingCandidate.node);
-  taskBondingPing.enable();
   taskBondingPing.setIterations(5); //remove magic number
+  taskBondingPing.enable();
   if (candidateCompleted > -1) {
     completeBondingSequence();
   }
@@ -532,15 +532,8 @@ void sendBondingPing() {
       
       break;
     case BONDING_COMPLETE:
-      if (taskBondingPing.isLastIteration())
-      {
-        abortBondingSequence(); // reset to being availible for bonding if bonding goes on
-        initiateBonding();
-      }
-      else {
-        pkg.progress = ExchangePackage::PROGRESS_COMPLETE;
-        mesh.sendPackage(&pkg);
-      }
+      pkg.progress = ExchangePackage::PROGRESS_COMPLETE;
+      mesh.sendPackage(&pkg);
       break;
 
     default:
@@ -583,6 +576,11 @@ bool receivedExchangeCallback(protocol::Variant variant)
   auto pkg = variant.to<ExchangePackage>();
 
   Serial.printf("Received ExchangePackage %u from %u\r\n", pkg.progress, pkg.from);
+
+  if (currentState == STATE_IDLE) {
+    Serial.println("Bonding not active, so package is discarded");
+    return true;
+  }
 
   if (pkg.progress == ExchangePackage::PROGRESS_START)
   {
