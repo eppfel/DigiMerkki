@@ -90,10 +90,11 @@ void StatusVisualiser::show() {
 		}
 		else if (_currentPattern == PATTERN_BEATFADE)
 		{
-			if ((get_millisecond_timer() - _animationStart) > _animationPhase)
+			uint32_t phase = _animationPhase = 60000 / _bpm;
+			if ((get_millisecond_timer() - _animationStart) > phase)
 			{
 				fill_solid(&(_leds[0]), NUM_LEDS, _animationColor);
-				_animationStart += _animationPhase;
+				_animationStart += phase;
 			}
 			FastLED.show();
 			fadeToBlackBy(_leds, NUM_LEDS, 16);
@@ -178,10 +179,13 @@ void StatusVisualiser::nextPattern()
 void StatusVisualiser::startPattern(uint8_t pattern) {
 	_currentPattern = pattern;
 
-	if (_currentPattern == PATTERN_BEATFADE)
+	if (_currentPattern == PATTERN_OFF)
+	{
+		FastLED.clear(true);
+	} 
+	else if (_currentPattern == PATTERN_BEATFADE)
 	{
 		_animationStart = get_millisecond_timer();
-		_animationPhase = 60000 / _bpm;
 	}
 	else if (_currentPattern == PATTERN_MOVINGRAINBOW)
 	{
