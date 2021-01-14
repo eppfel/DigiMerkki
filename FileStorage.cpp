@@ -104,21 +104,47 @@ void FileStorage::saveConfiguration(const BadgeConfig &config)
     file.close();
 }
 
+void FileStorage::logConnectionEvent(const uint32_t time, const SimpleList<uint32_t> &nodes)
+{
+    // Allocate a temporary JsonDocument
+    // Don't forget to change the capacity to match your requirements.
+    // Use arduinojson.org/assistant to compute the capacity.
+    StaticJsonDocument<LOG_MEMORY> doc;
 
-void FileStorage::logEvent(BadgeEvent evt)
+    doc["t"] = time;
+    doc["e"] = BadgeEvent::CONNECTION_EVT;
+
+    nodes.begin();
+
+    // Set the values in the document
+    JsonArray nodesArr = doc.createNestedArray("n");
+    SimpleList<uint32_t>::const_iterator node = nodes.begin();
+    while (node != nodes.end())
+    {
+        nodesArr.add(*node);
+        node++;
+    }
+
+    logEvent(doc);
+}
+
+void FileStorage::logEvent(const StaticJsonDocument<LOG_MEMORY> &doc)
 { // list SPIFFS contents
     fs::File logFile = SPIFFS.open(LOG_FILE, FILE_WRITE);
     if (!logFile)
     {
-        Serial.println("- failed to open configdirectoryu");
+        Serial.println("- failed to open log file");
         return;
     }
-    if (logFile.print("TEST"))
-    {
-        Serial.println("File was written");
-    }
-    else
+
+    // Serialize JSON to file
+    if (serializeJson(doc, logFile) == 0)
     {
         Serial.println("File write failed");
     }
+
+    // Close the file
+    logFile.close();
+
+    serializeJson(doc, Serial);
 }

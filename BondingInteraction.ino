@@ -700,26 +700,16 @@ void changedConnectionCallback()
 
   nodes = mesh.getNodeList();
 
-  Serial.printf("Num nodes: %d\r\n", nodes.size());
-  Serial.printf("Connection list:");
-
-  SimpleList<uint32_t>::iterator node = nodes.begin();
-  while (node != nodes.end())
-  {
-    Serial.printf(" %u", *node);
-    node++;
-  }
-  Serial.println("");
-  Serial.print("Nodetime: ");
-  Serial.println(mesh.getNodeTime());
-  calc_delay = true;
+  fileStorage.logConnectionEvent(mesh.getNodeTime(), nodes);
 
   updateNumNodes(nodes.size());
   if(nodes.size() > 0)
   {
+    calc_delay = true;
     //check nodes for group adn set accordingly
     visualiser.setProximityStatus(PROXIMITY_NEARBY);
-  } else
+  }
+  else
   {
     visualiser.setProximityStatus(PROXIMITY_ALONE);
   }
