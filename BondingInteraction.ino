@@ -233,6 +233,17 @@ void checkBatteryCharge()
     charging = !charging;
     showHomescreen();
   }
+
+  if (calc_delay)
+  {
+    SimpleList<uint32_t>::iterator node = nodes.begin();
+    while (node != nodes.end())
+    {
+      mesh.startDelayMeas(*node);
+      node++;
+    }
+    calc_delay = false;
+  }
 }
 
 int vref = 1100;
@@ -663,17 +674,6 @@ void sendMessage(String msg)
   Serial.printf("Sending message: %s\r\n", msg.c_str());
 
   mesh.sendBroadcast(msg);
-
-  if (calc_delay)
-  {
-    SimpleList<uint32_t>::iterator node = nodes.begin();
-    while (node != nodes.end())
-    {
-      mesh.startDelayMeas(*node);
-      node++;
-    }
-    calc_delay = false;
-  }
 }
 
 /* Controller for incoming messages that prints all incoming messages and listens on touch and bonding events */
