@@ -350,6 +350,8 @@ void checkDeviceStatus()
               String(touchInput._buttonLeft.wasReleased());
   Serial.println("Button states: " + bs);
 
+  fileStorage.printFile(LOG_FILE);
+
   taskShowLogo.restartDelayed();
 }
 
