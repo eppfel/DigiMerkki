@@ -365,7 +365,7 @@ void setTempo()
 
   //sendBPM after
   taskSendBPM.setCallback([]() {
-    auto pkg = BeatPackage(mesh.getNodeId(), visualiser.tapTempo.getBPM());
+    auto pkg = BeatPackage(mesh.getNodeId(), visualiser.tapTempo.getBeatLength());
     mesh.sendPackage(&pkg);
     currentState = STATE_IDLE;
     showHomescreen();
@@ -662,8 +662,8 @@ bool receivedBeatCallback(protocol::Variant variant)
 {
   auto pkg = variant.to<BeatPackage>();
 
-  Serial.printf("Received BPM %f from %u\r\n", pkg.bpm, pkg.from);
-  visualiser.tapTempo.setBPM(pkg.bpm);
+  Serial.printf("Received BPM %f from %u\r\n", pkg.beatLength, pkg.from);
+  visualiser.tapTempo.setBeatLength(pkg.beatLength);
   return true;
 }
 

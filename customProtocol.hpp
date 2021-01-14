@@ -111,26 +111,26 @@ public:
 class BeatPackage : public plugin::BroadcastPackage
 {
 public:
-    float bpm;
+    long beatLength;
 
     BeatPackage() : plugin::BroadcastPackage(BEAT_PKG) {}
 
-    BeatPackage(uint32_t fromID, float bpmIn) : plugin::BroadcastPackage(BEAT_PKG)
+    BeatPackage(uint32_t fromID, long beatLengthIn) : plugin::BroadcastPackage(BEAT_PKG)
     {
         from = fromID;
-        bpm = bpmIn;
+        beatLength = beatLengthIn;
     }
 
     // Convert json object into a BeatPackage
     BeatPackage(JsonObject jsonObj) : plugin::BroadcastPackage(jsonObj) {
-        bpm = jsonObj["bpm"].as<float>();
+        beatLength = jsonObj["beatLength"].as<long>();
     }
 
     // Convert BeatPackage to json object
     JsonObject addTo(JsonObject &&jsonObj) const
     {
         jsonObj = plugin::BroadcastPackage::addTo(std::move(jsonObj));
-        jsonObj["bpm"] = bpm;
+        jsonObj["beatLength"] = beatLength;
         return jsonObj;
     }
 
