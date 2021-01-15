@@ -143,7 +143,8 @@ void setup()
     {
       badges_t badges[NUM_BADGES] = {
           {2884960141, 0, {3, 4, 5}},
-          {3519576873, 1, {0, 1, 2}}};
+          {3519576873, 1, {0, 1, 2}},
+          {2884958213, 1, {0, 3, 6}}};
       uint32_t nodeid = mesh.getNodeId();
       for (size_t i = 0; i < NUM_BADGES; i++)
       {
