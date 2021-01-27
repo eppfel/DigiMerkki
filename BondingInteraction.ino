@@ -21,7 +21,7 @@
 #include "ScreenController.h"
 
 // Prototypes
-void checkBatteryCharge();
+void routineCheck();
 void goToSleep();
 void setTempo();
 void checkDeviceStatus();
@@ -63,7 +63,7 @@ StatusVisualiser visualiser(get_millisecond_timer_hook, 64);
 TFT_eSPI tft(TFT_WIDTH, TFT_HEIGHT); // Invoke custom TFT library
 
 // Task variables
-Task taskCheckBattery(BATTERY_CHARGE_CHECK_INTERVAL, TASK_FOREVER, &checkBatteryCharge);
+Task taskCheckBattery(BATTERY_CHARGE_CHECK_INTERVAL, TASK_FOREVER, &routineCheck);
 Task taskCheckButtonPress(TASK_CHECK_BUTTON_PRESS_INTERVAL, TASK_FOREVER, &checkButtonPress);
 Task taskVisualiser(VISUALISATION_UPDATE_INTERVAL, TASK_FOREVER, &showVisualisations);
 Task taskShowLogo(LOGO_DELAY, TASK_ONCE, &showHomescreen);
@@ -75,9 +75,6 @@ enum appState_t
 {
   STATE_IDLE,
   STATE_BONDING,
-  STATE_SCORE,
-  STATE_PROXIMITY,
-  STATE_GROUP,
   STATE_TAPTEMPO
 };
 appState_t currentState = STATE_IDLE;
@@ -110,7 +107,7 @@ void setup()
   initScreen();
 
   //check for battery to not discharge too much
-  checkBatteryCharge();
+  checkBatteryCharge(true);
 
   //check filesystem
   if (!SPIFFS.begin())
@@ -212,8 +209,12 @@ void wakeup_callback()
   //placeholder callback function
 }
 
+void routineCheck() {
+  checkBatteryCharge(false);
+}
+
 // Check if on Battery and empty, if so go to sleep to protect boot loop on low voltage
-void checkBatteryCharge()
+void checkBatteryCharge(bool boot)
 {
   static bool charging = false;
   float voltage = getInputVoltage();
@@ -223,19 +224,21 @@ void checkBatteryCharge()
     tft.setTextDatum(MC_DATUM);
     tft.drawString("Got no juice :(", tft.width() / 2, tft.height() / 2);
     goToSleep();
-  } else if ((!charging && voltage >= 4.5) || (charging && voltage < 4.5))
+  } else if (!boot && (!charging && voltage >= 4.5) || (charging && voltage < 4.5))
   {
     if (charging)
       Serial.println("Stopped Charging");
     else
       Serial.println("Started Charging");
-    displayMessage("Just a sec...");
-    touchInput.calibrate();
-    charging = !charging;
-    showHomescreen();
+    if (currentState == STATE_IDLE) {
+      displayMessage("Just a sec...");
+      touchInput.calibrate();
+      charging = !charging;
+      showHomescreen();
+    }
   }
 
-  if (calc_delay)
+  if (calc_delay && !boot)
   {
     SimpleList<uint32_t>::iterator node = nodes.begin();
     while (node != nodes.end())
