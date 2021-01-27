@@ -12,6 +12,9 @@ void FileStorage::printFile(const char *filename)
         return;
     }
 
+    Serial.print("File size: " + String(file.size()) + "\r\n");
+    Serial.print("Storage used: " + String(SPIFFS.usedBytes()) + "/" + String(SPIFFS.totalBytes()) + "\r\n");
+
     // Extract each characters by one by one
     while (file.available())
     {
