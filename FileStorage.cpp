@@ -1,4 +1,5 @@
 #include "FileStorage.h"
+#include <StreamUtils.h>
 
 // Prints the content of a file to the Serial
 void FileStorage::printFile(const char *filename)
@@ -130,21 +131,20 @@ void FileStorage::logConnectionEvent(const uint32_t time, const SimpleList<uint3
 
 void FileStorage::logEvent(const StaticJsonDocument<LOG_MEMORY> &doc)
 { // list SPIFFS contents
-    fs::File logFile = SPIFFS.open(LOG_FILE, FILE_WRITE);
+    fs::File logFile = SPIFFS.open(LOG_FILE, FILE_APPEND);
     if (!logFile)
     {
         Serial.println("- failed to open log file");
         return;
     }
 
+    WriteLoggingStream loggedFile(logFile, Serial);
     // Serialize JSON to file
-    if (serializeJson(doc, logFile) == 0)
+    if (serializeJson(doc, loggedFile) == 0)
     {
         Serial.println("File write failed");
     }
 
     // Close the file
     logFile.close();
-
-    serializeJson(doc, Serial);
 }
