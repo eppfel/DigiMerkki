@@ -133,7 +133,11 @@ void FileStorage::logConnectionEvent(const uint32_t time, const SimpleList<uint3
 }
 
 void FileStorage::logEvent(const StaticJsonDocument<LOG_MEMORY> &doc)
-{ // list SPIFFS contents
+{
+
+    // Time recorded for test purposes
+    // uint32_t t = millis();
+
     fs::File logFile = SPIFFS.open(LOG_FILE, FILE_APPEND);
     if (!logFile)
     {
@@ -150,4 +154,9 @@ void FileStorage::logEvent(const StaticJsonDocument<LOG_MEMORY> &doc)
 
     // Close the file
     logFile.close();
+
+    // How much time did writing to the log take
+    // t = millis() - t;
+    // Serial.print(t);
+    // Serial.println(" ms");
 }
