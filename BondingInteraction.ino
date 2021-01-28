@@ -224,7 +224,7 @@ void checkBatteryCharge(bool boot)
     tft.setTextDatum(MC_DATUM);
     tft.drawString("Got no juice :(", tft.width() / 2, tft.height() / 2);
     goToSleep();
-  } else if (!boot && (!charging && voltage >= 4.5) || (charging && voltage < 4.5))
+  } else if (!boot && ((!charging && voltage >= 4.5) || (charging && voltage < 4.5)))
   {
     if (charging)
       Serial.println("Stopped Charging");
@@ -531,7 +531,7 @@ void userFinishBonding()
 }
 
 void sendBondingPing() {
-  Serial.printf("Ping:BondingState:%u:%u\r\n", bondingState, taskBondingPing.getRunCounter());
+  Serial.printf("Ping:BondingState:%u:%lu\r\n", bondingState, taskBondingPing.getRunCounter());
 
   if (bondingState == BONDING_REQUESTED) {
     auto pkg = InvitationPackage(mesh.getNodeId());
@@ -668,7 +668,7 @@ bool receivedBeatCallback(protocol::Variant variant)
 {
   auto pkg = variant.to<BeatPackage>();
 
-  Serial.printf("Received BPM %f from %u\r\n", pkg.beatLength, pkg.from);
+  Serial.printf("Received BPM %ld from %u\r\n", pkg.beatLength, pkg.from);
   visualiser.tapTempo.setBeatLength(pkg.beatLength);
   return true;
 }

@@ -159,7 +159,7 @@ void StatusVisualiser::fillMeter(uint32_t fromT, uint32_t duration, int32_t colo
 	_animationPhase = duration;
 }
 
-void StatusVisualiser::cylon(CRGB color, uint8_t beatLength)
+void StatusVisualiser::cylon(CRGB color, uint32_t beatLength)
 {
 	_animationColor = color;
 	_currentState = STATE_ANIMATION;

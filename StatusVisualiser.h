@@ -63,7 +63,7 @@ public:
   void setMeterFromIndex(int8_t ledIndex);
   void setMeter(int8_t ledIndex = -1);
   void fillMeter(uint32_t fromT, uint32_t toT, int32_t colorCode = CRGB::White);
-  void cylon(CRGB color = CRGB::White, uint8_t beatLength = 500);
+  void cylon(CRGB color = CRGB::White, uint32_t beatLength = 500);
   void nextPattern();
   void startPattern(uint8_t pattern);
     void setProximityStatus(proximityStatus_t proxStat);
