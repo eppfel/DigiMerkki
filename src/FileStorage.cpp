@@ -108,6 +108,21 @@ void FileStorage::saveConfiguration(const BadgeConfig &config)
     file.close();
 }
 
+void FileStorage::logSharingEvent(const uint32_t time, const uint32_t &node, const int8_t &pic)
+{
+    // Allocate a temporary JsonDocument
+    // Don't forget to change the capacity to match your requirements.
+    // Use arduinojson.org/assistant to compute the capacity.
+    StaticJsonDocument<LOG_MEMORY> doc;
+
+    doc["t"] = time;
+    doc["e"] = BadgeEvent::SHARE_EVT;
+    doc["n"] = node;
+    doc["p"] = pic;
+
+    logEvent(doc);
+}
+
 void FileStorage::logConnectionEvent(const uint32_t time, const SimpleList<uint32_t> &nodes)
 {
     // Allocate a temporary JsonDocument

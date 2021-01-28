@@ -478,6 +478,8 @@ void completeBondingSequence()
     fileStorage.printFile(CONFIG_FILE);
   }
 
+  fileStorage.logSharingEvent(mesh.getNodeTime(), bondingCandidate.node, candidateCompleted);
+
   Serial.println("Set current picture");
   Serial.println(std::distance(configuration.pics, currentPic));
   setCurrentPicture(std::distance(configuration.pics, currentPic));

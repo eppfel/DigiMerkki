@@ -49,6 +49,7 @@ public:
     void printFile(const char *filename);
     bool loadConfiguration(BadgeConfig &config);
     void saveConfiguration(const BadgeConfig &config);
+    void logSharingEvent(const uint32_t time, const uint32_t &node, const int8_t &pic);
     void logConnectionEvent(const uint32_t time, const SimpleList<uint32_t> &nodes);
     void logEvent(const StaticJsonDocument<LOG_MEMORY> &doc);
 };
