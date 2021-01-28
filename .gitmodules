@@ -1,0 +1,6 @@
+[submodule "lib/ArduinoTapTempo"]
+	path = lib/ArduinoTapTempo
+	url = git@github.com:eppfel/ArduinoTapTempo.git
+[submodule "lib/EasyButton"]
+	path = lib/EasyButton
+	url = git@github.com:eppfel/EasyButton.git
