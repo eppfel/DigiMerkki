@@ -48,7 +48,7 @@ void CapacitiveKeyboard::pressedFor()
       _buttonState = HOLD_RIGHT;
   }
   _multipressed_callback_int(_buttonState);
-  _buttonState = 0;
+  _buttonState = NO_TAP;
 }
 
 void CapacitiveKeyboard::pressed()
@@ -61,7 +61,7 @@ void CapacitiveKeyboard::pressed()
   if (_buttonLeft.isReleased() && _buttonRight.isReleased())
   {
     _multipressed_callback_int(_buttonState);
-    _buttonState = 0;
+    _buttonState = NO_TAP;
   }
 }
 

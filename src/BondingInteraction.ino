@@ -401,23 +401,23 @@ void buttonHandler(uint8_t keyCode)
 
   if (currentState == STATE_IDLE)
   {
-    if (keyCode == TAP_LEFT)
+    if (keyCode == CapacitiveKeyboard::TAP_LEFT)
     {
       visualiser.nextPattern();
     }
-    else if (keyCode == TAP_RIGHT)
+    else if (keyCode == CapacitiveKeyboard::TAP_RIGHT)
     {
       nextPicture();
     }
-    else if (keyCode == HOLD_LEFT)
+    else if (keyCode == CapacitiveKeyboard::HOLD_LEFT)
     {
       setTempo();
     }
-    else if (keyCode == HOLD_RIGHT)
+    else if (keyCode == CapacitiveKeyboard::HOLD_RIGHT)
     {
       userStartBonding();
     }
-    else if (keyCode == HOLD_BOTH)
+    else if (keyCode == CapacitiveKeyboard::HOLD_BOTH)
     {
       goToSleep();
     }
