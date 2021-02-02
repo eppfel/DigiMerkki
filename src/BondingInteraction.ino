@@ -164,11 +164,7 @@ void setup()
   // Setup user input sensing
   touchInput.calibrate();
   touchInput.begin();
-  touchInput.setBtnHandlers(buttonHandler, onPressed);
-
-  touchInput._buttonLeft.onPressedFor(BTNHOLDDELAY, setTempo);
-  touchInput._buttonRight.onPressedFor(BTNHOLDDELAY, userStartBonding);
-
+  touchInput.setBtnHandlers(buttonHandler, onPressed, onPressedFor);
   userScheduler.addTask(taskCheckButtonPress);
   taskCheckButtonPress.enable();
 
@@ -303,10 +299,13 @@ void turnOffWifi(uint32_t reconnectDelay)
 // trigger deep sleep mode and wake up on any input from the touch buttons
 void goToSleep()
 {
+  visualiser.turnOff();
+  displayMessage("Shutting down...");
   mesh.stop();
   Serial.println("Disconnected from mesh!");
-  visualiser.turnOff();
-  esp_sleep_enable_ext0_wakeup((gpio_num_t)HW_BUTTON_PIN1, 0);
+  touchAttachInterrupt(TOUCHPIN_LEFT, wakeup_callback, STHRESHOLD);
+  touchAttachInterrupt(TOUCHPIN_RIGHT, wakeup_callback, STHRESHOLD);
+  esp_sleep_enable_touchpad_wakeup();
   Serial.println("Goind to sleep in 2 sec!");
   delay(2000);
   esp_deep_sleep_start();
@@ -316,9 +315,18 @@ void goToSleep()
 * USER INPUT
 */
 
+void onPressedFor()
+{
+  if (currentState != STATE_TAPTEMPO)
+  { //replace this with a proper check in the state machine
+    touchInput.pressedFor();
+  }
+}
+
 void onPressed()
 {
-  if (currentState != STATE_TAPTEMPO) { //replace thsi with a propoer check in the state machine
+  if (currentState != STATE_TAPTEMPO)
+  { //replace this with a proper check in the state machine
     touchInput.pressed();
   }
 }
@@ -396,12 +404,22 @@ void buttonHandler(uint8_t keyCode)
     if (keyCode == TAP_LEFT)
     {
       visualiser.nextPattern();
-      //Should become change the visualiser state -> Off / Score / Prox / Group
-      //But how to sweitch animation styles?
     }
     else if (keyCode == TAP_RIGHT)
     {
       nextPicture();
+    }
+    else if (keyCode == HOLD_LEFT)
+    {
+      setTempo();
+    }
+    else if (keyCode == HOLD_RIGHT)
+    {
+      userStartBonding();
+    }
+    else if (keyCode == HOLD_BOTH)
+    {
+      goToSleep();
     }
   }
 }

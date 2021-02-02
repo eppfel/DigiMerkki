@@ -7,7 +7,7 @@
 #include "Arduino.h"
 #include "CapacitiveKeyboard.h"
 
-//calibrarte button threshold
+//calibrate button threshold
 void CapacitiveKeyboard::calibrate()
 {
   uint32_t leftTouch = 0, rightTouch = 0;
@@ -32,35 +32,51 @@ void CapacitiveKeyboard::begin()
   _buttonRight.begin();
 }
 
-void CapacitiveKeyboard::pressed(){
-  if (_buttonState > TAP_BOTH) {
-    // for releasing a long press HOW?
-  }
-  else if (_buttonLeft.wasReleased() || _buttonRight.wasReleased())
-  {
-    if (_buttonLeft.wasReleased()) {
-      _buttonState = _buttonState | TAP_LEFT;
-    } else if (_buttonRight.wasReleased()) {
-      _buttonState = _buttonState | TAP_RIGHT;
-    }
 
-    if (_buttonLeft.isReleased() && _buttonRight.isReleased()) {
-      _multipressed_callback_int(_buttonState);
-      _buttonState = 0;
-    }
+void CapacitiveKeyboard::pressedFor()
+{
+  if (_buttonLeft.isPressed() && _buttonRight.isPressed())
+  {
+    _buttonState = HOLD_BOTH;
+  }
+  else if (_buttonLeft.isPressed())
+  {
+    _buttonState = HOLD_LEFT;
+  }
+  else //if (_buttonRight.isPressed())
+  {
+      _buttonState = HOLD_RIGHT;
+  }
+  _multipressed_callback_int(_buttonState);
+  _buttonState = 0;
+}
+
+void CapacitiveKeyboard::pressed()
+{
+  if (_buttonLeft.wasReleased()) {
+    _buttonState = _buttonState | TAP_LEFT;
+  } else if (_buttonRight.wasReleased()) {
+    _buttonState = _buttonState | TAP_RIGHT;
+  }
+  if (_buttonLeft.isReleased() && _buttonRight.isReleased())
+  {
+    _multipressed_callback_int(_buttonState);
+    _buttonState = 0;
   }
 }
 
 //catch the press in this class and check which buttons was/were pressed (checking states) and return keyCode
-void CapacitiveKeyboard::setBtnHandlers(CapacitiveKeyboard::callback_int_t callback_int, EasyButtonBase::callback_t callback) {
+void CapacitiveKeyboard::setBtnHandlers(CapacitiveKeyboard::callback_int_t callback_int, EasyButtonBase::callback_t callback, EasyButtonBase::callback_t callbackFor)
+{
   _multipressed_callback_int = callback_int;
   _buttonLeft.onPressed(callback);
   _buttonRight.onPressed(callback);
-  _buttonLeft.onPressedFor(BTNHOLDDELAY, callback);
-  _buttonRight.onPressedFor(BTNHOLDDELAY, callback);
+  _buttonLeft.onPressedFor(BTNHOLDDELAY, callbackFor);
+  _buttonRight.onPressedFor(BTNHOLDDELAY, callbackFor);
 }
 
-void CapacitiveKeyboard::tick() {
+void CapacitiveKeyboard::tick()
+{
   _buttonLeft.read();
   _buttonRight.read();
 }

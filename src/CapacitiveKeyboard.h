@@ -34,8 +34,7 @@ class CapacitiveKeyboard
     void tick();
     void pressed();
     void pressedFor();
-    void setBtnHandlers(CapacitiveKeyboard::callback_int_t callback_int, EasyButtonBase::callback_t callback);
-    // void onPressedFor(CapacitiveKeyboard::callback_int_t callback_int, EasyButtonBase::callback_t callback);
+    void setBtnHandlers(CapacitiveKeyboard::callback_int_t callback_int, EasyButtonBase::callback_t callback, EasyButtonBase::callback_t callbackFor);
 
   protected:
     uint8_t _buttonState;

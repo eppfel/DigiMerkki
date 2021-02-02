@@ -2,6 +2,7 @@
 #define TOUCHPIN_RIGHT T8      // Pin for sensing touch input 33 (labelled as 32)
 #define DEBOUNCE_TIME 35
 #define TTHRESHOLD 40     // threshold for touch
+#define STHRESHOLD 20     // threshold for wake up touch
 #define HW_BUTTON_PIN1 35 // Hardware button 1 on the T-display board
 #define HW_BUTTON_PIN2 0  // Hardware button 1 on the T-display board
 
