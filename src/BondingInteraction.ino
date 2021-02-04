@@ -22,7 +22,6 @@
 
 // Prototypes
 void routineCheck();
-void goToSleep();
 void setTempo();
 void checkDeviceStatus();
 void buttonHandler(CapacitiveKeyboard::InputType keyCode);
@@ -219,7 +218,7 @@ void checkBatteryCharge(bool boot)
     tft.fillScreen(TFT_BLACK);
     tft.setTextDatum(MC_DATUM);
     tft.drawString("Got no juice :(", tft.width() / 2, tft.height() / 2);
-    goToSleep();
+    goToSleep(true);
   } else if (!boot && ((!charging && voltage >= 4.5) || (charging && voltage < 4.5)))
   {
     if (charging)
@@ -276,8 +275,13 @@ void toggleDisplay()
 
 void pressedShutdown()
 {
+  pressedShutdown(false);
+}
+
+void pressedShutdown(bool touch)
+{
   displayMessage("Shutting down");
-  goToSleep();
+  goToSleep(touch);
 }
 
 void turnOffWifi() {
@@ -297,15 +301,21 @@ void turnOffWifi(uint32_t reconnectDelay)
 }
 
 // trigger deep sleep mode and wake up on any input from the touch buttons
-void goToSleep()
+void goToSleep(bool touch)
 {
   visualiser.turnOff();
-  displayMessage("Shutting down...");
   mesh.stop();
   Serial.println("Disconnected from mesh!");
-  touchAttachInterrupt(TOUCHPIN_LEFT, wakeup_callback, STHRESHOLD);
-  touchAttachInterrupt(TOUCHPIN_RIGHT, wakeup_callback, STHRESHOLD);
-  esp_sleep_enable_touchpad_wakeup();
+  if (touch)
+  {
+    touchAttachInterrupt(TOUCHPIN_LEFT, wakeup_callback, STHRESHOLD);
+    touchAttachInterrupt(TOUCHPIN_RIGHT, wakeup_callback, STHRESHOLD);
+    esp_sleep_enable_touchpad_wakeup();
+  }
+  else
+  {
+    esp_sleep_enable_ext0_wakeup((gpio_num_t)HW_BUTTON_PIN1, 0);
+  }
   Serial.println("Goind to sleep in 2 sec!");
   delay(2000);
   esp_deep_sleep_start();
@@ -419,7 +429,7 @@ void buttonHandler(CapacitiveKeyboard::InputType keyCode)
     }
     else if (keyCode == CapacitiveKeyboard::HOLD_BOTH)
     {
-      goToSleep();
+      pressedShutdown(true);
     }
   }
 }
