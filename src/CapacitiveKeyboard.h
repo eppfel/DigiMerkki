@@ -21,7 +21,7 @@ class CapacitiveKeyboard
       HOLD_RIGHT = 5,
       HOLD_BOTH = 6
     };
-    using callback_int_t = void(*)(uint8_t);
+    using callback_int_t = void(*)(InputType);
 
     CapacitiveKeyboard(int pin1, int pin2, int thresholdLeft, int thresholdRight, uint32_t debounce_time = 35) : _buttonLeft(pin1, debounce_time, thresholdLeft), _buttonRight(pin2, debounce_time, thresholdRight)
     {

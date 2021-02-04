@@ -25,7 +25,7 @@ void routineCheck();
 void goToSleep();
 void setTempo();
 void checkDeviceStatus();
-void buttonHandler(uint8_t keyCode);
+void buttonHandler(CapacitiveKeyboard::InputType keyCode);
 void onPressed();
 void userStartBonding();
 void sendBondingPing();
@@ -389,7 +389,7 @@ void setTempo()
 }
 
 
-void buttonHandler(uint8_t keyCode)
+void buttonHandler(CapacitiveKeyboard::InputType keyCode)
 {
   Serial.println("Tap " + String(keyCode));
 
