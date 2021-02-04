@@ -24,7 +24,7 @@
 void routineCheck();
 void setTempo();
 void checkDeviceStatus();
-void buttonHandler(CapacitiveKeyboard::InputType keyCode);
+void buttonHandler(TouchButtons::InputType keyCode);
 void onPressed();
 void userStartBonding();
 void sendBondingPing();
@@ -44,7 +44,7 @@ RTC_DATA_ATTR BadgeConfig configuration = {NUM_PICS, {0, 1, 2}}; // keep configu
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
-CapacitiveKeyboard touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, TTHRESHOLD, TTHRESHOLD, DEBOUNCE_TIME);
+TouchButtons touchInput(TOUCHPIN_LEFT, TOUCHPIN_RIGHT, TTHRESHOLD, TTHRESHOLD, DEBOUNCE_TIME);
 RTC_DATA_ATTR bool freshStart = true;
 
 Scheduler userScheduler; // to control your personal task
@@ -399,7 +399,7 @@ void setTempo()
 }
 
 
-void buttonHandler(CapacitiveKeyboard::InputType keyCode)
+void buttonHandler(TouchButtons::InputType keyCode)
 {
   Serial.println("Tap " + String(keyCode));
 
@@ -411,23 +411,23 @@ void buttonHandler(CapacitiveKeyboard::InputType keyCode)
 
   if (currentState == STATE_IDLE)
   {
-    if (keyCode == CapacitiveKeyboard::TAP_LEFT)
+    if (keyCode == TouchButtons::TAP_LEFT)
     {
       visualiser.nextPattern();
     }
-    else if (keyCode == CapacitiveKeyboard::TAP_RIGHT)
+    else if (keyCode == TouchButtons::TAP_RIGHT)
     {
       nextPicture();
     }
-    else if (keyCode == CapacitiveKeyboard::HOLD_LEFT)
+    else if (keyCode == TouchButtons::HOLD_LEFT)
     {
       setTempo();
     }
-    else if (keyCode == CapacitiveKeyboard::HOLD_RIGHT)
+    else if (keyCode == TouchButtons::HOLD_RIGHT)
     {
       userStartBonding();
     }
-    else if (keyCode == CapacitiveKeyboard::HOLD_BOTH)
+    else if (keyCode == TouchButtons::HOLD_BOTH)
     {
       pressedShutdown(true);
     }

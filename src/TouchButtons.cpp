@@ -8,7 +8,7 @@
 #include "TouchButtons.h"
 
 //calibrate button threshold
-void CapacitiveKeyboard::calibrate()
+void TouchButtons::calibrate()
 {
   uint32_t leftTouch = 0, rightTouch = 0;
   for (size_t i = 0; i < CALIBRATION_SAMPLES; i++)
@@ -25,14 +25,14 @@ void CapacitiveKeyboard::calibrate()
   _buttonRight.setThreshold(rightTouch);
 }
 
-void CapacitiveKeyboard::begin()
+void TouchButtons::begin()
 {
   _buttonState = 0;
   _buttonLeft.begin();
   _buttonRight.begin();
 }
 
-void CapacitiveKeyboard::pressedFor()
+void TouchButtons::pressedFor()
 {
   if (_buttonLeft.isPressed() && _buttonRight.isPressed())
   {
@@ -50,7 +50,7 @@ void CapacitiveKeyboard::pressedFor()
   _buttonState = NO_TAP;
 }
 
-void CapacitiveKeyboard::pressed()
+void TouchButtons::pressed()
 {
   if (_buttonLeft.wasReleased()) {
     _buttonState = _buttonState | TAP_LEFT;
@@ -65,7 +65,7 @@ void CapacitiveKeyboard::pressed()
 }
 
 //catch the press in this class and check which buttons was/were pressed (checking states) and return keyCode
-void CapacitiveKeyboard::setBtnHandlers(CapacitiveKeyboard::callback_int_t callback_int, EasyButtonBase::callback_t callback, EasyButtonBase::callback_t callbackFor)
+void TouchButtons::setBtnHandlers(TouchButtons::callback_int_t callback_int, EasyButtonBase::callback_t callback, EasyButtonBase::callback_t callbackFor)
 {
   _multipressed_callback_int = callback_int;
   _buttonLeft.onPressed(callback);
@@ -74,7 +74,7 @@ void CapacitiveKeyboard::setBtnHandlers(CapacitiveKeyboard::callback_int_t callb
   _buttonRight.onPressedFor(BTNHOLDDELAY, callbackFor);
 }
 
-void CapacitiveKeyboard::tick()
+void TouchButtons::tick()
 {
   _buttonLeft.read();
   _buttonRight.read();

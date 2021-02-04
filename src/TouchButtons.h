@@ -1,14 +1,14 @@
 /*
-  CapacitiveKeyboard.h - Library for handling three capacitive touch sensors as key input.
+  TouchButtons.h - Library for handling three capacitive touch sensors as key input.
   Created by Felix A. Epp
 */
-#ifndef CapacitiveKeyboard_h
-#define CapacitiveKeyboard_h
+#ifndef TouchButtons_h
+#define TouchButtons_h
 
 #include "Arduino.h"
 #include <EasyButtonTouch.h>
 
-class CapacitiveKeyboard
+class TouchButtons
 {
   public:
     enum InputType
@@ -23,7 +23,7 @@ class CapacitiveKeyboard
     };
     using callback_int_t = void(*)(InputType);
 
-    CapacitiveKeyboard(int pin1, int pin2, int thresholdLeft, int thresholdRight, uint32_t debounce_time = 35) : _buttonLeft(pin1, debounce_time, thresholdLeft), _buttonRight(pin2, debounce_time, thresholdRight)
+    TouchButtons(int pin1, int pin2, int thresholdLeft, int thresholdRight, uint32_t debounce_time = 35) : _buttonLeft(pin1, debounce_time, thresholdLeft), _buttonRight(pin2, debounce_time, thresholdRight)
     {
     }
     EasyButtonTouch _buttonLeft;
@@ -33,11 +33,11 @@ class CapacitiveKeyboard
     void tick();
     void pressed();
     void pressedFor();
-    void setBtnHandlers(CapacitiveKeyboard::callback_int_t callback_int, EasyButtonBase::callback_t callback, EasyButtonBase::callback_t callbackFor);
+    void setBtnHandlers(TouchButtons::callback_int_t callback_int, EasyButtonBase::callback_t callback, EasyButtonBase::callback_t callbackFor);
 
   protected:
     uint8_t _buttonState;
-    CapacitiveKeyboard::callback_int_t _multipressed_callback_int;
+    TouchButtons::callback_int_t _multipressed_callback_int;
 };
 
 #endif
