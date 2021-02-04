@@ -16,7 +16,7 @@
 
 #include <painlessMesh.h>
 #include "customProtocol.hpp"
-#include "CapacitiveKeyboard.h"
+#include "TouchButtons.h"
 #include "StatusVisualiser.h"
 #include "ScreenController.h"
 

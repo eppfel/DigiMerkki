@@ -1,11 +1,11 @@
 
 /*
-  CapacitiveKeyboard.cpp - Library for CapacitiveKeyboard
+  TouchButtons.cpp - Library for TouchButtons
   Created by Felix A. Epp
 */
 
 #include "Arduino.h"
-#include "CapacitiveKeyboard.h"
+#include "TouchButtons.h"
 
 //calibrate button threshold
 void CapacitiveKeyboard::calibrate()
