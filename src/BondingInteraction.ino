@@ -327,18 +327,12 @@ void goToSleep(bool touch)
 
 void onPressedFor()
 {
-  if (currentState != STATE_TAPTEMPO)
-  { //replace this with a proper check in the state machine
-    touchInput.pressedFor();
-  }
+  touchInput.pressedFor();
 }
 
 void onPressed()
 {
-  if (currentState != STATE_TAPTEMPO)
-  { //replace this with a proper check in the state machine
-    touchInput.pressed();
-  }
+  touchInput.pressed();
 }
 
 void checkButtonPress()
@@ -408,8 +402,11 @@ void buttonHandler(TouchButtons::InputType keyCode)
     firsttime = !firsttime;
     return;
   }
-
-  if (currentState == STATE_IDLE)
+  if (keyCode == TouchButtons::HOLD_BOTH)
+  {
+    pressedShutdown(true);
+  }
+  else if (currentState == STATE_IDLE)
   {
     if (keyCode == TouchButtons::TAP_LEFT)
     {
@@ -426,10 +423,6 @@ void buttonHandler(TouchButtons::InputType keyCode)
     else if (keyCode == TouchButtons::HOLD_RIGHT)
     {
       userStartBonding();
-    }
-    else if (keyCode == TouchButtons::HOLD_BOTH)
-    {
-      pressedShutdown(true);
     }
   }
 }
