@@ -386,7 +386,7 @@ void setTempo()
     auto pkg = BeatPackage(mesh.getNodeId(), visualiser.tapTempo.getBeatLength());
     mesh.sendPackage(&pkg);
     currentState = STATE_IDLE;
-    fileStorage.logBeatEvent(mesh.getNodeId(), visualiser.tapTempo.getBeatLength());
+    fileStorage.logBeatEvent(mesh.getNodeTime(), visualiser.tapTempo.getBeatLength(), mesh.getNodeId());
     showHomescreen();
   });
   taskSendBPM.restartDelayed();
@@ -693,7 +693,7 @@ bool receivedBeatCallback(protocol::Variant variant)
   auto pkg = variant.to<BeatPackage>();
 
   Serial.printf("Received BPM %ld from %u\r\n", pkg.beatLength, pkg.from);
-  fileStorage.logBeatEvent(mesh.getNodeId(), pkg.beatLength, pkg.from);
+  fileStorage.logBeatEvent(mesh.getNodeTime(), pkg.beatLength, pkg.from);
   visualiser.tapTempo.setBeatLength(pkg.beatLength);
   return true;
 }

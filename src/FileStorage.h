@@ -50,7 +50,6 @@ public:
     void printFile(const char *filename);
     bool loadConfiguration(BadgeConfig &config);
     void saveConfiguration(const BadgeConfig &config);
-    void logBeatEvent(const uint32_t time, const int32_t &beat);
     void logBeatEvent(const uint32_t time,const int32_t &beat, const uint32_t &node);
     void logSharingEvent(const uint32_t time, const uint32_t &node, const int8_t &pic);
     void logConnectionEvent(const uint32_t time, const SimpleList<uint32_t> &nodes);
