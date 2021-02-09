@@ -171,6 +171,7 @@ void setup()
   hwbutton2.begin();
   hwbutton1.onPressed(pressedShutdown);
   hwbutton2.onPressed(checkDeviceStatus);
+  hwbutton2.onSequence(2, 1000, printLog);
 
   //add tasks for later use to scheduler
   userScheduler.addTask(taskCheckBattery);
@@ -366,9 +367,26 @@ void checkDeviceStatus()
               String(touchInput._buttonLeft.wasReleased());
   Serial.println("Button states: " + bs);
 
-  fileStorage.printFile(LOG_FILE);
+  // Open file for reading
+  fs::File file = SPIFFS.open(LOG_FILE);
+  if (!file)
+  {
+    Serial.println(F("Failed to read file"));
+    return;
+  }
+  Serial.print("File size: " + String(file.size()) + "\r\n");
+  file.close();
+
+  Serial.print("Storage used: " + String(SPIFFS.usedBytes()) + "/" + String(SPIFFS.totalBytes()) + "\r\n");
 
   taskShowLogo.restartDelayed();
+}
+
+void printLog()
+{
+  Serial.println("LOGSTART" + String(mesh.getNodeId()));
+  fileStorage.printFile(LOG_FILE);
+  Serial.println("LOGEND");
 }
 
 void setTempo()
