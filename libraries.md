@@ -7,6 +7,7 @@ https://techtutorialsx.com/2017/05/06/esp32-arduino-creating-a-task/
 https://www.freertos.org/FreeRTOS-quick-start-guide.html
 
 ## Power managament
+https://github.com/pangodream/18650CL
 
 ### Sleep / power saving modes
 * https://platformio.org/lib/show/401/Adafruit%20SleepyDog%20Library / https://github.com/adafruit/Adafruit_SleepyDog
