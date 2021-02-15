@@ -107,7 +107,7 @@ void showHomescreen()
 
 size_t getCurrentPicture()
 {
-    return currentPicture;
+    return configuration.pics[currentPicture];
 }
 
 void setCurrentPicture(size_t picId) {
