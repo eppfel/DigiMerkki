@@ -27,8 +27,18 @@ See pin defintions in the header file for the layout.
 
 All boards can immediatly join the mesh without further setup or any elcectronics, but the will not use any I/O.
 
+
 ### T-display
 This board does not feature an onboard LED, so an external has to be attached, to show connectivity. Further this board controls its integrated display.
+
+#### Upload procedure
+
+1. Set upload port in platformio.ini (you can get device with `pio device list`)
+1. Run `Erase flash` (This deletes all data on the board and is needed for a clean start)
+1. Run `Upload`
+1. Run `Upload filesystem image` (This will delete files changed by the app, i.e. `configuration.json` and `interactionlog.json`. Hereafter the app also initialises the configuration.)
+
+With multiple boards you can create copies of the `evn:tdisplay` and set the respective serial port.
 
 ### Orther boards not supported anymore
 
