@@ -124,7 +124,7 @@ void StatusVisualiser::turnOff()
 	FastLED.show();
 }
 
-void StatusVisualiser::blink(uint32_t phase, uint8_t iterations, CRGB color, uint8_t transitionState)
+void StatusVisualiser::blink(uint32_t phase, uint8_t iterations, CRGB color, visualiserState_t transitionState)
 {
 	_animationStart = get_millisecond_timer();
 	_animationPhase = (uint32_t) ((float) phase / 2);
@@ -168,7 +168,7 @@ void StatusVisualiser::cylon(CRGB color, uint32_t beatLength)
 
 void StatusVisualiser::nextPattern()
 {
-	_currentPattern++;
+	_currentPattern = (visualiserPattern_t)((int)_currentPattern + 1);
 	if (_currentPattern > _maxPattern)
 	{
 		_currentPattern = PATTERN_OFF;
@@ -176,7 +176,7 @@ void StatusVisualiser::nextPattern()
 	startPattern(_currentPattern);
 }
 
-void StatusVisualiser::startPattern(uint8_t pattern) {
+void StatusVisualiser::startPattern(visualiserPattern_t pattern) {
 	_currentPattern = pattern;
 
 	if (_currentPattern == PATTERN_OFF)
