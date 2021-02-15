@@ -38,10 +38,12 @@ public:
     PATTERN_OFF,
     PATTERN_CYLON,
     PATTERN_SPREAD,
-    PATTERN_BEATFADE,
+    PATTERN_GLITTER,
+    PATTERN_STROBE,
     PATTERN_MOVINGRAINBOW,
     PATTERN_RAINBOWBEAT
   };
+
   StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness);
   ArduinoTapTempo tapTempo;
 

@@ -341,12 +341,14 @@ void checkButtonPress()
   touchInput.tick();
   hwbutton1.read();
   hwbutton2.read();
-  if (currentState == STATE_TAPTEMPO) {
+  if (currentState == STATE_TAPTEMPO)
     visualiser.tapTempo.update(touchInput._buttonLeft.isPressed());
-  }
-  else if (currentState == STATE_BONDING && touchInput._buttonRight.isReleased())
-  {
-    userAbortBonding();
+  else {
+    visualiser.tapTempo.update(false);
+    if (currentState == STATE_BONDING && touchInput._buttonRight.isReleased())
+    {
+      userAbortBonding();
+    }
   }
 }
 

@@ -88,16 +88,27 @@ void StatusVisualiser::show() {
 			fill_rainbow(_leds, NUM_LEDS, beatA, 12); // Use FastLED's fill_rainbow routine.
 			FastLED.show();
 		}
-		else if (_currentPattern == PATTERN_BEATFADE)
+		else if (_currentPattern == PATTERN_STROBE)
 		{
-			uint32_t phase = _animationPhase = 60000 / _bpm;
-			if ((get_millisecond_timer() - _animationStart) > phase)
+			if (tapTempo.beatProgress() > 0.95)
 			{
-				fill_solid(&(_leds[0]), NUM_LEDS, _animationColor);
-				_animationStart += phase;
+				fill_solid(_leds, NUM_LEDS, CRGB::White); // yaw for color
 			}
+			else
+			{
+				fadeToBlackBy(_leds, NUM_LEDS, 16);
+			}
+			FastLED.setBrightness(_maxBrightness);
 			FastLED.show();
-			fadeToBlackBy(_leds, NUM_LEDS, 16);
+		}
+		else if (_currentPattern == PATTERN_GLITTER) {
+			fill_solid(_leds, NUM_LEDS, CRGB::Black);
+			if (random8() < 10)
+			{
+				_leds[random16(NUM_LEDS)] += CRGB::White;
+			}
+			FastLED.setBrightness(_maxBrightness);
+			FastLED.show();
 		}
 		else
 		{
@@ -182,10 +193,6 @@ void StatusVisualiser::startPattern(visualiserPattern_t pattern) {
 	if (_currentPattern == PATTERN_OFF)
 	{
 		FastLED.clear(true);
-	} 
-	else if (_currentPattern == PATTERN_BEATFADE)
-	{
-		_animationStart = get_millisecond_timer();
 	}
 	else if (_currentPattern == PATTERN_MOVINGRAINBOW)
 	{
@@ -206,7 +213,7 @@ void StatusVisualiser::setProximityStatus(proximityStatus_t proxStat)
 		break;
 	case PROXIMITY_NEARBY:
 		//change to nearby animation
-		_maxPattern = PATTERN_BEATFADE;
+		_maxPattern = PATTERN_STROBE;
 		break;
 	default:
 		//change to last? alone animation
