@@ -15,7 +15,7 @@
 // #include "headers/tdisplay.h"
 
 #include <painlessMesh.h>
-#include "customProtocol.hpp"
+#include "BadgeProtocol.hpp"
 #include "TouchButtons.h"
 #include "StatusVisualiser.h"
 #include "ScreenController.h"
@@ -121,6 +121,7 @@ void setup()
   mesh.setDebugMsgTypes(ERROR | DEBUG); // set before init() so that you can see error messages
 
   mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler);
+  mesh.setContainsRoot(true);
   mesh.onReceive(&receivedCallback);
   mesh.onNewConnection(&newConnectionCallback);
   mesh.onChangedConnections(&changedConnectionCallback);

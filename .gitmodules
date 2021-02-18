@@ -4,3 +4,6 @@
 [submodule "lib/EasyButton"]
 	path = lib/EasyButton
 	url = git@github.com:eppfel/EasyButton.git
+[submodule "lib/BadgeProtocol"]
+	path = lib/BadgeProtocol
+	url = /Users/eppf1/Documents/PlatformIO/Projects/BadgeProtocol
