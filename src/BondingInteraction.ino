@@ -38,6 +38,7 @@ bool receivedInvitationCallback(protocol::Variant variant);
 bool receivedExchangeCallback(protocol::Variant variant);
 bool receivedAbortCallback(protocol::Variant variant);
 bool receivedBeatCallback(protocol::Variant variant);
+bool receivedTimeCallback(protocol::Variant variant);
 
 FileStorage fileStorage{};
 RTC_DATA_ATTR BadgeConfig configuration = {NUM_PICS, {0, 1, 2}}; // keep configuration in deep sleep
@@ -131,6 +132,7 @@ void setup()
   mesh.onPackage(EXCHANGE_PKG, &receivedExchangeCallback);
   mesh.onPackage(ABORT_PKG, &receivedAbortCallback);
   mesh.onPackage(BEAT_PKG, &receivedBeatCallback);
+  mesh.onPackage(DATE_PKG, &receivedTimeCallback);
 
   // Perform tasks necessary on a fresh start
   if (freshStart)
@@ -708,6 +710,15 @@ void showVisualisations()
 /*
 * NETWORKING
 */
+
+bool receivedTimeCallback(protocol::Variant variant)
+{
+  auto pkg = variant.to<DateTimePackage>();
+
+  Serial.printf("Received DateTime %lu from %u\r\n", pkg.datetime, pkg.from);
+
+  return true;
+}
 
 bool receivedBeatCallback(protocol::Variant variant)
 {
