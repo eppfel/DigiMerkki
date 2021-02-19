@@ -19,6 +19,8 @@
 #include "TouchButtons.h"
 #include "StatusVisualiser.h"
 #include "ScreenController.h"
+#include "time.h"
+#include <sys/time.h>
 
 // Prototypes
 void routineCheck();
@@ -716,7 +718,18 @@ bool receivedTimeCallback(protocol::Variant variant)
   auto pkg = variant.to<DateTimePackage>();
 
   Serial.printf("Received DateTime %lu from %u\r\n", pkg.datetime, pkg.from);
+  struct timeval incoming_time;
+  incoming_time.tv_sec = pkg.datetime;
+  settimeofday(&incoming_time, NULL);
 
+  time_t now;
+  char strftime_buf[64];
+  struct tm timeinfo;
+
+  time(&now);
+
+  localtime_r(&now, &timeinfo);
+  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
   return true;
 }
 
