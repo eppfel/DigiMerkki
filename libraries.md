@@ -36,6 +36,12 @@ https://community.platformio.org/t/how-to-define-littlefs-partition-build-image-
 ### Data upload
 ???
 
+### Date and Time
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system_time.html
+https://github.com/mcxiaoke/ESPDateTime
+https://github.com/fbiego/ESP32Time
+https://forum.arduino.cc/index.php?topic=595802.0 (precision of deep sleep system time)
+
 ## User input
 
 ### TapTempo
