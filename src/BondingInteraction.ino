@@ -196,6 +196,18 @@ void loop()
 * POWER MANAGEMENT
 */
 
+void logTime()
+{
+  time_t now;
+  struct tm timeinfo;
+
+  time(&now);
+
+  localtime_r(&now, &timeinfo);
+  Serial.print(now);
+  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+}
+
 void wakeup_callback()
 {
   //placeholder callback function
@@ -713,14 +725,7 @@ bool receivedTimeCallback(protocol::Variant variant)
   incoming_time.tv_sec = pkg.datetime;
   settimeofday(&incoming_time, NULL);
 
-  time_t now;
-  char strftime_buf[64];
-  struct tm timeinfo;
-
-  time(&now);
-
-  localtime_r(&now, &timeinfo);
-  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+  logTime();
   return true;
 }
 
