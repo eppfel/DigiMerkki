@@ -1,18 +1,9 @@
 //************************************************************
-// This demo uses the painless Mesh library for connectivity and FastLED library to control the NeoPixel LEDs
+// This application uses the painless Mesh library for connectivity and FastLED library to control the NeoPixel LEDs
 //
-// 1. blinks led once for every node on the mesh
-// 2. blink cycle repeats every BLINK_PERIOD
-// 6. prints anything it receives to Serial.print
-// 3. awaits user input for typing a 5 digit cypher on capacitive touch sensors
-// 4. sends cypher to every node on the mesh
-// 5. makes handshake with node that sends the same cypher
-// 6. Flashes the RGB LEDs when when chaning mode and differently when bhandshake was successful
-//
-// TODO: Calibrate touch sensors on startup to avoid false positive touch events
+// Felix A. Epp <felix.epp@aalto.fi>
 //
 //************************************************************
-// #include "headers/tdisplay.h"
 
 #include <painlessMesh.h>
 #include "BadgeProtocol.hpp"
