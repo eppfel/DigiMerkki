@@ -723,6 +723,7 @@ bool receivedTimeCallback(protocol::Variant variant)
   Serial.printf("Received DateTime %lu from %u\r\n", pkg.datetime, pkg.from);
   struct timeval incoming_time;
   incoming_time.tv_sec = pkg.datetime;
+  incoming_time.tv_usec = 0;
   settimeofday(&incoming_time, NULL);
 
   logTime();
