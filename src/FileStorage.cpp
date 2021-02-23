@@ -1,5 +1,14 @@
 #include "FileStorage.h"
 #include <StreamUtils.h>
+#include <time.h>
+#include <sys/time.h>
+
+unsigned long getTime()
+{
+    time_t now;
+    time(&now);
+    return now;
+}
 
 // Prints the content of a file to the Serial
 void FileStorage::printFile(const char *filename)
@@ -112,6 +121,7 @@ void FileStorage::logBeatEvent(const uint32_t time, const int32_t &beat, const u
     StaticJsonDocument<LOG_MEMORY> doc;
 
     doc["t"] = time;
+    doc["s"] = getTime();
     doc["e"] = BadgeEvent::BEAT_EVT;
     if (node != 0) doc["n"] = node;
     doc["b"] = beat;
@@ -127,6 +137,7 @@ void FileStorage::logSharingEvent(const uint32_t time, const uint32_t &node, con
     StaticJsonDocument<LOG_MEMORY> doc;
 
     doc["t"] = time;
+    doc["s"] = getTime();
     doc["e"] = BadgeEvent::SHARE_EVT;
     doc["n"] = node;
     doc["p"] = pic;
@@ -142,6 +153,7 @@ void FileStorage::logConnectionEvent(const uint32_t time, const SimpleList<uint3
     StaticJsonDocument<LOG_MEMORY> doc;
 
     doc["t"] = time;
+    doc["s"] = getTime();
     doc["e"] = BadgeEvent::CONNECTION_EVT;
 
     nodes.begin();
