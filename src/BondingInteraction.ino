@@ -321,7 +321,10 @@ void goToSleep(bool touch)
     touchAttachInterrupt(TOUCHPIN_RIGHT, wakeup_callback, STHRESHOLD);
     esp_sleep_enable_touchpad_wakeup();
   }
-  esp_sleep_enable_ext0_wakeup((gpio_num_t)HW_BUTTON_PIN1, 0);
+  else
+  {
+    esp_sleep_enable_ext0_wakeup((gpio_num_t)HW_BUTTON_PIN1, 0);
+  }
   Serial.println("Goind to sleep in 2 sec!");
   delay(2000);
   esp_deep_sleep_start();
