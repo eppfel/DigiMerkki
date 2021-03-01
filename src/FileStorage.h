@@ -22,7 +22,7 @@ struct badges_t
     uint8_t Pics[NUM_PICS];
 };
 
-struct BadgeConfig
+struct badgeConfig_t
 {
     size_t numPics;
     uint8_t pics[NUM_BADGES * NUM_PICS];
@@ -48,8 +48,8 @@ public:
     
     void initialise();
     void printFile(const char *filename);
-    bool loadConfiguration(BadgeConfig &config);
-    void saveConfiguration(const BadgeConfig &config);
+    bool loadConfiguration(badgeConfig_t &config);
+    void saveConfiguration(const badgeConfig_t &config);
     void logBeatEvent(const uint32_t time,const int32_t &beat, const uint32_t &node);
     void logSharingEvent(const uint32_t time, const uint32_t &node, const int8_t &pic);
     void logConnectionEvent(const uint32_t time, const SimpleList<uint32_t> &nodes);

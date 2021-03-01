@@ -47,7 +47,7 @@ void FileStorage::initialise()
     // printFile(CONFIG_FILE);
 }
 
-bool FileStorage::loadConfiguration(BadgeConfig &config)
+bool FileStorage::loadConfiguration(badgeConfig_t &config)
 {
     // Open file for reading
     fs::File file = SPIFFS.open(CONFIG_FILE);
@@ -79,7 +79,7 @@ bool FileStorage::loadConfiguration(BadgeConfig &config)
 }
 
 // Saves the configuration to a file
-void FileStorage::saveConfiguration(const BadgeConfig &config)
+void FileStorage::saveConfiguration(const badgeConfig_t &config)
 {
     // Delete existing file, otherwise the configuration is appended to the file
     SPIFFS.remove(CONFIG_FILE);

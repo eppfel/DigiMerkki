@@ -34,7 +34,7 @@ bool receivedBeatCallback(protocol::Variant variant);
 bool receivedTimeCallback(protocol::Variant variant);
 
 FileStorage fileStorage{};
-RTC_DATA_ATTR BadgeConfig configuration = {NUM_PICS, {0, 1, 2}}; // keep configuration in deep sleep
+RTC_DATA_ATTR badgeConfig_t configuration = {NUM_PICS, 0, {0, 1, 2}}; // keep configuration in deep sleep
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
@@ -133,16 +133,16 @@ void setup()
     // load configuration from and state from persistent storage
     if (!fileStorage.loadConfiguration(configuration)) 
     {
-      badges_t badges[NUM_BADGES] = {
+      badges_t all_badges[NUM_BADGES] = {
           {2884960141, 0, {3, 4, 5}},
           {3519576873, 1, {0, 1, 2}},
           {2884958213, 1, {0, 3, 6}}};
       uint32_t nodeid = mesh.getNodeId();
       for (size_t i = 0; i < NUM_BADGES; i++)
       {
-        if (badges[i].node == nodeid)
+        if (all_badges[i].node == nodeid)
         {
-          memcpy(configuration.pics, badges[i].Pics, sizeof(badges[i].Pics));
+          memcpy(configuration.pics, all_badges[i].Pics, sizeof(all_badges[i].Pics));
           configuration.numPics = NUM_PICS;
           break;
         }
