@@ -25,6 +25,7 @@ struct badges_t
 struct badgeConfig_t
 {
     size_t numPics;
+    uint8_t group;
     uint8_t pics[NUM_BADGES * NUM_PICS];
 };
 

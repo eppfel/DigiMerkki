@@ -46,6 +46,7 @@ painlessMesh mesh;
 
 bool calc_delay = false;
 SimpleList<uint32_t> nodes;
+SimpleList<uint32_t> groupNodes;
 
 // @Override This function is called by FastLED inside lib8tion.h.Requests it to use mesg.getNodeTime instead of internal millis() timer.
 uint32_t get_millisecond_timer_hook()
@@ -144,10 +145,19 @@ void setup()
         {
           memcpy(configuration.pics, all_badges[i].Pics, sizeof(all_badges[i].Pics));
           configuration.numPics = NUM_PICS;
+          configuration.group = all_badges[i].group;
           break;
         }
       }
-      
+
+      for (size_t i = 0; i < NUM_BADGES; i++)
+      {
+        if (all_badges[i].group == configuration.group)
+        {
+          groupNodes.push_back(all_badges[i].node);
+        }
+      }
+
       fileStorage.saveConfiguration(configuration);
 
       // fileStorage.printFile(CONFIG_FILE);
@@ -766,10 +776,10 @@ void newConnectionCallback(uint32_t nodeId)
   showHomescreen();
 }
 
+// Called when a change in the connections is registered and control animations based on the change
 void changedConnectionCallback()
 {
   Serial.printf("Changed connections\r\n");
-  // Display changes on tft
 
   nodes = mesh.getNodeList();
 
@@ -779,8 +789,23 @@ void changedConnectionCallback()
   if(nodes.size() > 0)
   {
     calc_delay = true;
-    //check nodes for group adn set accordingly
-    visualiser.setProximityStatus(PROXIMITY_NEARBY);
+
+    // Cycle through all connected nodes and check if any outside the group are present
+    bool groupMatch = true;
+    SimpleList<uint32_t>::const_iterator node = nodes.begin();
+    while ( node != nodes.end() && groupMatch) {
+      Serial.println(*node);
+      groupMatch = (*std::find(groupNodes.begin(), groupNodes.end(), *node) == *node);
+      node++;
+    }
+    if (groupMatch)
+    {
+      visualiser.setProximityStatus(PROXIMITY_NEARBY);
+    }
+    else
+    {
+      visualiser.setProximityStatus(PROXIMITY_GROUP);
+    }
   }
   else
   {
