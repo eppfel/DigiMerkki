@@ -46,7 +46,7 @@ painlessMesh mesh;
 
 bool calc_delay = false;
 SimpleList<uint32_t> nodes;
-SimpleList<uint32_t> groupNodes;
+RTC_DATA_ATTR SimpleList<uint32_t> groupNodes;
 
 // @Override This function is called by FastLED inside lib8tion.h.Requests it to use mesg.getNodeTime instead of internal millis() timer.
 uint32_t get_millisecond_timer_hook()
@@ -131,14 +131,17 @@ void setup()
   // Perform tasks necessary on a fresh start
   if (freshStart)
   {
+    Serial.println(F("Fresh start, load configuration"));
+    
     // load configuration from and state from persistent storage
+    uint32_t nodeid = mesh.getNodeId();
+    badges_t all_badges[NUM_BADGES] = {
+        {2884960141, 0, {3, 4, 5}},
+        {3519576873, 1, {0, 1, 2}},
+        {2884958213, 1, {0, 3, 6}}};
     if (!fileStorage.loadConfiguration(configuration)) 
     {
-      badges_t all_badges[NUM_BADGES] = {
-          {2884960141, 0, {3, 4, 5}},
-          {3519576873, 1, {0, 1, 2}},
-          {2884958213, 1, {0, 3, 6}}};
-      uint32_t nodeid = mesh.getNodeId();
+      Serial.println(F("No configuration stored. Reconfigure."));
       for (size_t i = 0; i < NUM_BADGES; i++)
       {
         if (all_badges[i].node == nodeid)
@@ -150,17 +153,18 @@ void setup()
         }
       }
 
-      for (size_t i = 0; i < NUM_BADGES; i++)
-      {
-        if (all_badges[i].group == configuration.group)
-        {
-          groupNodes.push_back(all_badges[i].node);
-        }
-      }
-
       fileStorage.saveConfiguration(configuration);
 
       // fileStorage.printFile(CONFIG_FILE);
+    }
+
+    for (size_t i = 0; i < NUM_BADGES; i++)
+    {
+      if (all_badges[i].group == configuration.group && all_badges[i].node != nodeid)
+      {
+        groupNodes.push_back(all_badges[i].node);
+        Serial.printf("Adding %lu\r\n", all_badges[i].node);
+      }
     }
 
     freshStart = false;
