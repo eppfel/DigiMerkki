@@ -1,0 +1,7 @@
+for serialport in /dev/cu.usbserial-*
+do
+#	echo $serialport
+	~/.platformio/penv/bin/pio run -t erase --upload-port $serialport
+	~/.platformio/penv/bin/pio run -t uploadfs --upload-port $serialport
+	~/.platformio/penv/bin/pio run -t upload --upload-port $serialport
+done
