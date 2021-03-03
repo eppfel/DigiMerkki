@@ -5,6 +5,8 @@
 
 #include "Arduino.h"
 #include "StatusVisualiser.h"
+#include "time.h"
+#include "sys/time.h"
 
 uint32_t (*getMeshNodeTime)();
 
@@ -110,6 +112,15 @@ void StatusVisualiser::show() {
 			FastLED.setBrightness(_maxBrightness);
 			FastLED.show();
 		}
+		else if (_currentPattern == PATTERN_SECONDS)
+		{
+			time_t now;
+			time(&now);
+			fill_solid(_leds, NUM_LEDS, CRGB::Black);
+			fill_solid(_leds, (now % NUM_LEDS)+1, _animationColor);
+			FastLED.setBrightness(_maxBrightness);
+			FastLED.show();
+		}
 		else
 		{
 			FastLED.show();
@@ -179,10 +190,14 @@ void StatusVisualiser::cylon(CRGB color, uint32_t beatLength)
 
 void StatusVisualiser::nextPattern()
 {
-	_currentPattern = (visualiserPattern_t)((int)_currentPattern + 1);
-	if (_currentPattern > _maxPattern)
+	int i = (int)_currentPattern + 1;
+	if (i > (int)_maxPattern)
 	{
 		_currentPattern = PATTERN_OFF;
+	}
+	else
+	{
+		_currentPattern = (visualiserPattern_t)i;
 	}
 	startPattern(_currentPattern);
 }
