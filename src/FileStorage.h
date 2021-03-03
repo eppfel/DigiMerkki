@@ -19,7 +19,7 @@ struct badges_t
 {
     uint32_t node;
     uint8_t group;
-    uint8_t Pics[NUM_PICS];
+    uint8_t pics[NUM_PICS];
 };
 
 struct badgeConfig_t

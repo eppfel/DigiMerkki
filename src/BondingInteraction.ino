@@ -146,7 +146,7 @@ void setup()
       {
         if (all_badges[i].node == nodeid)
         {
-          memcpy(configuration.pics, all_badges[i].Pics, sizeof(all_badges[i].Pics));
+          memcpy(configuration.pics, all_badges[i].pics, sizeof(all_badges[i].pics));
           configuration.numPics = NUM_PICS;
           configuration.group = all_badges[i].group;
           break;
