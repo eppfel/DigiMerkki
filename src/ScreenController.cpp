@@ -36,8 +36,6 @@ void initScreen()
 
     TJpgDec.setJpgScale(1);
     TJpgDec.setCallback(tft_output);
-
-    displayMessage("Just a sec...");
 }
 
 void updateNumNodes(uint8_t numnodes) {

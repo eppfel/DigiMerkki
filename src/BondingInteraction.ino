@@ -97,11 +97,17 @@ void setup()
   Serial.begin(115200);
   delay(25);
 
-  // Start Display for Feedback first
+  // Start Display for feedback first
   initScreen();
-
+  
   //check for battery to not discharge too much
   checkBatteryCharge(true);
+
+  //Start LEDs 
+  userScheduler.addTask(taskVisualiser);
+  taskVisualiser.enable();
+  visualiser.blink(1000, 1, CRGB::Green, StatusVisualiser::STATE_STATIC);
+  displayMessage(F("Starting Up..."));
 
   //check filesystem
   if (!SPIFFS.begin())
@@ -112,23 +118,13 @@ void setup()
   }
   Serial.print("SPIFFS initialised.\r\n");
 
-  // Start up mesh connection and callbacks
+  // Start up mesh connection
   mesh.setDebugMsgTypes(ERROR | DEBUG); // set before init() so that you can see error messages
 
   mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler);
   mesh.setContainsRoot(true);
-  mesh.onReceive(&receivedCallback);
-  mesh.onNewConnection(&newConnectionCallback);
-  mesh.onChangedConnections(&changedConnectionCallback);
-  mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
-  mesh.onNodeDelayReceived(&delayReceivedCallback);
-  mesh.onPackage(INVITATION_PKG, &receivedInvitationCallback);
-  mesh.onPackage(EXCHANGE_PKG, &receivedExchangeCallback);
-  mesh.onPackage(ABORT_PKG, &receivedAbortCallback);
-  mesh.onPackage(BEAT_PKG, &receivedBeatCallback);
-  mesh.onPackage(DATE_PKG, &receivedTimeCallback);
 
-  // Perform tasks necessary on a fresh start
+  // Perform tasks necessary on a fresh start: load configurations
   if (freshStart)
   {
     Serial.println(F("Fresh start, load configuration"));
@@ -170,7 +166,19 @@ void setup()
     freshStart = false;
   }
 
-  // Setup user input sensing
+  // Setup all network listeners
+  mesh.onReceive(&receivedCallback);
+  mesh.onNewConnection(&newConnectionCallback);
+  mesh.onChangedConnections(&changedConnectionCallback);
+  mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
+  mesh.onNodeDelayReceived(&delayReceivedCallback);
+  mesh.onPackage(INVITATION_PKG, &receivedInvitationCallback);
+  mesh.onPackage(EXCHANGE_PKG, &receivedExchangeCallback);
+  mesh.onPackage(ABORT_PKG, &receivedAbortCallback);
+  mesh.onPackage(BEAT_PKG, &receivedBeatCallback);
+  mesh.onPackage(DATE_PKG, &receivedTimeCallback);
+
+  // Setup user input sensing (Do we need to wait here until people do not touch anymore???)
   touchInput.calibrate();
   touchInput.begin();
   touchInput.setBtnHandlers(buttonHandler, onPressed, onPressedFor);
@@ -189,10 +197,6 @@ void setup()
   userScheduler.addTask(taskSendBPM);
   userScheduler.addTask(taskReconnectMesh);
   userScheduler.addTask(taskBondingPing);
-
-  //Output
-  userScheduler.addTask(taskVisualiser);
-  taskVisualiser.enable();
 
   userScheduler.addTask(taskShowLogo);
   displayMessage(F("Calibrating touch..."));
