@@ -38,6 +38,8 @@ class TouchButtons
   protected:
     uint8_t _buttonState;
     TouchButtons::callback_int_t _multipressed_callback_int;
+    bool _calibrating;
+    void _addMeasurement();
 };
 
 #endif

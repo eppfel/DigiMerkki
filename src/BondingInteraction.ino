@@ -163,7 +163,7 @@ void setup()
       if (all_badges[i].group == configuration.group && all_badges[i].node != nodeid)
       {
         groupNodes.push_back(all_badges[i].node);
-        Serial.printf("Adding %lu\r\n", all_badges[i].node);
+        Serial.printf("Adding %u\r\n", all_badges[i].node);
       }
     }
 
@@ -195,8 +195,8 @@ void setup()
   taskVisualiser.enable();
 
   userScheduler.addTask(taskShowLogo);
-  displayMessage("Here we go!");
-  taskShowLogo.restartDelayed(2000);
+  displayMessage(F("Calibrating touch..."));
+  taskShowLogo.restartDelayed(CALIBRATION_TIME);
 
   randomSeed(analogRead(A0));
 }
@@ -249,7 +249,7 @@ void checkBatteryCharge(bool boot)
     else
       Serial.println("Started Charging");
     if (currentState == STATE_IDLE) {
-      displayMessage("Just a sec...");
+      displayMessage(F("Calibrating touch..."));
       touchInput.calibrate();
       charging = !charging;
       showHomescreen();

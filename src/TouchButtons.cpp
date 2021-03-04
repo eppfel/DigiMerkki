@@ -10,19 +10,34 @@
 //calibrate button threshold
 void TouchButtons::calibrate()
 {
-  uint32_t leftTouch = 0, rightTouch = 0;
-  for (size_t i = 0; i < CALIBRATION_SAMPLES; i++)
+  _calibrating = true;
+}
+
+void TouchButtons::_addMeasurement()
+{
+  static uint32_t leftTouch = 0, rightTouch = 0;
+  static size_t i = 0;
+  static unsigned long lastMeasuerement = 0;
+  if (i < CALIBRATION_SAMPLES)
   {
-    leftTouch += touchRead(TOUCHPIN_LEFT);
-    rightTouch += touchRead(TOUCHPIN_RIGHT);
-    delay(CALIBRATION_TIME / CALIBRATION_SAMPLES);
+    if ((millis() - lastMeasuerement) >= (CALIBRATION_TIME / CALIBRATION_SAMPLES)) {
+      leftTouch += touchRead(TOUCHPIN_LEFT);
+      rightTouch += touchRead(TOUCHPIN_RIGHT);
+      lastMeasuerement = millis();
+      i++;
+    }
   }
-  leftTouch /= CALIBRATION_SAMPLES;
-  rightTouch /= CALIBRATION_SAMPLES;
-  leftTouch = leftTouch - SENSITIVITY_RANGE;
-  rightTouch = rightTouch - SENSITIVITY_RANGE;
-  _buttonLeft.setThreshold(leftTouch);
-  _buttonRight.setThreshold(rightTouch);
+  else
+  {
+    leftTouch /= CALIBRATION_SAMPLES;
+    rightTouch /= CALIBRATION_SAMPLES;
+    leftTouch = leftTouch - SENSITIVITY_RANGE;
+    rightTouch = rightTouch - SENSITIVITY_RANGE;
+    _buttonLeft.setThreshold(leftTouch);
+    _buttonRight.setThreshold(rightTouch);
+    _calibrating = false;
+    i = leftTouch = rightTouch = 0;
+  }
 }
 
 void TouchButtons::begin()
@@ -34,6 +49,8 @@ void TouchButtons::begin()
 
 void TouchButtons::pressedFor()
 {
+  if (_calibrating) return;
+
   if (_buttonLeft.isPressed() && _buttonRight.isPressed())
   {
     _buttonState = HOLD_BOTH;
@@ -52,6 +69,8 @@ void TouchButtons::pressedFor()
 
 void TouchButtons::pressed()
 {
+  if (_calibrating) return;
+  
   if (_buttonLeft.wasReleased()) {
     _buttonState = _buttonState | TAP_LEFT;
   } else if (_buttonRight.wasReleased()) {
@@ -76,6 +95,9 @@ void TouchButtons::setBtnHandlers(TouchButtons::callback_int_t callback_int, Eas
 
 void TouchButtons::tick()
 {
+  if (_calibrating) {
+    _addMeasurement();
+  }
   _buttonLeft.read();
   _buttonRight.read();
 }
