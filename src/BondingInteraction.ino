@@ -371,7 +371,7 @@ void checkButtonPress()
     visualiser.tapTempo.update(touchInput._buttonLeft.isPressed());
   else {
     visualiser.tapTempo.update(false);
-    if (currentState == STATE_BONDING && touchInput._buttonRight.isReleased())
+    if (currentState == STATE_BONDING && bondingState != BONDING_COMPLETE && touchInput._buttonRight.isReleased())
     {
       userAbortBonding();
     }
@@ -711,7 +711,9 @@ bool receivedAbortCallback(protocol::Variant variant) { // Abort ercevied
 
   Serial.printf("Received AbortPackage from %u\r\n", pkg.from);
 
-  if ((bondingState == BONDING_STARTED || bondingState == BONDING_INPROGRESS || bondingState == BONDING_COMPLETE) && bondingCandidate.node == pkg.from)
+  if (currentState == STATE_BONDING 
+      && bondingState != BONDING_REQUESTED
+      && bondingCandidate.node == pkg.from)
   { // abort current bonding procedure
     Serial.println("Bonding aborted by peer");
     abortBondingSequence();
