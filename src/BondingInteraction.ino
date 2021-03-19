@@ -106,7 +106,7 @@ void setup()
   //Start LEDs 
   userScheduler.addTask(taskVisualiser);
   taskVisualiser.enable();
-  visualiser.blink(1000, 1, CRGB::Green, StatusVisualiser::STATE_STATIC);
+  visualiser.blink(1000, 1, CRGB::Green, StatusVisualiser::STATE_ANIMATION);
   displayMessage(F("Starting Up..."));
 
   //check filesystem

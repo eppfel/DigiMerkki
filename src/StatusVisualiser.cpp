@@ -149,7 +149,7 @@ void StatusVisualiser::turnOff()
 void StatusVisualiser::blink(uint32_t phase, uint8_t iterations, CRGB color, visualiserState_t transitionState)
 {
 	_animationStart = get_millisecond_timer();
-	_animationPhase = (uint32_t) ((float) phase / 2);
+	_animationPhase = (uint32_t) ((float) phase / 2.0);
 	_animationIterations = iterations * 2;
 	_blinkColor = color;
 	_transitionState = transitionState;
@@ -190,6 +190,7 @@ void StatusVisualiser::cylon(CRGB color, uint32_t beatLength)
 
 void StatusVisualiser::nextPattern()
 {
+	_currentState = STATE_ANIMATION;
 	int i = (int)_currentPattern + 1;
 	if (i > (int)_maxPattern)
 	{
@@ -203,6 +204,7 @@ void StatusVisualiser::nextPattern()
 }
 
 void StatusVisualiser::startPattern(visualiserPattern_t pattern) {
+	_currentState = STATE_ANIMATION;
 	_currentPattern = pattern;
 
 	if (_currentPattern == PATTERN_OFF)
@@ -220,6 +222,7 @@ void StatusVisualiser::setProximityStatus(proximityStatus_t proxStat)
 {
 	if (proxStat == _proximity) return;
 
+	_currentState = STATE_ANIMATION;
 	switch (proxStat)
 	{
 	case PROXIMITY_GROUP:
