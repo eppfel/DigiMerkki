@@ -104,9 +104,7 @@ void setup()
   checkBatteryCharge(true);
 
   //Start LEDs 
-  userScheduler.addTask(taskVisualiser);
-  taskVisualiser.enable();
-  visualiser.blink(1000, 1, CRGB::Green, StatusVisualiser::STATE_ANIMATION);
+  visualiser.fillAll(CRGB::Green);
   displayMessage(F("Starting Up..."));
 
   //check filesystem
@@ -198,6 +196,9 @@ void setup()
   userScheduler.addTask(taskReconnectMesh);
   userScheduler.addTask(taskBondingPing);
 
+  userScheduler.addTask(taskVisualiser);
+  taskVisualiser.enable();
+  visualiser.startPattern();
   userScheduler.addTask(taskShowLogo);
   displayMessage(F("Calibrating touch..."));
   taskShowLogo.restartDelayed(CALIBRATION_TIME);

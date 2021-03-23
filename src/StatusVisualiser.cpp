@@ -8,6 +8,7 @@
 #include "time.h"
 #include "sys/time.h"
 
+RTC_DATA_ATTR StatusVisualiser::visualiserPattern_t _currentPattern = StatusVisualiser::PATTERN_OFF;
 uint32_t (*getMeshNodeTime)();
 
 // @Override This function is called by FastLED inside lib8tion.h.Requests it to use mesg.getNodeTime instead of internal millis() timer.
@@ -139,9 +140,15 @@ void StatusVisualiser::show() {
 
 void StatusVisualiser::turnOff()
 {
-	_currentState = STATE_ANIMATION;
-	_currentPattern = PATTERN_OFF;
+	_currentState = STATE_STATIC;
 	FastLED.clear();
+	FastLED.show();
+}
+
+void StatusVisualiser::fillAll(CRGB color)
+{
+	_currentState = STATE_STATIC;
+	fill_solid(&(_leds[0]), NUM_LEDS, color);
 	FastLED.show();
 }
 
@@ -202,14 +209,18 @@ void StatusVisualiser::nextPattern()
 	startPattern(_currentPattern);
 }
 
-void StatusVisualiser::startPattern(visualiserPattern_t pattern) {
+void StatusVisualiser::startPattern()
+{
 	_currentState = STATE_ANIMATION;
-	_currentPattern = pattern;
-
 	if (_currentPattern == PATTERN_OFF)
 	{
 		FastLED.clear(true);
 	}
+}
+
+void StatusVisualiser::startPattern(visualiserPattern_t pattern) {
+	_currentPattern = pattern;
+	startPattern();
 }
 
 void StatusVisualiser::setProximityStatus(proximityStatus_t proxStat)

@@ -50,12 +50,14 @@ public:
 
   void show();
   void turnOff();
+  void fillAll(CRGB color);
   void blink(uint32_t phase, uint8_t iterations, CRGB color, visualiserState_t transitionState = STATE_ANIMATION);
   void setMeterFromIndex(int8_t ledIndex);
   void setMeter(int8_t ledIndex = -1);
   void fillMeter(uint32_t fromT, uint32_t toT, int32_t colorCode = CRGB::White);
   void cylon(CRGB color = CRGB::White, uint32_t beatLength = 500);
   void nextPattern();
+  void startPattern();
   void startPattern(visualiserPattern_t pattern);
   void setProximityStatus(proximityStatus_t proxStat);
 
@@ -63,7 +65,6 @@ private:
   CRGB _leds[NUM_LEDS]; // include variables for addresable LEDs
   visualiserState_t _currentState = STATE_ANIMATION;
   visualiserState_t _transitionState = _currentState;
-  visualiserPattern_t _currentPattern = PATTERN_OFF;
   visualiserPattern_t _maxPattern = PATTERN_SPREAD;
   uint8_t _maxBrightness = 64;
   float _bpm = 60;
