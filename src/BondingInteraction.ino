@@ -369,9 +369,9 @@ void checkButtonPress()
   hwbutton1.read();
   hwbutton2.read();
   if (currentState == STATE_TAPTEMPO)
-    visualiser.tapTempo.update(touchInput._buttonLeft.isPressed());
+    visualiser.updateBeat(touchInput._buttonLeft.isPressed());
   else {
-    visualiser.tapTempo.update(false);
+    visualiser.updateBeat();
     if (currentState == STATE_BONDING && bondingState != BONDING_COMPLETE && touchInput._buttonRight.isReleased())
     {
       userAbortBonding();
@@ -430,10 +430,10 @@ void setTempo()
 
   //sendBPM after
   taskSendBPM.setCallback([]() {
-    auto pkg = BeatPackage(mesh.getNodeId(), visualiser.tapTempo.getBeatLength());
+    auto pkg = BeatPackage(mesh.getNodeId(), visualiser.getBeatLength());
     mesh.sendPackage(&pkg);
     currentState = STATE_IDLE;
-    fileStorage.logBeatEvent(mesh.getNodeTime(), visualiser.tapTempo.getBeatLength(), mesh.getNodeId());
+    fileStorage.logBeatEvent(mesh.getNodeTime(), visualiser.getBeatLength(), mesh.getNodeId());
     showHomescreen();
   });
   taskSendBPM.restartDelayed();
@@ -757,7 +757,7 @@ bool receivedBeatCallback(protocol::Variant variant)
 
   Serial.printf("Received BPM %ld from %u\r\n", pkg.beatLength, pkg.from);
   fileStorage.logBeatEvent(mesh.getNodeTime(), pkg.beatLength, pkg.from);
-  visualiser.tapTempo.setBeatLength(pkg.beatLength);
+  visualiser.setBeatLength(pkg.beatLength);
   return true;
 }
 

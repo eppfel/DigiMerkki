@@ -46,7 +46,6 @@ public:
   };
 
   StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness);
-  ArduinoTapTempo tapTempo;
 
   void show();
   void turnOff();
@@ -60,8 +59,12 @@ public:
   void startPattern();
   void startPattern(visualiserPattern_t pattern);
   void setProximityStatus(proximityStatus_t proxStat);
+  void updateBeat(bool pressed = false);
+  unsigned long getBeatLength();
+  void setBeatLength(unsigned long beatLengthMS);
 
 private:
+  ArduinoTapTempo tapTempo;
   CRGB _leds[NUM_LEDS]; // include variables for addresable LEDs
   visualiserState_t _currentState = STATE_ANIMATION;
   visualiserState_t _transitionState = _currentState;

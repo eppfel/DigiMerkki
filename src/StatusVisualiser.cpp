@@ -9,6 +9,8 @@
 #include "sys/time.h"
 
 RTC_DATA_ATTR StatusVisualiser::visualiserPattern_t _currentPattern = StatusVisualiser::PATTERN_OFF;
+RTC_DATA_ATTR unsigned long _beatLenghtMS = DEFAULT_BPM;
+
 uint32_t (*getMeshNodeTime)();
 
 // @Override This function is called by FastLED inside lib8tion.h.Requests it to use mesg.getNodeTime instead of internal millis() timer.
@@ -25,7 +27,7 @@ StatusVisualiser::StatusVisualiser(uint32_t (*t)(), uint8_t maxBrightness = 64)
 	_maxBrightness = maxBrightness;
 	getMeshNodeTime = t;
 	FastLED.setBrightness(maxBrightness);
-	tapTempo.setBPM(DEFAULT_BPM);
+	tapTempo.setBPM(_beatLenghtMS);
 }
 
 void StatusVisualiser::show() {
@@ -246,4 +248,22 @@ void StatusVisualiser::setProximityStatus(proximityStatus_t proxStat)
 
 	startPattern(_maxPattern);
 	_proximity = proxStat;
+}
+
+void StatusVisualiser::updateBeat(bool pressed)
+{
+	tapTempo.update(pressed);
+	_beatLenghtMS = tapTempo.getBeatLength();
+}
+
+unsigned long StatusVisualiser::getBeatLength()
+{
+	_beatLenghtMS = tapTempo.getBeatLength();
+	return _beatLenghtMS;
+}
+
+void StatusVisualiser::setBeatLength(unsigned long beatLengthMS)
+{
+	_beatLenghtMS = beatLengthMS;
+	tapTempo.setBeatLength(beatLengthMS);
 }
