@@ -80,8 +80,7 @@ void StatusVisualiser::show() {
 		}
 		else if (_currentPattern == PATTERN_MOVINGRAINBOW)
 		{	
-			uint8_t phase = (((get_millisecond_timer() - _animationStart) % _animationPhase) / (_animationPhase / 255));
-			fill_rainbow(_leds, NUM_LEDS, phase, 17); // Use FastLED's fill_rainbow routine.
+			fill_rainbow(_leds, NUM_LEDS, (uint8_t)(tapTempo.beatProgress()*255), 85/NUM_LEDS); // Use FastLED's fill_rainbow routine.
 			FastLED.show();
 		}
 		else if (_currentPattern == PATTERN_RAINBOWBEAT)
@@ -210,11 +209,6 @@ void StatusVisualiser::startPattern(visualiserPattern_t pattern) {
 	if (_currentPattern == PATTERN_OFF)
 	{
 		FastLED.clear(true);
-	}
-	else if (_currentPattern == PATTERN_MOVINGRAINBOW)
-	{
-		_animationStart = get_millisecond_timer();
-		_animationPhase = 4000;
 	}
 }
 
