@@ -157,7 +157,7 @@ void setup()
       if (all_badges[i].group == configuration.group && all_badges[i].node != nodeid)
       {
         groupNodes.push_back(all_badges[i].node);
-        Serial.printf("Adding %u\r\n", all_badges[i].node);
+        Serial.printf("Adding %u to group\r\n", all_badges[i].node);
       }
     }
 
