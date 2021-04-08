@@ -128,7 +128,6 @@ void setup()
     Serial.println(F("Fresh start, load configuration"));
     
     // load configuration from and state from persistent storage
-    uint32_t nodeid = mesh.getNodeId();
     badges_t all_badges[NUM_BADGES] = {
         {2884960141, 0, CRGB::Blue, {3, 4, 5}},
         {3519576873, 1, CRGB::Cyan, {0, 1, 2}},
@@ -139,7 +138,7 @@ void setup()
       Serial.println(F("No configuration stored. Reconfigure."));
       for (size_t i = 0; i < NUM_BADGES; i++)
       {
-        if (all_badges[i].node == nodeid)
+        if (all_badges[i].node == mesh.getNodeId())
         {
           memcpy(configuration.pics, all_badges[i].pics, sizeof(all_badges[i].pics));
           configuration.numPics = NUM_PICS;
@@ -156,7 +155,7 @@ void setup()
 
     for (size_t i = 0; i < NUM_BADGES; i++)
     {
-      if (all_badges[i].group == configuration.group && all_badges[i].node != nodeid)
+      if (all_badges[i].group == configuration.group && all_badges[i].node != mesh.getNodeId())
       {
         groupNodes.push_back(all_badges[i].node);
         Serial.printf("Adding %u to group\r\n", all_badges[i].node);
