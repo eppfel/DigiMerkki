@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "Uploading app too all usb devices at /dev/cu.usbserial-*"
-
 # this function is called when Ctrl-C is sent
 function trap_ctrlc ()
 {
@@ -15,6 +13,14 @@ if [[ $? -ne 0 ]] ; then
 	echo "Platformio is not installed!"
 	exit 2 
 fi
+
+echo "Uploading app to the following devices:"
+
+#print each usb serial device
+for serialport in /dev/cu.usbserial-*
+do
+	echo $serialport
+done
 
 #for each usb serial device availible run the build scripts
 for serialport in /dev/cu.usbserial-*
