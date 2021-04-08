@@ -474,6 +474,16 @@ void buttonHandler(TouchButtons::InputType keyCode)
       userStartBonding();
     }
   }
+  else if (currentState == STATE_TAPTEMPO)
+  {
+    if (keyCode == TouchButtons::HOLD_LEFT) 
+    {
+      taskSendBPM.disable();
+      showHomescreen();
+      currentState = STATE_IDLE;
+    }
+  }
+  
 }
 
 /*
