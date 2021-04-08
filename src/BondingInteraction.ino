@@ -69,9 +69,10 @@ enum appState_t
 {
   STATE_IDLE,
   STATE_BONDING,
-  STATE_TAPTEMPO
+  STATE_TAPTEMPO,
+  STATE_WAITFORINTERACTION
 };
-appState_t currentState = STATE_IDLE;
+appState_t currentState = STATE_WAITFORINTERACTION;
 
 enum exchangeState_t
 {
@@ -199,11 +200,9 @@ void setup()
 
   visualiser.setDefaultColor(configuration.color);
   userScheduler.addTask(taskVisualiser);
-  taskVisualiser.enable();
   visualiser.startPattern();
   userScheduler.addTask(taskShowLogo);
-  displayMessage(F("Calibrating touch..."));
-  taskShowLogo.restartDelayed(CALIBRATION_TIME);
+  displayMessage(F("Have you filled the survey?"));
 
   randomSeed(analogRead(A0));
 }
@@ -481,6 +480,13 @@ void buttonHandler(TouchButtons::InputType keyCode)
       taskSendBPM.disable();
       showHomescreen();
       currentState = STATE_IDLE;
+    }
+  }
+  else if (currentState == STATE_WAITFORINTERACTION) {
+    if (keyCode != TouchButtons::NO_TAP) {
+      currentState = STATE_IDLE;
+      showHomescreen();
+      visualiser.startPattern();
     }
   }
   
