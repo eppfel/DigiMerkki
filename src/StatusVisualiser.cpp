@@ -96,7 +96,7 @@ void StatusVisualiser::show() {
 		{
 			if (tapTempo.beatProgress() > 0.95)
 			{
-				fill_solid(_leds, NUM_LEDS, CRGB::White); // yaw for color
+				fill_solid(_leds, NUM_LEDS, _animationColor); // yaw for color
 			}
 			else
 			{
@@ -109,7 +109,7 @@ void StatusVisualiser::show() {
 			fill_solid(_leds, NUM_LEDS, CRGB::Black);
 			if (random8() < 10)
 			{
-				_leds[random16(NUM_LEDS)] += CRGB::White;
+				_leds[random16(NUM_LEDS)] += _animationColor;
 			}
 			FastLED.setBrightness(_maxBrightness);
 			FastLED.show();
