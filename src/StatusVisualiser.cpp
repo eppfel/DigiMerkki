@@ -83,7 +83,7 @@ void StatusVisualiser::show() {
 		}
 		else if (_currentPattern == PATTERN_MOVINGRAINBOW)
 		{	
-			fill_rainbow(_leds, NUM_LEDS, (uint8_t)(tapTempo.beatProgress()*255), 85/NUM_LEDS); // Use FastLED's fill_rainbow routine.
+			fill_rainbow(_leds, NUM_LEDS, (uint8_t)(beat8(_bpm)), 85/NUM_LEDS); // Use FastLED's fill_rainbow routine.
 			FastLED.show();
 		}
 		else if (_currentPattern == PATTERN_RAINBOWBEAT)
@@ -94,7 +94,7 @@ void StatusVisualiser::show() {
 		}
 		else if (_currentPattern == PATTERN_STROBE)
 		{
-			if (tapTempo.beatProgress() > 0.95)
+			if (beat8(_bpm) > 250)
 			{
 				fill_solid(_leds, NUM_LEDS, _animationColor); // yaw for color
 			}
