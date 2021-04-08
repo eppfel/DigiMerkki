@@ -147,19 +147,30 @@ void StatusVisualiser::turnOff()
 	FastLED.show();
 }
 
-void StatusVisualiser::fillAll(CRGB color)
+void StatusVisualiser::setDefaultColor(uint32_t color)
+{
+	_defaultColor = color;
+}
+
+void StatusVisualiser::fillAll()
+{
+	fillAll(_defaultColor);
+}
+
+void StatusVisualiser::fillAll(uint32_t color)
 {
 	_currentState = STATE_STATIC;
 	fill_solid(&(_leds[0]), NUM_LEDS, color);
 	FastLED.show();
 }
 
-void StatusVisualiser::blink(uint32_t phase, uint8_t iterations, CRGB color, visualiserState_t transitionState)
+void StatusVisualiser::blink(uint32_t phase, uint8_t iterations, uint32_t color, visualiserState_t transitionState)
 {
 	_animationStart = get_millisecond_timer();
 	_animationPhase = (uint32_t) ((float) phase / 2.0);
 	_animationIterations = iterations * 2;
 	_blinkColor = color;
+	if (_blinkColor == 0) _blinkColor = _defaultColor;
 	_transitionState = transitionState;
 	_currentState = STATE_BLINKING;
 	_blinkFlag = true;
@@ -183,13 +194,21 @@ void StatusVisualiser::setMeter(int8_t ledIndex) {
 	setMeterFromIndex(ledIndex);
 }
 
-void StatusVisualiser::fillMeter(uint32_t fromT, uint32_t duration, int32_t colorCode) {
+void StatusVisualiser::fillMeter(uint32_t fromT, uint32_t duration) {
+	fillMeter(fromT, duration, _defaultColor);
+}
+
+void StatusVisualiser::fillMeter(uint32_t fromT, uint32_t duration, uint32_t colorCode) {
 	_currentState = STATE_METER;
 	_animationStart = fromT;
 	_animationPhase = duration;
 }
 
-void StatusVisualiser::cylon(CRGB color, uint32_t beatLength)
+void StatusVisualiser::cylon(uint32_t beatLength) {
+	cylon(_defaultColor, beatLength);
+}
+
+void StatusVisualiser::cylon(uint32_t color, uint32_t beatLength)
 {
 	_animationColor = color;
 	_currentState = STATE_ANIMATION;
@@ -214,6 +233,7 @@ void StatusVisualiser::nextPattern()
 void StatusVisualiser::startPattern()
 {
 	_currentState = STATE_ANIMATION;
+	_animationColor = _defaultColor;
 	if (_currentPattern == PATTERN_OFF)
 	{
 		FastLED.clear(true);

@@ -34,7 +34,7 @@ bool receivedBeatCallback(protocol::Variant variant);
 bool receivedTimeCallback(protocol::Variant variant);
 
 FileStorage fileStorage{};
-RTC_DATA_ATTR badgeConfig_t configuration = {NUM_PICS, 0, {0, 1, 2}}; // keep configuration in deep sleep
+RTC_DATA_ATTR badgeConfig_t configuration = {NUM_PICS, 0, 0xffffff, {0, 1, 2}}; // keep configuration in deep sleep
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
@@ -130,9 +130,10 @@ void setup()
     // load configuration from and state from persistent storage
     uint32_t nodeid = mesh.getNodeId();
     badges_t all_badges[NUM_BADGES] = {
-        {2884960141, 0, {3, 4, 5}},
-        {3519576873, 1, {0, 1, 2}},
-        {2884958213, 1, {0, 3, 6}}};
+        {2884960141, 0, CRGB::Blue, {3, 4, 5}},
+        {3519576873, 1, CRGB::Cyan, {0, 1, 2}},
+        {2884958213, 1, CRGB::Yellow, {0, 3, 6}}
+    };
     if (!fileStorage.loadConfiguration(configuration)) 
     {
       Serial.println(F("No configuration stored. Reconfigure."));
@@ -143,6 +144,7 @@ void setup()
           memcpy(configuration.pics, all_badges[i].pics, sizeof(all_badges[i].pics));
           configuration.numPics = NUM_PICS;
           configuration.group = all_badges[i].group;
+          configuration.color = all_badges[i].color;
           break;
         }
       }
@@ -196,6 +198,7 @@ void setup()
   userScheduler.addTask(taskReconnectMesh);
   userScheduler.addTask(taskBondingPing);
 
+  visualiser.setDefaultColor(configuration.color);
   userScheduler.addTask(taskVisualiser);
   taskVisualiser.enable();
   visualiser.startPattern();

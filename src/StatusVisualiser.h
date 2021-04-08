@@ -49,12 +49,16 @@ public:
 
   void show();
   void turnOff();
-  void fillAll(CRGB color);
-  void blink(uint32_t phase, uint8_t iterations, CRGB color, visualiserState_t transitionState = STATE_ANIMATION);
+  void setDefaultColor(uint32_t color);
+  void fillAll();
+  void fillAll(uint32_t color);
+  void blink(uint32_t phase, uint8_t iterations, uint32_t color, visualiserState_t transitionState = STATE_ANIMATION);
   void setMeterFromIndex(int8_t ledIndex);
   void setMeter(int8_t ledIndex = -1);
-  void fillMeter(uint32_t fromT, uint32_t toT, int32_t colorCode = CRGB::White);
-  void cylon(CRGB color = CRGB::White, uint32_t beatLength = 500);
+  void fillMeter(uint32_t fromT, uint32_t toT);
+  void fillMeter(uint32_t fromT, uint32_t toT, uint32_t color);
+  void cylon(uint32_t beatLength = 500);
+  void cylon(uint32_t color = 0, uint32_t beatLength = 500);
   void nextPattern();
   void startPattern();
   void startPattern(visualiserPattern_t pattern);
@@ -69,17 +73,19 @@ private:
   visualiserState_t _currentState = STATE_ANIMATION;
   visualiserState_t _transitionState = _currentState;
   visualiserPattern_t _maxPattern = PATTERN_SPREAD;
+  proximityStatus_t _proximity = PROXIMITY_ALONE;
+
   uint8_t _maxBrightness = 64;
   float _bpm = 60;
-  CRGB _animationColor = CRGB::White;
 
-  bool _blinkFlag;
+  uint32_t _defaultColor = CRGB::White;
+  uint32_t _animationColor = _defaultColor;
   uint32_t _animationStart = 0;
   uint32_t _animationPhase;
   uint8_t _animationIterations;
-  CRGB _blinkColor;
+  uint32_t _blinkColor;
 
-  proximityStatus_t _proximity = PROXIMITY_ALONE;
+  bool _blinkFlag;
 };
 
 #endif

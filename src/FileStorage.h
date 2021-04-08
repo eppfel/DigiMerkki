@@ -19,6 +19,7 @@ struct badges_t
 {
     uint32_t node;
     uint8_t group;
+    uint32_t color;
     uint8_t pics[NUM_PICS];
 };
 
@@ -26,6 +27,7 @@ struct badgeConfig_t
 {
     size_t numPics;
     uint8_t group;
+    uint32_t color;
     uint8_t pics[NUM_BADGES * NUM_PICS];
 };
 
