@@ -8,6 +8,7 @@ This project automatically connects several ESP32 ~or ESP8266~ in range into a W
 * [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) (for controlling the display on the TTGO T-display board)
 * [eppfel/EasyButton (Custom Fork)](https://github.com/eppfel/EasyButton) (Button debounce and abstraction)
 * [eppfel/ArduinoTapTempo (Custom Fork)](https://github.com/eppfel/ArduinoTapTempo) (To set beat from taps)
+* [ESP Mesh Badge Protocol](https://version.aalto.fi/gitlab/digi-haalarit/esp-mesh-badge-protocol) (shared protocol specifications)
 * Deprectated: [CapacitiveSensor](https://github.com/PaulStoffregen/CapacitiveSensor) (for ESP8266 touch sensing)
 
 ## Hardware
