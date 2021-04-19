@@ -44,6 +44,7 @@ RTC_DATA_ATTR bool freshStart = true;
 Scheduler userScheduler; // to control your personal task
 painlessMesh mesh;
 
+int32_t energyCountdown = ENERGY_SAFE_TIMEOUT;
 bool calc_delay = false;
 SimpleList<uint32_t> nodes;
 RTC_DATA_ATTR SimpleList<uint32_t> groupNodes;
@@ -240,6 +241,18 @@ void routineCheck() {
 // Check if on Battery and empty, if so go to sleep to protect boot loop on low voltage
 void checkBatteryCharge(bool boot)
 {
+  if (energyCountdown*1000 < BATTERY_CHARGE_CHECK_INTERVAL)
+  {
+    if (nodes.size() == 0)
+    {
+      goToSleep(true);
+    }
+  }
+  else
+  {
+    energyCountdown -= BATTERY_CHARGE_CHECK_INTERVAL/1000;
+  }
+
   static bool charging = false;
   float voltage = getInputVoltage();
   if (voltage < 3.0)
@@ -444,6 +457,7 @@ void setTempo()
 void buttonHandler(TouchButtons::InputType keyCode)
 {
   Serial.println("Tap " + String(keyCode));
+  energyCountdown = ENERGY_SAFE_TIMEOUT;
 
   static bool firsttime = true;
   if (firsttime) {

@@ -16,6 +16,7 @@
 #define VISUALISATION_UPDATE_INTERVAL 5    // default scheduling time for currentPatternSELECT, in milliseconds
 #define LOGO_DELAY 3000
 #define BATTERY_CHARGE_CHECK_INTERVAL 5000
+#define ENERGY_SAFE_TIMEOUT 3600
 #define FS_NO_GLOBALS
 #define CALIBRATION_TIME 700
 #define CALIBRATION_SAMPLES 5
