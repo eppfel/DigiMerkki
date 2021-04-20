@@ -269,16 +269,18 @@ void checkBatteryCharge(bool boot)
     tft.setTextDatum(MC_DATUM);
     tft.drawString("Got no juice :(", tft.width() / 2, tft.height() / 2);
     goToSleep(true);
-  } else if (!boot && ((!charging && voltage >= 4.5) || (charging && voltage < 4.5)))
+  }
+  else if ((!charging && voltage >= 4.5) || (charging && voltage < 4.5))
   {
+    charging = !charging;
     if (charging)
-      Serial.println("Stopped Charging");
-    else
       Serial.println("Started Charging");
-    if (currentState == STATE_IDLE) {
+    else
+      Serial.println("Stopped Charging");
+    if (!boot && currentState == STATE_IDLE)
+    {
       displayMessage(F("Calibrating touch..."));
       touchInput.calibrate();
-      charging = !charging;
       showHomescreen();
     }
   }
