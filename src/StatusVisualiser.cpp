@@ -59,38 +59,32 @@ void StatusVisualiser::show() {
 	{
 		if (_currentPattern == PATTERN_CYLON)
 		{
+			fadeToBlackBy(_leds, NUM_LEDS, 255);
 			uint8_t ledPos = beatsin8(_bpm, 0, NUM_LEDS - 1);
 			_leds[ledPos] = _animationColor;
 			_leds[ledPos] %= 64;
 			ledPos = beatsin8(_bpm, 0, NUM_LEDS - 1, 0, 20);
 			_leds[ledPos] = _animationColor;
-			FastLED.setBrightness(_maxBrightness);
-			FastLED.show();
-			fadeToBlackBy(_leds, NUM_LEDS, 255);
 		}
 		else if (_currentPattern == PATTERN_SPREAD)
 		{
-			static const uint8_t startled = NUM_LEDS / 2;
+			fadeToBlackBy(_leds, NUM_LEDS, 255);
+			uint8_t startled = NUM_LEDS / 2;
 			uint8_t spread = beatsin8(_bpm, 0, startled + 1);
 			if (spread) {
 				uint8_t ledmin = startled - (spread - 1);
 				uint8_t lednum = spread * 2 - 1;
 				fill_solid(&(_leds[ledmin]), lednum, _animationColor);
-				FastLED.setBrightness(_maxBrightness);
 			}
-			FastLED.show();
-			fadeToBlackBy(_leds, NUM_LEDS, 255);
 		}
 		else if (_currentPattern == PATTERN_MOVINGRAINBOW)
 		{	
 			fill_rainbow(_leds, NUM_LEDS, (uint8_t)(beat8(_bpm)), 85/NUM_LEDS); // Use FastLED's fill_rainbow routine.
-			FastLED.show();
 		}
 		else if (_currentPattern == PATTERN_RAINBOWBEAT)
 		{	
 			uint8_t beatA = beatsin8(_bpm / 2, 0, 255); // Starting hue
 			fill_rainbow(_leds, NUM_LEDS, beatA, 12); // Use FastLED's fill_rainbow routine.
-			FastLED.show();
 		}
 		else if (_currentPattern == PATTERN_STROBE)
 		{
@@ -102,8 +96,6 @@ void StatusVisualiser::show() {
 			{
 				fadeToBlackBy(_leds, NUM_LEDS, 16);
 			}
-			FastLED.setBrightness(_maxBrightness);
-			FastLED.show();
 		}
 		else if (_currentPattern == PATTERN_GLITTER) {
 			fill_solid(_leds, NUM_LEDS, CRGB::Black);
@@ -111,8 +103,6 @@ void StatusVisualiser::show() {
 			{
 				_leds[random16(NUM_LEDS)] += _animationColor;
 			}
-			FastLED.setBrightness(_maxBrightness);
-			FastLED.show();
 		}
 		else if (_currentPattern == PATTERN_SECONDS)
 		{
@@ -120,13 +110,9 @@ void StatusVisualiser::show() {
 			time(&now);
 			fill_solid(_leds, NUM_LEDS, CRGB::Black);
 			fill_solid(_leds, (now % NUM_LEDS)+1, _animationColor);
-			FastLED.setBrightness(_maxBrightness);
-			FastLED.show();
 		}
-		else
-		{
-			FastLED.show();
-		}
+		FastLED.setBrightness(_maxBrightness);
+		FastLED.show();
 	}
 	else if (_currentState == STATE_METER) {
 		uint8_t meterIndex = (get_millisecond_timer() - _animationStart) / (_animationPhase / NUM_LEDS);
@@ -143,8 +129,7 @@ void StatusVisualiser::show() {
 void StatusVisualiser::turnOff()
 {
 	_currentState = STATE_STATIC;
-	FastLED.clear();
-	FastLED.show();
+	FastLED.clear(true);
 }
 
 void StatusVisualiser::setDefaultColor(uint32_t color)
