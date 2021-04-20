@@ -209,9 +209,9 @@ void setup()
 
   visualiser.setDefaultColor(configuration.color);
   userScheduler.addTask(taskVisualiser);
-  visualiser.startPattern();
+  visualiser.turnOff();
   userScheduler.addTask(taskShowLogo);
-  displayMessage(F("Have you filled the survey?"));
+  displayMessage(F("Filled the survey?"));
 
   randomSeed(analogRead(A0));
 }
@@ -393,7 +393,6 @@ void checkButtonPress()
   if (currentState == STATE_TAPTEMPO)
     visualiser.updateBeat(touchInput._buttonLeft.isPressed());
   else {
-    visualiser.updateBeat();
     if (currentState == STATE_BONDING && bondingState != BONDING_COMPLETE && touchInput._buttonRight.isReleased())
     {
       userAbortBonding();
@@ -467,14 +466,17 @@ void buttonHandler(TouchButtons::InputType keyCode)
   Serial.println("Tap " + String(keyCode));
   energyCountdown = ENERGY_SAFE_TIMEOUT;
 
-  static bool firsttime = true;
-  if (firsttime) {
-    firsttime = !firsttime;
-    return;
-  }
   if (keyCode == TouchButtons::HOLD_BOTH)
   {
     pressedShutdown(true);
+  }
+  else if (currentState == STATE_WAITFORINTERACTION) {
+    if (keyCode != TouchButtons::NO_TAP) {
+      currentState = STATE_IDLE;
+      showHomescreen();
+      visualiser.startPattern();
+      taskVisualiser.enable();
+    }
   }
   else if (currentState == STATE_IDLE)
   {
@@ -500,15 +502,8 @@ void buttonHandler(TouchButtons::InputType keyCode)
     if (keyCode == TouchButtons::HOLD_LEFT) 
     {
       taskSendBPM.disable();
-      showHomescreen();
-      currentState = STATE_IDLE;
-    }
-  }
-  else if (currentState == STATE_WAITFORINTERACTION) {
-    if (keyCode != TouchButtons::NO_TAP) {
       currentState = STATE_IDLE;
       showHomescreen();
-      visualiser.startPattern();
     }
   }
   
@@ -824,7 +819,7 @@ void newConnectionCallback(uint32_t nodeId)
   // Serial.printf("--> startHere: New Connection, %s\r\n", mesh.subConnectionJson(true).c_str());
   // Serial.println("");
   updateNumNodes(nodes.size());
-  showHomescreen();
+  if (currentState == STATE_IDLE) showHomescreen();
 }
 
 // Called when a change in the connections is registered and control animations based on the change
@@ -862,7 +857,7 @@ void changedConnectionCallback()
   {
     visualiser.setProximityStatus(PROXIMITY_ALONE);
   }
-  showHomescreen();
+  if (currentState == STATE_IDLE) showHomescreen();
 }
 
 void nodeTimeAdjustedCallback(int32_t offset)
