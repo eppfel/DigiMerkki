@@ -249,16 +249,13 @@ void routineCheck() {
 // Check if on Battery and empty, if so go to sleep to protect boot loop on low voltage
 void checkBatteryCharge(bool boot)
 {
+  energyCountdown -= BATTERY_CHARGE_CHECK_INTERVAL / 1000;
   if (energyCountdown*1000 < BATTERY_CHARGE_CHECK_INTERVAL)
   {
     if (nodes.size() == 0)
     {
       goToSleep(true);
     }
-  }
-  else
-  {
-    energyCountdown -= BATTERY_CHARGE_CHECK_INTERVAL/1000;
   }
 
   static bool charging = false;
