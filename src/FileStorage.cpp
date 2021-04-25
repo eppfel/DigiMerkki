@@ -65,6 +65,8 @@ bool FileStorage::loadConfiguration(badgeConfig_t &config)
         return false;
     } 
     // Copy values from the JsonDocument to the Config
+    config.color = doc["color"];
+    config.group = doc["group"];
     JsonArray pics = doc[CONFIG_KEY_PICS];
     config.numPics = pics.size();
     size_t i = 0;
@@ -98,6 +100,8 @@ void FileStorage::saveConfiguration(const badgeConfig_t &config)
     StaticJsonDocument<CONFIG_MEMORY> doc;
 
     // Set the values in the document
+    doc["color"] = config.color;  
+    doc["group"] = config.group;  
     JsonArray pics = doc.createNestedArray(CONFIG_KEY_PICS);
     for (size_t i = 0; i < config.numPics; i++)
     {

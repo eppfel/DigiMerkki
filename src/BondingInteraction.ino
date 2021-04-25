@@ -174,6 +174,7 @@ void setup()
 
     freshStart = false;
   }
+  Serial.printf("Booting with the following configurations: \r\n - group id: %u\r\n - colour: %#08x\r\n - pictures: %u\r\n", configuration.group, configuration.color, configuration.numPics);
 
   // Setup all network listeners
   mesh.onReceive(&receivedCallback);
