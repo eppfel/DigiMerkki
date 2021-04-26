@@ -7,9 +7,14 @@
 #include "SPIFFS.h"
 #include <list>
 
+// JSON file format key specifications
+#define CONFIG_KEY_ID "id"
+#define CONFIG_KEY_GROUP "group"
+#define CONFIG_KEY_COLOR "color"
 #define CONFIG_KEY_PICS "pics"
 
-#define CONFIG_MEMORY JSON_ARRAY_SIZE(NUM_BADGES*NUM_PICS) + JSON_OBJECT_SIZE(1) + 16
+#define BADGES_MEMORY NUM_BADGES * JSON_ARRAY_SIZE(NUM_PICS) + JSON_ARRAY_SIZE(NUM_BADGES) + NUM_BADGES * JSON_OBJECT_SIZE(4) + NUM_BADGES * 8 + 32
+#define CONFIG_MEMORY JSON_ARRAY_SIZE(NUM_BADGES*NUM_PICS) + JSON_OBJECT_SIZE(3) + 16
 #define LOG_MEMORY 512 //JSON_ARRAY_SIZE(NUM_BADGES *NUM_PICS) + JSON_OBJECT_SIZE(1) + 16
 
 template <typename T>
@@ -26,7 +31,7 @@ struct badges_t
 struct badgeConfig_t
 {
     size_t numPics;
-    uint8_t group;
+    uint32_t group[MAX_GROUP_SIZE];
     uint32_t color;
     uint8_t pics[NUM_BADGES * NUM_PICS];
 };
@@ -49,8 +54,8 @@ public:
     FileStorage(){}
     ~FileStorage(){}
     
-    void initialise();
     void printFile(const char *filename);
+    bool initConfiguration(badgeConfig_t &config, uint32_t nodeid);
     bool loadConfiguration(badgeConfig_t &config);
     void saveConfiguration(const badgeConfig_t &config);
     void logBeatEvent(const uint32_t time,const int32_t &beat, const uint32_t &node);

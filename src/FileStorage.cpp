@@ -32,19 +32,61 @@ void FileStorage::printFile(const char *filename)
     file.close();
 }
 
-void FileStorage::initialise()
+bool FileStorage::initConfiguration(badgeConfig_t &config, uint32_t nodeid)
 {
-    // // Should load default config if run for the first time
-    // Serial.println(F("Loading configuration..."));
-    // loadConfiguration(config);
+    // Open file for reading
+    fs::File file = SPIFFS.open(BADGES_FILE);
 
-    // // Create configuration file
-    // Serial.println(F("Saving configuration..."));
-    // saveConfiguration(config);
+    // Allocate a temporary JsonDocument
+    // Don't forget to change the capacity to match your requirements.
+    // Use arduinojson.org/v6/assistant to compute the capacity.
+    StaticJsonDocument<BADGES_MEMORY> doc;
 
-    // // Dump config file
-    // Serial.println(F("Print config file..."));
-    // printFile(CONFIG_FILE);
+    DeserializationError error = deserializeJson(doc, file);
+    // Deserialize the JSON document
+    if (error)
+    {
+        Serial.println(F("Failed to read file, using default configuration"));
+        file.close();
+        return false;
+    }
+
+    // Iterate over all possible configruations
+    uint8_t groupid;
+    for (JsonObject elem : doc.as<JsonArray>())
+    {
+        //Check if this is this is the configuration for this device
+        if (elem[CONFIG_KEY_ID] == nodeid) 
+        {
+            // Copy values from the JsonDocument to the Config
+            groupid = elem[CONFIG_KEY_GROUP];
+            config.color = (uint32_t) strtol(elem[CONFIG_KEY_COLOR], 0, 16);
+            config.numPics = NUM_PICS;
+            JsonArray pics = elem[CONFIG_KEY_PICS];
+            for (size_t i = 0; i < NUM_PICS; i++)
+            {
+                config.pics[i] = pics[i];
+            }
+            break; // stop iterating, because we found the config
+        }
+    }
+
+    size_t n = 0;
+    for (JsonObject elem : doc.as<JsonArray>())
+    {
+        //Check if this is this is a node in the group but not itself
+        if (elem[CONFIG_KEY_GROUP] == groupid && elem[CONFIG_KEY_ID] != nodeid)
+        {
+            // Add the id values from the JsonDocument to the config
+            config.group[n++] = elem[CONFIG_KEY_ID];
+        }
+    }
+
+    file.close();
+
+    saveConfiguration(config);
+
+    return true;
 }
 
 bool FileStorage::loadConfiguration(badgeConfig_t &config)
@@ -65,8 +107,8 @@ bool FileStorage::loadConfiguration(badgeConfig_t &config)
         return false;
     } 
     // Copy values from the JsonDocument to the Config
-    config.color = doc["color"];
-    config.group = doc["group"];
+    config.color = doc[CONFIG_KEY_COLOR];
+    JsonArray groupnodes = doc[CONFIG_KEY_GROUP];
     JsonArray pics = doc[CONFIG_KEY_PICS];
     config.numPics = pics.size();
     size_t i = 0;
@@ -75,6 +117,13 @@ bool FileStorage::loadConfiguration(badgeConfig_t &config)
         config.pics[i] = pic.as<uint8_t>();
         i++;
     }
+    i = 0;
+    for (JsonVariant node : groupnodes)
+    {
+        config.group[i] = node.as<uint32_t>();
+        i++;
+    }
+
 
     file.close();
     return true;
@@ -100,12 +149,16 @@ void FileStorage::saveConfiguration(const badgeConfig_t &config)
     StaticJsonDocument<CONFIG_MEMORY> doc;
 
     // Set the values in the document
-    doc["color"] = config.color;  
-    doc["group"] = config.group;  
+    doc[CONFIG_KEY_COLOR] = config.color;
     JsonArray pics = doc.createNestedArray(CONFIG_KEY_PICS);
     for (size_t i = 0; i < config.numPics; i++)
     {
         pics.add(config.pics[i]);
+    }
+    JsonArray groupnodes = doc.createNestedArray(CONFIG_KEY_GROUP);
+    for (size_t i = 0; i < MAX_GROUP_SIZE && config.group[i] != 0; i++)
+    {
+        groupnodes.add(config.group[i]);
     }
 
     // Serialize JSON to file

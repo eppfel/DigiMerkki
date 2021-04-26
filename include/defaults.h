@@ -1,6 +1,7 @@
 #define DISPLAY_ORIENTATION 3 //Rotation of the display in 90° steps form 0 to 3
-#define NUM_BADGES 3
-#define NUM_PICS 3
+#define NUM_BADGES 3 // Not tested to be memory safe with more than 20 devices
+#define NUM_PICS 3 // This should be low (< 5) for larger numbers of badges
+#define MAX_GROUP_SIZE 4
 
 #define BTNHOLDDELAY 700
 #define BONDINGTIMEOUT 20000
@@ -21,6 +22,7 @@
 #define CALIBRATION_TIME 700
 #define CALIBRATION_SAMPLES 5
 #define SENSITIVITY_RANGE 12
+#define BADGES_FILE "/badges.json"
 #define CONFIG_FILE "/config.json"
 #define LOG_FILE "/interactionslog.json"
 

@@ -4,7 +4,7 @@
 // Felix A. Epp <felix.epp@aalto.fi>
 //
 //************************************************************
-
+#define ARDUINOJSON_USE_LONG_LONG 1
 #include <painlessMesh.h>
 #include "BadgeProtocol.hpp"
 #include "TouchButtons.h"
@@ -34,7 +34,7 @@ bool receivedBeatCallback(protocol::Variant variant);
 bool receivedTimeCallback(protocol::Variant variant);
 
 FileStorage fileStorage{};
-RTC_DATA_ATTR badgeConfig_t configuration = {NUM_PICS, 0, 0xffffff, {0, 1, 2}}; // keep configuration in deep sleep
+RTC_DATA_ATTR badgeConfig_t configuration = {NUM_PICS, {}, 0xffffff, {0, 1, 2}}; // keep configuration in deep sleep
 
 EasyButton hwbutton1(HW_BUTTON_PIN1);
 EasyButton hwbutton2(HW_BUTTON_PIN2);
@@ -47,7 +47,7 @@ painlessMesh mesh;
 int32_t energyCountdown = ENERGY_SAFE_TIMEOUT;
 bool calc_delay = false;
 SimpleList<uint32_t> nodes;
-RTC_DATA_ATTR SimpleList<uint32_t> groupNodes;
+SimpleList<uint32_t> groupNodes;
 
 // @Override This function is called by FastLED inside lib8tion.h.Requests it to use mesg.getNodeTime instead of internal millis() timer.
 uint32_t get_millisecond_timer_hook()
@@ -136,45 +136,22 @@ void setup()
   if (freshStart)
   {
     Serial.println(F("Fresh start, load configuration"));
-    
-    // load configuration from and state from persistent storage
-    badges_t all_badges[NUM_BADGES] = {
-        {2884960141, 0, CRGB::Blue, {3, 4, 5}},
-        {3519576873, 1, CRGB::Cyan, {0, 1, 2}},
-        {2884958213, 1, CRGB::Yellow, {0, 3, 6}}
-    };
+
     if (!fileStorage.loadConfiguration(configuration)) 
     {
-      Serial.println(F("No configuration stored. Reconfigure."));
-      for (size_t i = 0; i < NUM_BADGES; i++)
-      {
-        if (all_badges[i].node == mesh.getNodeId())
-        {
-          memcpy(configuration.pics, all_badges[i].pics, sizeof(all_badges[i].pics));
-          configuration.numPics = NUM_PICS;
-          configuration.group = all_badges[i].group;
-          configuration.color = all_badges[i].color;
-          break;
-        }
-      }
-
-      fileStorage.saveConfiguration(configuration);
-
-      // fileStorage.printFile(CONFIG_FILE);
+      // load configuration from persistent storage
+      fileStorage.initConfiguration(configuration, mesh.getNodeId());
     }
-
-    for (size_t i = 0; i < NUM_BADGES; i++)
-    {
-      if (all_badges[i].group == configuration.group && all_badges[i].node != mesh.getNodeId())
-      {
-        groupNodes.push_back(all_badges[i].node);
-        Serial.printf("Adding %u to group\r\n", all_badges[i].node);
-      }
-    }
-
+    // fileStorage.printFile(CONFIG_FILE);
     freshStart = false;
   }
-  Serial.printf("Booting with the following configurations: \r\n - group id: %u\r\n - colour: %#08x\r\n - pictures: %u\r\n", configuration.group, configuration.color, configuration.numPics);
+  Serial.printf("Booting with the following configurations: \r\n - colour: %#08x\r\n - pictures: %u\r\n", configuration.color, configuration.numPics);
+  // GROUP NODES FROM CONFIG FILE=??=?=
+  for (size_t i = 0; i < MAX_GROUP_SIZE && configuration.group[i] != 0; i++)
+  {
+    groupNodes.push_back(configuration.group[i]);
+    Serial.printf("Adding %u to group\r\n", configuration.group[i]);
+  }
 
   // Setup all network listeners
   mesh.onReceive(&receivedCallback);
