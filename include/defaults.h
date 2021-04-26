@@ -26,6 +26,3 @@
 #define CONFIG_FILE "/config.json"
 #define LOG_FILE "/interactionslog.json"
 
-//Protocol
-#define BP_NEWBPM "BPM"
-
