@@ -169,7 +169,7 @@ void StatusVisualiser::setMeterFromIndex(int8_t ledIndex) {
 		{
 			_leds[i] = CRGB::Black;
 		} else {
-			_leds[i] = CRGB::HotPink;
+			_leds[i] = _defaultColor;
 		}
 	}
 }
@@ -243,11 +243,11 @@ void StatusVisualiser::setProximityStatus(proximityStatus_t proxStat)
 		break;
 	case PROXIMITY_NEARBY:
 		//change to nearby animation
-		_maxPattern = PATTERN_STROBE;
+		_maxPattern = PATTERN_SPREAD;
 		break;
 	default:
 		//change to last? alone animation
-		_maxPattern = PATTERN_SPREAD;
+		_maxPattern = PATTERN_GLITTER;
 		break;
 	}
 
