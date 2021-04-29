@@ -44,7 +44,8 @@ struct BadgeEvent
         CONNECTION_EVT,
         SHARE_EVT,
         BEAT_EVT,
-        POWER_EVT
+        POWER_EVT,
+        PICTURE_EVT
     } type;
 };
 
@@ -58,7 +59,9 @@ public:
     bool initConfiguration(badgeConfig_t &config, uint32_t nodeid);
     bool loadConfiguration(badgeConfig_t &config);
     void saveConfiguration(const badgeConfig_t &config);
+    void logBootEvent(const uint32_t time);
     void logBeatEvent(const uint32_t time,const int32_t &beat, const uint32_t &node);
+    void logPictureEvent(const uint32_t time, const int8_t &pic);
     void logSharingEvent(const uint32_t time, const uint32_t &node, const int8_t &pic);
     void logConnectionEvent(const uint32_t time, const SimpleList<uint32_t> &nodes);
     void logEvent(const StaticJsonDocument<LOG_MEMORY> &doc);

@@ -191,6 +191,8 @@ void setup()
   userScheduler.addTask(taskShowLogo);
   displayMessage(F("Filled the survey?"));
 
+  fileStorage.logBootEvent(mesh.getNodeTime());
+
   randomSeed(analogRead(A0));
 }
 
@@ -464,6 +466,7 @@ void buttonHandler(TouchButtons::InputType keyCode)
     else if (keyCode == TouchButtons::TAP_RIGHT)
     {
       nextPicture();
+      fileStorage.logPictureEvent(mesh.getNodeTime(), getCurrentPicture());
     }
     else if (keyCode == TouchButtons::HOLD_LEFT)
     {
@@ -562,8 +565,9 @@ void completeBondingSequence()
   fileStorage.logSharingEvent(mesh.getNodeTime(), bondingCandidate.node, candidateCompleted);
 
   Serial.println("Set current picture");
-  Serial.println(std::distance(configuration.pics, currentPic));
   setCurrentPicture(std::distance(configuration.pics, currentPic));
+  fileStorage.logPictureEvent(mesh.getNodeTime(), getCurrentPicture());
+
 
   visualiser.blink(500, 3, CRGB::Green); // fill meter
   displayMessage("Bonding Complete!");
