@@ -25,4 +25,4 @@
 #define BADGES_FILE "/badges.json"
 #define CONFIG_FILE "/config.json"
 #define LOG_FILE "/interactionslog.json"
-
+#define LOGGING_LIMIT 2000000

@@ -232,6 +232,11 @@ void FileStorage::logEvent(const StaticJsonDocument<LOG_MEMORY> &doc)
 
     // Time recorded for test purposes
     // uint32_t t = millis();
+    
+    if (SPIFFS.usedBytes() > LOGGING_LIMIT) {
+        Serial.println(F("Warning: Filesystem full. Logging halted."));
+        return;
+    }
 
     fs::File logFile = SPIFFS.open(LOG_FILE, FILE_APPEND);
     if (!logFile)
@@ -246,6 +251,7 @@ void FileStorage::logEvent(const StaticJsonDocument<LOG_MEMORY> &doc)
     {
         Serial.println("File write failed");
     }
+    logFile.println();
 
     // Close the file
     logFile.close();
