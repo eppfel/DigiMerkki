@@ -1,6 +1,11 @@
 #include "ScreenController.h"
 
-char const *imgfiles[] = {"baboon", "bmo", "nude", "aalto", "octopus", "amongus"};
+char const *imgfiles[] = {"baboon",
+                            "bmo",
+                            "nude",
+                            "aalto",
+                            "octopus",
+                            "amongus"};
 RTC_DATA_ATTR size_t currentPicture = 0;
 
 uint8_t _numnodes = 0;

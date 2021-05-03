@@ -47,6 +47,7 @@ bool FileStorage::initConfiguration(badgeConfig_t &config, uint32_t nodeid)
     if (error)
     {
         Serial.println(F("Failed to read file, using default configuration"));
+        Serial.println(error.c_str());
         file.close();
         return false;
     }
