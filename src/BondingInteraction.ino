@@ -12,6 +12,7 @@
 #include "ScreenController.h"
 #include "time.h"
 #include <sys/time.h>
+#include "esp_adc_cal.h"
 
 // Prototypes
 void routineCheck();
@@ -44,6 +45,7 @@ RTC_DATA_ATTR bool freshStart = true;
 Scheduler userScheduler; // to control your personal task
 painlessMesh mesh;
 
+int vref = 1100;
 int32_t energyCountdown = ENERGY_SAFE_TIMEOUT;
 bool calc_delay = false;
 SimpleList<uint32_t> nodes;
@@ -221,6 +223,24 @@ void routineCheck() {
 // Check if on Battery and empty, if so go to sleep to protect boot loop on low voltage
 void checkBatteryCharge(bool boot)
 {
+  if (boot) {
+    esp_adc_cal_characteristics_t adc_chars;
+    esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars); //Check type of calibration value used to characterize ADC
+    if (val_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
+    {
+      Serial.printf("eFuse Vref:%u mV", adc_chars.vref);
+      vref = adc_chars.vref;
+    }
+    else if (val_type == ESP_ADC_CAL_VAL_EFUSE_TP)
+    {
+      Serial.printf("Two Point --> coeff_a:%umV coeff_b:%umV\n", adc_chars.coeff_a, adc_chars.coeff_b);
+    }
+    else
+    {
+      Serial.println("Default Vref: 1100mV");
+    }
+  }
+
   energyCountdown -= BATTERY_CHARGE_CHECK_INTERVAL / 1000;
   if (energyCountdown*1000 < BATTERY_CHARGE_CHECK_INTERVAL)
   {
@@ -266,7 +286,6 @@ void checkBatteryCharge(bool boot)
   }
 }
 
-int vref = 1100;
 float getInputVoltage()
 {
   uint16_t vPin = analogRead(ADC_PIN);
