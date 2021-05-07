@@ -101,15 +101,7 @@ void setup()
 
   // Start Display for feedback first
   initScreen();
-
-  /*
-    ADC_EN is the ADC detection enable port
-    If the USB port is used for power supply, it is turned on by default.
-    If it is powered by battery, it needs to be set to high level
-    */
-  pinMode(ADC_EN, OUTPUT);
-  digitalWrite(ADC_EN, HIGH);
-
+  
   //check for battery to not discharge too much
   checkBatteryCharge(true);
 
