@@ -1,5 +1,7 @@
 #!/bin/bash
 
+ports=/dev/cu.usbserial-*
+
 # this function is called when Ctrl-C is sent
 function trap_ctrlc ()
 {
