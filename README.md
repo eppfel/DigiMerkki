@@ -41,10 +41,22 @@ This board does not feature an on-board LED, so an external has to be attached, 
 
 ### Upload procedure
 
+Depending on the goal there are different ways to upload the software onto the ESP32 board.
+
+#### Upload precompiled app with esptool
+
+If you have a compiled binary, you only need the [esptool](https://github.com/espressif/esptool) to upload the board.
+
+1. Install `python` and [esptool](https://github.com/espressif/esptool), if it is not already in your machine.
+1. Check the port you want to upload to (e.g. `/dev/cu.usbserial-01E063F5`, you can get device with `pio device list`)
+1. Run `esptool.py --port /dev/cu.usbserial-01E063F5 write_flash 0x10000 DigiMerkkiApp.bin` (With replacing the port and the correct path to `esptool.py`)
+
+#### Upload from source inside Visual Studio Code
+
 1. Set upload port in platformio.ini (you can get device with `pio device list`)
-1. Run `Erase flash` (This deletes all data on the board and is needed for a clean start)
+1. OPTIONAL: Run `Erase flash` (This deletes all data on the board and is needed for a clean start)
 1. Run `Upload`
-1. Run `Upload filesystem image` (This will delete files changed by the app, i.e. `configuration.json` and `interactionlog.json`. Hereafter the app also initialises the configuration.)
+1. OPTIONAL: Run `Upload filesystem image` (This will delete files changed by the app, i.e. `configuration.json` and `interactionlog.json`. Hereafter the app also initialises the configuration.)
 
 Working with multiple boards you can make use the scripts `uploadall.sh` or `eraseandupload.sh` to perform the upper steps for multiple boards. Just edit value of `ports` to filter `/dev/cu.usbserial-*` all boards connected to vis USB.
 
